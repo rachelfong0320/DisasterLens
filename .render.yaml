@@ -2,7 +2,7 @@ services:
   - type: cron
     name: tweet-scraper-cron
     env: python
-    schedule: "*/0 * * * *"
+    schedule: "*/60 * * * *"
     buildCommand: |
       pip install -r requirements.txt
       python -m spacy download en_core_web_sm
