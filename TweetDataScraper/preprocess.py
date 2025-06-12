@@ -6,8 +6,14 @@ import spacy
 import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
+import os
 
-nlp = spacy.load("en_core_web_sm")
+try:
+    nlp = spacy.load(os.getenv("SPACY_MODEL", "en_core_web_sm"))
+except OSError:
+    from spacy.cli import download
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 english_stopwords = set(stopwords.words('english'))
 bm_stopwords = set(['dan', 'yang', 'untuk', 'dari', 'pada', 'adalah', 'ini', 'itu'])
 
