@@ -3,6 +3,8 @@ import emoji
 from langdetect import detect
 from deep_translator import GoogleTranslator
 import spacy
+import nltk
+nltk.download('stopwords')
 from nltk.corpus import stopwords
 
 nlp = spacy.load("en_core_web_sm")

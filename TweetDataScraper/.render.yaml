@@ -1,0 +1,5 @@
+services:
+  - type: cron
+    name: tweet-streaming
+    schedule: "0 * * * *" # every hour
+    command: "python main.py"

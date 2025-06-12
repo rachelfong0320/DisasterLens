@@ -1,0 +1,10 @@
+requests
+pymongo
+emoji
+spacy
+langdetect
+deep_translator
+nltk
+urllib3
+
+python -m spacy download en_core_web_sm

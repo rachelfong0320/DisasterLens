@@ -2,17 +2,21 @@ import logging
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # MongoDB
-MONGO_URI = "mongodb+srv://s2178502:Z03b4XXDF7VzV7hG@tweetdata.aqndcld.mongodb.net/retryWrites=true&w=majority&appName=TweetData"
+MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = "TweetData"
 COLLECTION_NAME = "CleanedTweets"
 
 # Twitter API
 RAPID_API_URL = "https://twitter241.p.rapidapi.com/search-v2"
 HEADERS = {
-    "X-RapidAPI-Key": "c7d63f413cmshf2851df4a5e42d1p1ed1bejsn092d86a02e69",
-    "X-RapidAPI-Host": "twitter241.p.rapidapi.com"
+    "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
+    "X-RapidAPI-Host": os.getenv("RAPIDAPI_HOST")
 }
 
 # Logging
