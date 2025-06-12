@@ -6,4 +6,4 @@ langdetect
 deep_translator
 nltk
 urllib3
-
+python-dotenv
