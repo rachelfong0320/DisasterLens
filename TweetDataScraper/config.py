@@ -5,6 +5,21 @@ from urllib3.util.retry import Retry
 from dotenv import load_dotenv
 import os
 
+"""
+This script sets up the environment and session configuration for streaming disaster-related tweets 
+using the Twitter API (via RapidAPI), with built-in support for retries, logging, and MongoDB connection setup.
+
+Key features:
+- Loads API keys and MongoDB URI from a .env file for security and configuration flexibility.
+- Initializes a MongoDB database connection to store cleaned tweet data.
+- Configures an HTTP session with retry logic to handle common network issues (e.g., rate limits, server errors).
+- Sets up logging to track script activity and potential errors.
+
+Note:
+- Actual tweet processing and data ingestion logic should be implemented separately using the configured session and DB.
+"""
+
+
 load_dotenv()
 
 # MongoDB

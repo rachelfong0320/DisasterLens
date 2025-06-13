@@ -838,3 +838,112 @@
 2025-06-13 12:51:14,921 INFO:No more cursor. Exiting job for earthquake kuantan.
 2025-06-13 12:51:15,055 INFO:No more cursor. Exiting job for earthquake cyberjaya.
 2025-06-13 12:51:15,858 INFO:No more cursor. Exiting job for earthquake kota kinabalu.
+2025-06-13 14:43:14,512 INFO:Starting real-time tweet streaming for banjir malaysia...
+2025-06-13 14:43:14,513 INFO:Starting real-time tweet streaming for banjir kuala lumpur...
+2025-06-13 14:43:14,514 INFO:Starting real-time tweet streaming for banjir selangor...
+2025-06-13 14:43:14,515 INFO:Starting real-time tweet streaming for banjir johor...
+2025-06-13 14:43:14,516 INFO:Starting real-time tweet streaming for banjir penang...
+2025-06-13 14:43:14,517 INFO:Starting real-time tweet streaming for banjir pulau pinang...
+2025-06-13 14:43:14,518 INFO:Starting real-time tweet streaming for banjir perak...
+2025-06-13 14:43:14,519 INFO:Starting real-time tweet streaming for banjir kedah...
+2025-06-13 14:43:14,521 INFO:Starting real-time tweet streaming for banjir pahang...
+2025-06-13 14:43:14,522 INFO:Starting real-time tweet streaming for banjir terengganu...
+2025-06-13 14:43:15,734 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:43:19,763 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:43:26,808 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:43:32,177 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:43:37,884 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:43:43,279 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:43:48,977 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:43:54,395 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:00,030 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:05,453 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:11,283 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:14,774 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+malaysia (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:44:14,775 INFO:Starting real-time tweet streaming for banjir kelantan...
+2025-06-13 14:44:14,782 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+kedah (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:44:14,782 INFO:Starting real-time tweet streaming for banjir melaka...
+2025-06-13 14:44:14,785 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+johor (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:44:14,785 INFO:Starting real-time tweet streaming for banjir negeri sembilan...
+2025-06-13 14:44:14,792 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+pahang (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:44:14,792 INFO:Starting real-time tweet streaming for banjir sabah...
+2025-06-13 14:44:14,796 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+penang (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:44:14,796 INFO:Starting real-time tweet streaming for banjir sarawak...
+2025-06-13 14:44:14,797 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+perak (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:44:14,797 INFO:Starting real-time tweet streaming for banjir labuan...
+2025-06-13 14:44:14,809 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+selangor (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:44:14,809 INFO:Starting real-time tweet streaming for banjir putrajaya...
+2025-06-13 14:44:15,873 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:19,952 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:26,417 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:30,978 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:35,033 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:41,493 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:44,633 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:50,308 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:54,114 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:44:59,770 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:04,625 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:09,218 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:13,464 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:14,915 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+kelantan (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:45:14,915 INFO:Starting real-time tweet streaming for banjir cyberjaya...
+2025-06-13 14:45:14,923 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+labuan (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:45:14,923 INFO:Starting real-time tweet streaming for banjir langkawi...
+2025-06-13 14:45:14,936 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+sarawak (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:45:14,937 INFO:Starting real-time tweet streaming for banjir ipoh...
+2025-06-13 14:45:14,945 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+negeri+sembilan (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:45:14,945 INFO:Starting real-time tweet streaming for banjir alor setar...
+2025-06-13 14:45:14,948 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+putrajaya (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:45:14,948 INFO:Starting real-time tweet streaming for banjir george town...
+2025-06-13 14:45:15,023 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+sabah (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:45:15,023 INFO:Starting real-time tweet streaming for banjir kuantan...
+2025-06-13 14:45:19,767 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:23,012 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:28,112 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:32,415 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:36,755 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:42,904 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:46,347 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:51,308 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:55,589 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:45:59,903 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:06,089 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:09,507 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:14,491 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:15,051 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+ipoh (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:46:15,052 INFO:Starting real-time tweet streaming for banjir kuching...
+2025-06-13 14:46:15,065 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+alor+setar (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:46:15,066 INFO:Starting real-time tweet streaming for banjir kota kinabalu...
+2025-06-13 14:46:15,067 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+langkawi (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:46:15,068 INFO:Starting real-time tweet streaming for banjir bintulu...
+2025-06-13 14:46:15,085 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+george+town (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:46:15,085 INFO:Starting real-time tweet streaming for banjir sibu...
+2025-06-13 14:46:15,180 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+kuantan (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:46:15,180 INFO:Starting real-time tweet streaming for banjir miri...
+2025-06-13 14:46:18,750 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:23,025 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:28,297 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:32,640 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:37,641 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:41,898 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:45,283 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:49,064 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:53,004 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:46:56,329 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:00,137 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:04,040 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:07,416 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:11,214 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:15,085 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:15,182 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+kota+kinabalu (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:47:15,182 INFO:Starting real-time tweet streaming for tanah runtuh malaysia...
+2025-06-13 14:47:15,185 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+bintulu (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:47:15,186 INFO:Starting real-time tweet streaming for tanah runtuh kuala lumpur...
+2025-06-13 14:47:15,228 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+sibu (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:47:15,229 INFO:Starting real-time tweet streaming for tanah runtuh selangor...
+2025-06-13 14:47:15,313 ERROR:Error: HTTPSConnectionPool(host='twitter241.p.rapidapi.com', port=443): Max retries exceeded with url: /search-v2?type=Latest&count=1000&query=banjir+miri (Caused by ResponseError('too many 429 error responses'))
+2025-06-13 14:47:15,313 INFO:Starting real-time tweet streaming for tanah runtuh johor...
+2025-06-13 14:47:18,729 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:22,336 WARNING:Non-200 response: 403. Sleeping 10s.
+2025-06-13 14:47:26,158 WARNING:Non-200 response: 403. Sleeping 10s.

@@ -8,6 +8,38 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 import os
 
+"""
+Tweet Text Preprocessing Utilities for Disaster Tweet Analysis
+
+Overview:
+This script provides functions for cleaning, translating, and tokenizing tweet text to prepare it for further analysis or storage.
+
+Key Features:
+1. **clean_text(text)**:
+   - Removes URLs, mentions (@user), emojis, and special characters.
+   - Strips and normalizes whitespace.
+   - Outputs clean, alphanumeric-only text.
+
+2. **translate_to_english(text)**:
+   - Detects the language of the input text using `langdetect`.
+   - Translates non-English text to English using `deep_translator` and Google Translate.
+   - Falls back to original text if detection or translation fails.
+
+3. **tokenize_and_clean(text)**:
+   - Uses spaCy for tokenization.
+   - Converts text to lowercase and removes stopwords (both English and Bahasa Melayu).
+   - Returns a list of clean, meaningful tokens.
+
+Dependencies:
+- `emoji`, `langdetect`, `deep-translator`, `spacy`, `nltk`
+- English and BM stopwords are included.
+- Downloads NLTK stopwords and ensures the `en_core_web_sm` spaCy model is available.
+
+Usage:
+These functions are intended to be used in a tweet scraping pipeline to preprocess text before analysis, filtering, or database insertion.
+"""
+
+
 try:
     nlp = spacy.load(os.getenv("SPACY_MODEL", "en_core_web_sm"))
 except OSError:

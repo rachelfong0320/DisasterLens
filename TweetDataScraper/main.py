@@ -6,6 +6,41 @@ from helpers import is_location_in_malaysia, malaysia_keywords
 from dbConnection import insert_tweet
 from concurrent.futures import ThreadPoolExecutor
 
+"""
+Real-Time Twitter Scraper for Disaster-Related Tweets in Malaysia
+
+Overview:
+This script streams disaster-related tweets from Malaysia in real-time using the Twitter API via RapidAPI,
+performs basic filtering and natural language processing (NLP), and stores the cleaned data in MongoDB.
+
+Key Features:
+- Constructs search queries by combining disaster-related keywords (in English and Bahasa Melayu) with Malaysian locations.
+- Filters tweets based on:
+    - Location (must mention a Malaysian place)
+    - User status (ignores verified users, business/creator accounts, and users with >10k followers)
+- Processes tweet text by:
+    - Cleaning raw tweet text
+    - Translating non-English text to English
+    - Tokenizing and removing stopwords
+- Stores processed tweet data in MongoDB while avoiding duplicates using tweet IDs.
+- Utilizes threading for parallel query processing and includes rate-limit-safe request retries.
+- Maintains a shared set of seen tweet IDs to avoid duplicate processing across threads.
+
+Modules Required:
+- `config`: contains API credentials and session configuration
+- `preprocess`: defines text cleaning, translation, and tokenization functions
+- `helpers`: includes Malaysian location keyword list and matching logic
+- `dbConnection`: handles MongoDB connection and tweet insertion
+- `concurrent.futures`: enables multi-threaded scraping across queries
+
+Execution:
+Run this script as a standalone process. It will start multiple threads to concurrently stream tweets matching various disaster-location keyword combinations.
+
+Note:
+Make sure your `.env` file is properly configured with valid RAPIDAPI credentials and MongoDB URI before running this script.
+"""
+
+
 def run_once(combined_query, seen_ids, lock):
     # Twitter API params
     params = {
