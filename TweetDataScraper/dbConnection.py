@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from config import MONGO_URI, DB_NAME, COLLECTION_NAME
 
 client = MongoClient(MONGO_URI)
@@ -10,5 +10,6 @@ def insert_tweet(tweet_info):
     try:
         collection.insert_one(tweet_info)
         print(f"Tweet {tweet_info['tweet_id']} inserted.")
-    except Exception:
+    except errors.DuplicateKeyError:
         print("Insert error: duplicated tweet")
+        pass

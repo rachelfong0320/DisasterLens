@@ -4,8 +4,9 @@ from config import session, HEADERS, RAPID_API_URL
 from preprocess import clean_text, translate_to_english, tokenize_and_clean
 from helpers import is_location_in_malaysia, malaysia_keywords
 from dbConnection import insert_tweet
+from concurrent.futures import ThreadPoolExecutor
 
-def run_once(combined_query):
+def run_once(combined_query, seen_ids, lock):
     # Twitter API params
     params = {
         "type": "Latest",
@@ -13,7 +14,6 @@ def run_once(combined_query):
         "query": combined_query
     }
     logging.info(f"Starting real-time tweet streaming for {combined_query}...")
-    seen_ids = set()
     next_cursor = None
 
     try:
@@ -42,9 +42,11 @@ def run_once(combined_query):
 
                         tweet = content['itemContent']['tweet_results']['result']
                         tweet_id = tweet.get('rest_id')
-                        if tweet_id in seen_ids:
-                            continue
-                        seen_ids.add(tweet_id)
+                        
+                        with lock:
+                            if tweet_id in seen_ids:
+                                continue
+                            seen_ids.add(tweet_id)
 
                         user = tweet.get('core', {}).get('user_results', {}).get('result', {})
                         user_legacy = user.get('legacy', {})
@@ -96,7 +98,7 @@ def run_once(combined_query):
                             next_cursor = content.get('value')
 
             if not next_cursor:
-                logging.info(f"No more cursor. Exiting job for {keyword}.")
+                logging.info(f"No more cursor. Exiting job for {combined_query}.")
                 break
 
             time.sleep(3)
@@ -105,12 +107,18 @@ def run_once(combined_query):
         logging.error(f"Error: {e}")
 
 if __name__ == "__main__":
+    import threading
+    
     # Disaster keywords
     bm_keywords = ["banjir", "tanah runtuh", "ribut", "jerebu", "kebakaran hutan", "mendapan tanah", "gempa bumi", "tsunami"]
     en_keywords = ["flood", "landslide", "storm", "haze", "forest fire", "sinkhole", "earthquake"]
     all_keywords = bm_keywords + en_keywords
     
-    for keyword in all_keywords:
-        for location_keyword in malaysia_keywords:
-            combined_query = f"{keyword} {location_keyword}"
-            run_once(combined_query)
+    queries = [f"{d} {l}" for d in all_keywords for l in malaysia_keywords]
+    
+    seen_ids = set()
+    lock = threading.Lock()
+    
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for q in queries:
+            executor.submit(run_once, q, seen_ids, lock)
