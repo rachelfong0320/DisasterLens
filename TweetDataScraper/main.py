@@ -2,23 +2,17 @@ import time
 import logging
 from config import session, HEADERS, RAPID_API_URL
 from preprocess import clean_text, translate_to_english, tokenize_and_clean
-from helpers import is_location_in_malaysia
+from helpers import is_location_in_malaysia, malaysia_keywords
 from dbConnection import insert_tweet
 
-# Disaster keywords
-bm_keywords = ["banjir", "tanah runtuh", "ribut", "jerebu", "kebakaran hutan", "mendapan tanah", "gempa bumi", "tsunami"]
-en_keywords = ["flood", "landslide", "storm", "haze", "forest fire", "sinkhole", "earthquake", "tsunami"]
-disaster_query = " OR ".join(bm_keywords + en_keywords)
-
-# Twitter API params
-params = {
-    "type": "Latest",
-    "count": "100",
-    "query": f"({disaster_query})"
-}
-
-def run_once():
-    logging.info("Starting real-time tweet streaming...")
+def run_once(combined_query):
+    # Twitter API params
+    params = {
+        "type": "Latest",
+        "count": "1000",
+        "query": combined_query
+    }
+    logging.info(f"Starting real-time tweet streaming for {combined_query}...")
     seen_ids = set()
     next_cursor = None
 
@@ -102,7 +96,7 @@ def run_once():
                             next_cursor = content.get('value')
 
             if not next_cursor:
-                logging.info("No more cursor. Exiting job.")
+                logging.info(f"No more cursor. Exiting job for {keyword}.")
                 break
 
             time.sleep(3)
@@ -111,4 +105,12 @@ def run_once():
         logging.error(f"Error: {e}")
 
 if __name__ == "__main__":
-    run_once()
+    # Disaster keywords
+    bm_keywords = ["banjir", "tanah runtuh", "ribut", "jerebu", "kebakaran hutan", "mendapan tanah", "gempa bumi", "tsunami"]
+    en_keywords = ["flood", "landslide", "storm", "haze", "forest fire", "sinkhole", "earthquake"]
+    all_keywords = bm_keywords + en_keywords
+    
+    for keyword in all_keywords:
+        for location_keyword in malaysia_keywords:
+            combined_query = f"{keyword} {location_keyword}"
+            run_once(combined_query)

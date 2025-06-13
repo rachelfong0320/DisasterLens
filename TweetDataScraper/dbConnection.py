@@ -10,5 +10,5 @@ def insert_tweet(tweet_info):
     try:
         collection.insert_one(tweet_info)
         print(f"Tweet {tweet_info['tweet_id']} inserted.")
-    except Exception as e:
-        print(f"Insert error: {e}")
+    except Exception:
+        print("Insert error: duplicated tweet")
