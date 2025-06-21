@@ -43,6 +43,7 @@ Make sure your `.env` file is properly configured with valid RAPIDAPI credential
 logging.info("🚀 Main script started")
 
 def run_once(combined_query, seen_ids, lock):
+    seen_ids=set()
     try:
         # Twitter API params
         params = {
@@ -80,10 +81,9 @@ def run_once(combined_query, seen_ids, lock):
                         tweet = content['itemContent']['tweet_results']['result']
                         tweet_id = tweet.get('rest_id')
                         
-                        with lock:
-                            if tweet_id in seen_ids:
-                                continue
-                            seen_ids.add(tweet_id)
+                        if tweet_id in seen_ids:
+                            continue
+                        seen_ids.add(tweet_id)
 
                         user = tweet.get('core', {}).get('user_results', {}).get('result', {})
                         user_legacy = user.get('legacy', {})
@@ -155,9 +155,7 @@ if __name__ == "__main__":
     queries = [f"{d} {l}" for d in all_keywords for l in malaysia_keywords]
     
     logging.info(f"🧮 Total query combinations: {len(queries)}")
-    seen_ids = set()
-    lock = threading.Lock()
     
     with ThreadPoolExecutor(max_workers=10) as executor:
         for q in queries:
-            executor.submit(run_once, q, seen_ids, lock)
+            executor.submit(run_once, q)
