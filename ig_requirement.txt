@@ -1,0 +1,12 @@
+pandas
+emoji
+aiohttp
+googletrans
+pymongo
+python-dotenv
+requests
+urllib3
+langdetect
+deep-translator
+spacy
+nltk
