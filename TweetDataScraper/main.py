@@ -45,7 +45,7 @@ def run_once(combined_query, seen_ids, lock):
     # Twitter API params
     params = {
         "type": "Latest",
-        "count": "1000",
+        "count": "2000",
         "query": combined_query
     }
     logging.info(f"Starting real-time tweet streaming for {combined_query}...")
