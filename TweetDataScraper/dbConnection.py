@@ -18,7 +18,11 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 collection.create_index("tweet_id", unique=True)
-
+try:
+    client.admin.command('ping')
+    logging.info("✅ MongoDB connection successful.")
+except Exception as e:
+    logging.error(f"❌ MongoDB connection failed: {e}")
 def insert_tweet(tweet_info):
     try:
         collection.insert_one(tweet_info)
