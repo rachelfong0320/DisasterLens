@@ -4,7 +4,6 @@ from langdetect import detect
 from deep_translator import GoogleTranslator
 import spacy
 import nltk
-nltk.download('stopwords')
 from nltk.corpus import stopwords
 import os
 
@@ -39,15 +38,22 @@ Usage:
 These functions are intended to be used in a tweet scraping pipeline to preprocess text before analysis, filtering, or database insertion.
 """
 
+# Ensure stopwords are available
+try:
+    english_stopwords = set(stopwords.words('english'))
+except LookupError:
+    nltk.download('stopwords')
+    english_stopwords = set(stopwords.words('english'))
 
+# Load BM stopwords manually
+bm_stopwords = set(['dan', 'yang', 'untuk', 'dari', 'pada', 'adalah', 'ini', 'itu'])
+    
 try:
     nlp = spacy.load(os.getenv("SPACY_MODEL", "en_core_web_sm"))
 except OSError:
     from spacy.cli import download
     download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
-english_stopwords = set(stopwords.words('english'))
-bm_stopwords = set(['dan', 'yang', 'untuk', 'dari', 'pada', 'adalah', 'ini', 'itu'])
 
 def clean_text(text):
     text = re.sub(r"http\S+", "", text)
