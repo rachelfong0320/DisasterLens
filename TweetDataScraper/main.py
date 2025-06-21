@@ -42,7 +42,7 @@ Make sure your `.env` file is properly configured with valid RAPIDAPI credential
 
 logging.info("🚀 Main script started")
 
-def run_once(combined_query, seen_ids, lock):
+def run_once(combined_query):
     seen_ids=set()
     try:
         # Twitter API params
