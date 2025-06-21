@@ -49,16 +49,16 @@ logging.basicConfig(
 logging.info("🚀 Main script started")
 
 def run_once(combined_query, seen_ids, lock):
-    # Twitter API params
-    params = {
-        "type": "Latest",
-        "count": "1000",
-        "query": combined_query
-    }
-    logging.info(f"Starting real-time tweet streaming for {combined_query}...")
-    next_cursor = None
-
     try:
+        # Twitter API params
+        params = {
+            "type": "Latest",
+            "count": "1000",
+            "query": combined_query
+        }
+        logging.info(f"Starting real-time tweet streaming for {combined_query}...")
+        next_cursor = None
+
         while True:
             if next_cursor:
                 params["cursor"] = next_cursor
