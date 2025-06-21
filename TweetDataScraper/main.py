@@ -93,7 +93,7 @@ def run_once(combined_query):
                         user_legacy = user.get('legacy', {})
                         tweet_legacy = tweet.get('legacy', {})
 
-                        location = user_legacy.get('location', '')
+                        location = user.get('location', {}).get('location', '') or user_legacy.get('location', '')
                         if not is_location_in_malaysia(location):
                             logging.info(f"[{tweet_id}] Skipped: not in Malaysia — location: {location}")
                             continue
