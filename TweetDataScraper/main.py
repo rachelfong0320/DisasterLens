@@ -40,12 +40,6 @@ Note:
 Make sure your `.env` file is properly configured with valid RAPIDAPI credentials and MongoDB URI before running this script.
 """
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-
 def run_once(combined_query):
     seen_ids=set()
     try:
@@ -95,7 +89,6 @@ def run_once(combined_query):
 
                         location = user.get('location', {}).get('location', '') or user_legacy.get('location', '')
                         if not is_location_in_malaysia(location):
-                            logging.info(f"[{tweet_id}] Skipped: not in Malaysia — location: {location}")
                             continue
 
                         is_verified = user.get('verified', False)
@@ -104,10 +97,8 @@ def run_once(combined_query):
                         followers_count = user_legacy.get('followers_count', 0)
 
                         if is_verified or verification_type != 'null' or professional_type in ['Business', 'Creator']:
-                            logging.info(f"[{tweet_id}] Skipped: user is autority figure")
                             continue
                         if followers_count > 10000:
-                            logging.info(f"[{tweet_id}] Skipped: >10k followers")
                             continue
 
                         raw_text = tweet_legacy.get('full_text', '')
@@ -136,7 +127,6 @@ def run_once(combined_query):
                             'professional_type': professional_type
                         }
 
-                        logging.info(f"[{combined_query}] Calling insert_tweet for tweet {tweet_id}")
                         insert_tweet(tweet_info)
 
                         if item.get('entryId', '').startswith('cursor-bottom'):
@@ -152,8 +142,6 @@ def run_once(combined_query):
         logging.error(f"Error: {e}")
 
 if __name__ == "__main__":
-    logging.info("🎯 Entering main execution block")
-    import threading
     
     # Disaster keywords
     bm_keywords = ["banjir", "tanah runtuh", "ribut", "jerebu", "kebakaran hutan", "mendapan tanah", "gempa bumi", "tsunami"]
@@ -161,8 +149,6 @@ if __name__ == "__main__":
     all_keywords = bm_keywords + en_keywords
     
     queries = [f"{d} {l}" for d in all_keywords for l in malaysia_keywords]
-    
-    logging.info(f"🧮 Total query combinations: {len(queries)}")
     
     with ThreadPoolExecutor(max_workers=10) as executor:
         for q in queries:
