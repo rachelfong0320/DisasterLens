@@ -46,6 +46,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+logging.info("🚀 Main script started")
 
 def run_once(combined_query, seen_ids, lock):
     # Twitter API params
@@ -149,6 +150,7 @@ def run_once(combined_query, seen_ids, lock):
         logging.error(f"Error: {e}")
 
 if __name__ == "__main__":
+    logging.info("🎯 Entering main execution block")
     import threading
     
     # Disaster keywords
@@ -158,6 +160,7 @@ if __name__ == "__main__":
     
     queries = [f"{d} {l}" for d in all_keywords for l in malaysia_keywords]
     
+    logging.info(f"🧮 Total query combinations: {len(queries)}")
     seen_ids = set()
     lock = threading.Lock()
     
