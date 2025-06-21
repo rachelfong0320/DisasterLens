@@ -1,10 +1,10 @@
 import re
 import emoji
+import logging
 from langdetect import detect
 from deep_translator import GoogleTranslator
 import spacy
 import nltk
-nltk.download('stopwords')
 from nltk.corpus import stopwords
 import os
 
@@ -38,16 +38,29 @@ Dependencies:
 Usage:
 These functions are intended to be used in a tweet scraping pipeline to preprocess text before analysis, filtering, or database insertion.
 """
+# Setup basic logging
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s')
 
+# Ensure stopwords are available
+try:
+    english_stopwords = set(stopwords.words('english'))
+    logging.info("NLTK English stopwords loaded successfully.")
+except LookupError:
+    logging.info("NLTK stopwords not found. Downloading...")
+    nltk.download('stopwords')
+    english_stopwords = set(stopwords.words('english'))
+    logging.info("NLTK English stopwords downloaded and loaded.")
 
+# Load BM stopwords manually
+bm_stopwords = set(['dan', 'yang', 'untuk', 'dari', 'pada', 'adalah', 'ini', 'itu'])
+logging.info("Bahasa Melayu stopwords loaded manually.")
+    
 try:
     nlp = spacy.load(os.getenv("SPACY_MODEL", "en_core_web_sm"))
 except OSError:
     from spacy.cli import download
     download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
-english_stopwords = set(stopwords.words('english'))
-bm_stopwords = set(['dan', 'yang', 'untuk', 'dari', 'pada', 'adalah', 'ini', 'itu'])
 
 def clean_text(text):
     text = re.sub(r"http\S+", "", text)

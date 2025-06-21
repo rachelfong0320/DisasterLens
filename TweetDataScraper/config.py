@@ -34,9 +34,12 @@ HEADERS = {
     "X-RapidAPI-Host": os.getenv("RAPIDAPI_HOST")
 }
 
-# Logging
-logging.basicConfig(filename='streaming.log', level=logging.INFO,
-                    format='%(asctime)s %(levelname)s:%(message)s')
+# Logging (to console, not file — so it shows in GitHub Actions)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.StreamHandler()]  # Send to stdout
+)
 
 # HTTP Session
 session = requests.Session()
@@ -44,3 +47,6 @@ retries = Retry(total=5, backoff_factor=2, status_forcelist=[429, 500, 502, 503,
 adapter = HTTPAdapter(max_retries=retries)
 session.mount("https://", adapter)
 session.mount("http://", adapter)
+
+
+logging.info("✅ Session and API configuration initialized successfully.")
