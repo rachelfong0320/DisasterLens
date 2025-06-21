@@ -1,5 +1,6 @@
 import re
 import emoji
+import logging
 from langdetect import detect
 from deep_translator import GoogleTranslator
 import spacy
@@ -37,16 +38,22 @@ Dependencies:
 Usage:
 These functions are intended to be used in a tweet scraping pipeline to preprocess text before analysis, filtering, or database insertion.
 """
+# Setup basic logging
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s')
 
 # Ensure stopwords are available
 try:
     english_stopwords = set(stopwords.words('english'))
+    logging.info("NLTK English stopwords loaded successfully.")
 except LookupError:
+    logging.info("NLTK stopwords not found. Downloading...")
     nltk.download('stopwords')
     english_stopwords = set(stopwords.words('english'))
+    logging.info("NLTK English stopwords downloaded and loaded.")
 
 # Load BM stopwords manually
 bm_stopwords = set(['dan', 'yang', 'untuk', 'dari', 'pada', 'adalah', 'ini', 'itu'])
+logging.info("Bahasa Melayu stopwords loaded manually.")
     
 try:
     nlp = spacy.load(os.getenv("SPACY_MODEL", "en_core_web_sm"))
