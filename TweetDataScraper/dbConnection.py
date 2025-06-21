@@ -24,6 +24,7 @@ try:
 except Exception as e:
     logging.error(f"MongoDB connection failed: {e}")
 def insert_tweet(tweet_info):
+    logging.info("insert_tweet() called")
     try:
         collection.insert_one(tweet_info)
         logging.info(f"Tweet {tweet_info['tweet_id']} inserted.")

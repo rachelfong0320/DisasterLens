@@ -40,7 +40,11 @@ Note:
 Make sure your `.env` file is properly configured with valid RAPIDAPI credentials and MongoDB URI before running this script.
 """
 
-logging.info("🚀 Main script started")
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 
 def run_once(combined_query):
     seen_ids=set()
