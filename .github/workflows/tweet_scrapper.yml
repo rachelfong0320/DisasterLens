@@ -2,7 +2,7 @@ name: Run Tweet Scraper Hourly
 
 on:
   schedule:
-    # - cron: "0 * * * *" # Runs every hour (temporarily stop)
+    - cron: "0 * * * *" # Runs every hour (temporarily stop)
   workflow_dispatch: # Allow manual trigger too
 
 jobs:

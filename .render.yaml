@@ -1,9 +1,0 @@
-services:
-  - type: cron
-    name: tweet-scraper-cron
-    env: python
-    schedule: "*/60 * * * *"
-    buildCommand: |
-      pip install -r requirements.txt
-      python -m spacy download en_core_web_sm
-    startCommand: python TweetDataScraper/main.py
