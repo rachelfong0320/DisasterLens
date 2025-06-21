@@ -1,0 +1,29 @@
+name: Run Instagram Scraper Hourly
+
+on:
+  schedule:
+    # - cron: "0 * * * *" # Runs every hour (temporarily stop)
+  workflow_dispatch: # Allow manual trigger too
+
+jobs:
+  run-script:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r ig_requirement.txt
+
+      - name: Run scraper
+        env:
+          RAPIDAPI_IG_KEY: ${{ secrets.RAPIDAPI_IG_KEY }}
+          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+        run: python InstagramDataScraper/main.py
