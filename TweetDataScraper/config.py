@@ -25,7 +25,7 @@ load_dotenv()
 # MongoDB
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = "TweetData"
-COLLECTION_NAME = "CleanedTweets"
+COLLECTION_NAME = "CleanedTweet"
 
 # Twitter API
 RAPID_API_URL = "https://twitter241.p.rapidapi.com/search-v2"
