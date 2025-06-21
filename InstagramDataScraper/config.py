@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Configuration
-API_KEY = os.getenv("RAPIDAPI_KEY")
+API_KEY = os.getenv("RAPIDAPI_IG_KEY")
 API_HOST = "instagram-social-api.p.rapidapi.com"
 BASE_URL = "https://instagram-social-api.p.rapidapi.com/v1/search_posts"
 
