@@ -85,9 +85,9 @@ def run_once(combined_query):
                         tweet = content['itemContent']['tweet_results']['result']
                         tweet_id = tweet.get('rest_id')
                         
-                        # if tweet_id in seen_ids:
-                        #    continue
-                        # seen_ids.add(tweet_id)
+                        if tweet_id in seen_ids:
+                            continue
+                        seen_ids.add(tweet_id)
 
                         user = tweet.get('core', {}).get('user_results', {}).get('result', {})
                         user_legacy = user.get('legacy', {})
@@ -95,6 +95,7 @@ def run_once(combined_query):
 
                         location = user_legacy.get('location', '')
                         if not is_location_in_malaysia(location):
+                            logging.info(f"[{tweet_id}] Skipped: not in Malaysia — location: {location}")
                             continue
 
                         is_verified = user.get('verified', False)
@@ -103,8 +104,10 @@ def run_once(combined_query):
                         followers_count = user_legacy.get('followers_count', 0)
 
                         if is_verified or verification_type != 'null' or professional_type in ['Business', 'Creator']:
+                            logging.info(f"[{tweet_id}] Skipped: user is autority figure")
                             continue
                         if followers_count > 10000:
+                            logging.info(f"[{tweet_id}] Skipped: >10k followers")
                             continue
 
                         raw_text = tweet_legacy.get('full_text', '')
@@ -133,6 +136,7 @@ def run_once(combined_query):
                             'professional_type': professional_type
                         }
 
+                        logging.info(f"[{combined_query}] Calling insert_tweet for tweet {tweet_id}")
                         insert_tweet(tweet_info)
 
                         if item.get('entryId', '').startswith('cursor-bottom'):
