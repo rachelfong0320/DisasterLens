@@ -85,9 +85,9 @@ def run_once(combined_query):
                         tweet = content['itemContent']['tweet_results']['result']
                         tweet_id = tweet.get('rest_id')
                         
-                        if tweet_id in seen_ids:
-                            continue
-                        seen_ids.add(tweet_id)
+                        # if tweet_id in seen_ids:
+                        #    continue
+                        # seen_ids.add(tweet_id)
 
                         user = tweet.get('core', {}).get('user_results', {}).get('result', {})
                         user_legacy = user.get('legacy', {})

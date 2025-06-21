@@ -23,6 +23,7 @@ try:
     logging.info("MongoDB connection successful.")
 except Exception as e:
     logging.error(f"MongoDB connection failed: {e}")
+    
 def insert_tweet(tweet_info):
     logging.info("insert_tweet() called")
     try:
