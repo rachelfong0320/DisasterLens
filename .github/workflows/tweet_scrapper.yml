@@ -20,8 +20,8 @@ jobs:
       - name: Cache NLTK data
         uses: actions/cache@v3
         with:
-        path: ~/.cache/nltk
-        key: ${{ runner.os }}-nltk
+          path: ~/.cache/nltk
+          key: ${{ runner.os }}-nltk
 
       - name: Download NLTK stopwords
         run: python -m nltk.downloader stopwords
@@ -30,7 +30,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           python -m spacy download en_core_web_sm
-          python -m nltk.downloader stopwords
 
       - name: Run scraper
         env:
