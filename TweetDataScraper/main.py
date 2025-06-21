@@ -40,6 +40,12 @@ Note:
 Make sure your `.env` file is properly configured with valid RAPIDAPI credentials and MongoDB URI before running this script.
 """
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+
 
 def run_once(combined_query, seen_ids, lock):
     # Twitter API params
@@ -58,6 +64,7 @@ def run_once(combined_query, seen_ids, lock):
             elif "cursor" in params:
                 del params["cursor"]
 
+            logging.info(f"[{combined_query}] Sending request to Twitter API...")
             response = session.get(RAPID_API_URL, headers=HEADERS, params=params)
             if response.status_code != 200:
                 logging.warning(f"Non-200 response: {response.status_code}. Sleeping 10s.")
