@@ -2,7 +2,7 @@ name: Run Tweet Scraper Hourly
 
 on:
   schedule:
-     - cron: "0 * * * *" # Runs every hour (temporarily stop)
+    - cron: "0 * * * *" # Runs every hour
   workflow_dispatch: # Allow manual trigger too
 
 jobs:
@@ -17,10 +17,17 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: Cache NLTK data
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/nltk
+          key: ${{ runner.os }}-nltk
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           python -m spacy download en_core_web_sm
+          python -m nltk.downloader stopwords
 
       - name: Run scraper
         env:

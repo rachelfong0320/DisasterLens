@@ -25,7 +25,7 @@ load_dotenv()
 # MongoDB
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = "TweetData"
-COLLECTION_NAME = "CleanedTweets"
+COLLECTION_NAME = "CleanedTweet"
 
 # Twitter API
 RAPID_API_URL = "https://twitter241.p.rapidapi.com/search-v2"
@@ -34,9 +34,12 @@ HEADERS = {
     "X-RapidAPI-Host": os.getenv("RAPIDAPI_HOST")
 }
 
-# Logging
-logging.basicConfig(filename='streaming.log', level=logging.INFO,
-                    format='%(asctime)s %(levelname)s:%(message)s')
+# Logging (to console, not file — so it shows in GitHub Actions)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.StreamHandler()]  # Send to stdout
+)
 
 # HTTP Session
 session = requests.Session()

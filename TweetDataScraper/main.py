@@ -40,24 +40,25 @@ Note:
 Make sure your `.env` file is properly configured with valid RAPIDAPI credentials and MongoDB URI before running this script.
 """
 
-
-def run_once(combined_query, seen_ids, lock):
-    # Twitter API params
-    params = {
-        "type": "Latest",
-        "count": "1000",
-        "query": combined_query
-    }
-    logging.info(f"Starting real-time tweet streaming for {combined_query}...")
-    next_cursor = None
-
+def run_once(combined_query):
+    seen_ids=set()
     try:
+        # Twitter API params
+        params = {
+            "type": "Latest",
+            "count": "1000",
+            "query": combined_query
+        }
+        logging.info(f"Starting real-time tweet streaming for {combined_query}...")
+        next_cursor = None
+
         while True:
             if next_cursor:
                 params["cursor"] = next_cursor
             elif "cursor" in params:
                 del params["cursor"]
 
+            logging.info(f"[{combined_query}] Sending request to Twitter API...")
             response = session.get(RAPID_API_URL, headers=HEADERS, params=params)
             if response.status_code != 200:
                 logging.warning(f"Non-200 response: {response.status_code}. Sleeping 10s.")
@@ -78,16 +79,15 @@ def run_once(combined_query, seen_ids, lock):
                         tweet = content['itemContent']['tweet_results']['result']
                         tweet_id = tweet.get('rest_id')
                         
-                        with lock:
-                            if tweet_id in seen_ids:
-                                continue
-                            seen_ids.add(tweet_id)
+                        if tweet_id in seen_ids:
+                            continue
+                        seen_ids.add(tweet_id)
 
                         user = tweet.get('core', {}).get('user_results', {}).get('result', {})
                         user_legacy = user.get('legacy', {})
                         tweet_legacy = tweet.get('legacy', {})
 
-                        location = user_legacy.get('location', '')
+                        location = user.get('location', {}).get('location', '') or user_legacy.get('location', '')
                         if not is_location_in_malaysia(location):
                             continue
 
@@ -142,7 +142,6 @@ def run_once(combined_query, seen_ids, lock):
         logging.error(f"Error: {e}")
 
 if __name__ == "__main__":
-    import threading
     
     # Disaster keywords
     bm_keywords = ["banjir", "tanah runtuh", "ribut", "jerebu", "kebakaran hutan", "mendapan tanah", "gempa bumi", "tsunami"]
@@ -151,9 +150,6 @@ if __name__ == "__main__":
     
     queries = [f"{d} {l}" for d in all_keywords for l in malaysia_keywords]
     
-    seen_ids = set()
-    lock = threading.Lock()
-    
     with ThreadPoolExecutor(max_workers=10) as executor:
         for q in queries:
-            executor.submit(run_once, q, seen_ids, lock)
+            executor.submit(run_once, q)
