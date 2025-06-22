@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Configuration
-API_KEY = os.getenv("RAPIDAPI_IG_KEY")
+API_KEY = os.getenv("RAPIDAPI_IG_KEY").strip()
 API_HOST = "instagram-social-api.p.rapidapi.com"
 BASE_URL = "https://instagram-social-api.p.rapidapi.com/v1/search_posts"
 
@@ -15,8 +15,8 @@ HEADERS = {
 }
 
 # MongoDB Configuration
-MONGO_USERNAME = os.getenv("MONGO_USERNAME")
-MONGO_PASSWORD = os.getenv("MONGO_PASSWORD")
+MONGO_USERNAME = os.getenv("MONGO_USERNAME").strip()
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD").strip()
 MONGO_URI = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@disasterlens.cnayord.mongodb.net/?retryWrites=true&w=majority&appName=DisasterLens"
 DB_NAME = "Instagram"
 COLLECTION_NAME = "cleaned_posts"

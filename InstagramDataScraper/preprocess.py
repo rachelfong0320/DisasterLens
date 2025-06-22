@@ -51,8 +51,15 @@ def parse_disaster_post(posts):
 def process_dataframe(df):
     """Process and clean the DataFrame"""
     # Filter out invalid account types and empty descriptions
-    df = df[df["account_type"] != 2]
-    df = df[df["description"].notna()] 
+    if "account_type" not in df.columns:
+        print("account_type' column missing. Skipping filtering.")
+    else:
+        df = df[df["account_type"] != 2]
+
+    if "description" in df.columns:
+        df = df[df["description"].notna()]
+    else:
+        df["description"] = ""
 
     # Filter for valid location information
     location_fields = ['city', 'address', 'latitude', 'longitude', 'location_name', 'location_short_name']
