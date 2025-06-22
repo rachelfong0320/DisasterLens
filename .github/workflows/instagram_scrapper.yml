@@ -2,7 +2,7 @@ name: Run Instagram Scraper Hourly
 
 on:
   schedule:
-    # - cron: "0 * * * *" # Runs every hour (temporarily stop)
+    - cron: "0 * * * *" # Runs every hour (temporarily stop)
   workflow_dispatch: # Allow manual trigger too
 
 jobs:
@@ -27,4 +27,3 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         run: python InstagramDataScraper/main.py
-
