@@ -45,7 +45,7 @@ async def fetch_data(session, keyword, pagination_token=None):
     return None
 
 
-async def fetch_all_pages(session, keyword, existing_ids, delay=0.1, max_pages=20):
+async def fetch_all_pages(session, keyword, delay=0.1, max_pages=20):
     """Fetch all pages for one keyword"""
     all_posts = []
     pagination_token = None
@@ -60,16 +60,8 @@ async def fetch_all_pages(session, keyword, existing_ids, delay=0.1, max_pages=2
             break
 
         items = data["data"]["items"]
-        print(f"{keyword} - {len(items)} items")
-
-        # Lock condition: all posts in this page are already known
-        if all(post.get("id") in existing_ids for post in items):
-            print(f"{keyword} - All posts already seen. Stopping early.")
-            break
-
         all_posts.extend(items)
-
-
+        print(f"{keyword} - {len(items)} items")
 
         pagination_token = data.get("pagination_token")
         if not pagination_token:
@@ -80,10 +72,10 @@ async def fetch_all_pages(session, keyword, existing_ids, delay=0.1, max_pages=2
 
     return all_posts
 
-async def run_all_fetches(existing_ids):
+async def run_all_fetches():
     """Run fetch tasks for all keywords"""
     async with aiohttp.ClientSession() as session:
-        tasks = [fetch_all_pages(session, kw, existing_ids, max_pages=20) for kw in keywords]
+        tasks = [fetch_all_pages(session, kw, max_pages=20) for kw in keywords]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         all_posts = []
@@ -99,29 +91,28 @@ async def run_all_fetches(existing_ids):
 async def main():
     """Main execution function"""
     try:
-        # 1. Connect to DB and get existing post IDs
-        print("Connecting to MongoDB...")
-        db = DatabaseConnection()
-        existing_ids = set(db.collection.distinct("ig_post_id"))
-
-        # 2. Fetch data
+        # 1. Fetch data
         print("Fetching posts...")
-        all_posts = await run_all_fetches(existing_ids)
+        all_posts = await run_all_fetches()
         
-        # 3. Parse posts
+        # 2. Parse posts
         print("\nParsing posts...")
         parsed_posts = parse_disaster_post(all_posts)
         
-        # 4. Create DataFrame
+        # 3. Create DataFrame
         print("Creating DataFrame...")
         post_df = pd.DataFrame(parsed_posts)
         
-        # 5. Process and clean data
+        # 4. Process and clean data
         print("Processing and cleaning data...")
         processed_df = process_dataframe(post_df)
         
-        # 6. Save to MongoDB
+        # 5. Save to MongoDB
         print("Saving to MongoDB...")
+        db = DatabaseConnection()
+        
+        existing_ids = set(db.collection.distinct("ig_post_id"))
+
         # Format and filter out duplicates
         documents = [db.format_post_for_db(row) for _, row in processed_df.iterrows()]
         new_documents = [doc for doc in documents if doc["ig_post_id"] not in existing_ids]
