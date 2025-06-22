@@ -1,4 +1,5 @@
 import os
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -44,13 +45,17 @@ malaysia_locations = [
     "johor", "kedah", "kelantan", "melaka", "negeri sembilan", "pahang", "pulau pinang",
     "penang", "perak", "perlis", "sabah", "sarawak", "selangor", "terengganu",
     # Major Cities
-    "johor bahru", "malacca city", "alor setar", "ipoh", "kuantan","cyberjaya","langkawi","george town"
+    "johor bahru", "malacca city", "alor setar", "ipoh", "kuantan","cyberjaya","langkawi","george town",
     "kuala terengganu", "putrajaya", "iskandar puteri", "sungai petani",
     "sandakan", "miri", "tawau", "butterworth", "shah alam", "petaling jaya",
     "klang", "subang jaya", "taiping", "bintulu", "sibu"
 ]
 
 # Generate search keywords combinations
-keywords = [f"{d} {s}" for d in disasters for s in malaysia_keywords]
+# keywords = [f"{d} {s}" for d in disasters for s in malaysia_keywords]
+malaysia_keywords_clean = [re.sub(r'[\r\n]', '', s).strip() for s in malaysia_keywords]
+disasters_clean = [re.sub(r'[\r\n]', '', d).strip() for d in disasters]
+
+keywords = [f"{d} {s}" for d in disasters_clean for s in malaysia_keywords_clean]
 
 
