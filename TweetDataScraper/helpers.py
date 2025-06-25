@@ -1,5 +1,5 @@
 """
-This script defines a utility function to determine whether a given user location is in Malaysia.
+This script defines a utility function to determine whether a given post location is in Malaysia.
 
 Features:
 - Contains a predefined list of Malaysian locations and states (in lowercase) as keywords.

@@ -11,7 +11,7 @@ Real-Time Twitter Scraper for Disaster-Related Tweets in Malaysia
 
 Overview:
 This script streams disaster-related tweets from Malaysia in real-time using the Twitter API via RapidAPI,
-performs basic filtering and natural language processing (NLP), and stores the cleaned data in MongoDB.
+performs basic filtering and stores the cleaned data in MongoDB.
 
 Key Features:
 - Constructs search queries by combining disaster-related keywords (in English and Bahasa Melayu) with Malaysian locations.
