@@ -4,13 +4,19 @@ import type React from "react"
 
 import { useState } from "react"
 
-export default function NewsletterSection() {
+interface NewsletterSectionProps {
+  preferredLocations: string[] // New prop to receive preferred locations
+}
+
+export default function NewsletterSection({ preferredLocations }: NewsletterSectionProps) {
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault()
     if (email) {
+      // In a real application, you would send preferredLocations along with the email
+      console.log("Subscribing email:", email, "for locations:", preferredLocations.join(", "))
       setSubscribed(true)
       setTimeout(() => {
         setEmail("")
@@ -43,6 +49,14 @@ export default function NewsletterSection() {
             {subscribed ? "Subscribed!" : "Subscribe"}
           </button>
         </form>
+
+        {/* Display the selected locations */}
+        {preferredLocations.length > 0 && (
+          <p className="mt-4 text-sm text-primary-foreground/70">
+            You will receive updates for: {preferredLocations.join(", ")}
+          </p>
+        )}
+
       </div>
     </section>
   )

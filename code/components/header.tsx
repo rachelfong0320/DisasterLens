@@ -15,8 +15,7 @@ export default function Header({ onFilterClick }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
-            <span className="text-2xl">📍</span>
+          <Link href="/" className="flex items-center gap-2 font-bold text-3xl text-primary">
             <span>DisasterLens</span>
           </Link>
 
@@ -38,22 +37,10 @@ export default function Header({ onFilterClick }: HeaderProps) {
 
           {/* Right side actions */}
           <div className="hidden md:flex items-center gap-4">
-            <select className="text-sm px-3 py-2 border border-border rounded-md bg-background">
+            <select className="tpx-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:opacity-90 transition">
               <option>ENG</option>
               <option>BM</option>
             </select>
-            <button
-              onClick={onFilterClick}
-              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:opacity-90 transition"
-            >
-              Filter
-            </button>
-            <Link
-              href="#"
-              className="px-4 py-2 text-sm font-medium text-primary border border-primary rounded-md hover:bg-primary hover:text-primary-foreground transition"
-            >
-              Login
-            </Link>
           </div>
 
           {/* Mobile menu button */}

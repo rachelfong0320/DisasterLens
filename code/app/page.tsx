@@ -12,6 +12,12 @@ import Footer from "@/components/footer"
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  const [selectedLocations, setSelectedLocations] = useState<string[]>(['Kuala Lumpur', 'Johor', 'Sarawak'])
+
+  // Helper function to update the list of selected locations
+  const handleLocationsChange = (locations: string[]) => {
+    setSelectedLocations(locations)
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -22,8 +28,10 @@ export default function Home() {
         <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
       </section>
 
-      <PreferredLocations />
-      <NewsletterSection />
+      {/* 2. Pass the update function and initial state to PreferredLocations */}
+      <PreferredLocations onLocationsChange={handleLocationsChange} initialAlerts={selectedLocations} />
+      {/* 3. Pass the state down to NewsletterSection */}
+      <NewsletterSection preferredLocations={selectedLocations} />
       <Footer />
 
       <FilterModal isOpen={filterOpen} onClose={() => setFilterOpen(false)} />

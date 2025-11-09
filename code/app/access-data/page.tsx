@@ -8,7 +8,14 @@ import Footer from "@/components/footer"
 import Link from "next/link"
 
 export default function AccessDataPage() {
-  const [formData, setFormData] = useState({
+  type AccessForm = {
+    startDate: string
+    endDate: string
+    locations: string[]
+    exportFormat: string
+  }
+
+  const [formData, setFormData] = useState<AccessForm>({
     startDate: "2024-01-01",
     endDate: "2024-12-31",
     locations: [],
