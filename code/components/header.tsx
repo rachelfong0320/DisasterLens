@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
+import LocaleSwitcher from "./locale-switcher"
 
 interface HeaderProps {
   onFilterClick: () => void
@@ -39,10 +40,7 @@ export default function Header({ onFilterClick }: HeaderProps) {
 
           {/* Right side actions */}
           <div className="hidden md:flex items-center gap-4">
-            <select className="tpx-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:opacity-90 transition">
-              <option>ENG</option>
-              <option>BM</option>
-            </select>
+            <LocaleSwitcher />
           </div>
 
           {/* Mobile menu button */}

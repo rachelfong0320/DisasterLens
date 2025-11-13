@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
-import { getMessages } from "next-intl/server" 
+import { getMessages, setRequestLocale } from "next-intl/server" 
 import { hasLocale, NextIntlClientProvider } from "next-intl" 
 import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation"
@@ -33,8 +33,10 @@ export const metadata: Metadata = {
   },
 }
 
-// FIX 1: Must be async because it calls an awaitable function.
-// FIX 2 & 3: params must be optional (params?) to handle the static root path (/).
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }))
+}
+
 export default async function RootLayout({
   children,
   params,
@@ -50,6 +52,8 @@ export default async function RootLayout({
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
+
+  setRequestLocale(locale);
 
   // FIX 2 (Line 50): Handle the external config error gracefully
   let translation;
