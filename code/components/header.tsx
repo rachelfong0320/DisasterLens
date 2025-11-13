@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
 
 interface HeaderProps {
   onFilterClick: () => void
 }
 
 export default function Header({ onFilterClick }: HeaderProps) {
+  const t = useTranslations("header");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -22,16 +24,16 @@ export default function Header({ onFilterClick }: HeaderProps) {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/" className="text-sm font-medium text-foreground hover:text-primary transition">
-              Home
+              {t('home')}
             </Link>
             <Link href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition">
-              Statistics
+              {t('statistics')}
             </Link>
             <Link href="/access-data" className="text-sm font-medium text-foreground hover:text-primary transition">
-              Access Data
+              {t('access_data')}
             </Link>
             <Link href="/subscription" className="text-sm font-medium text-foreground hover:text-primary transition">
-              Subscription
+              {t('subscription')}
             </Link>
           </nav>
 
@@ -53,35 +55,26 @@ export default function Header({ onFilterClick }: HeaderProps) {
         {mobileMenuOpen && (
           <nav className="md:hidden pb-4 space-y-2">
             <Link href="/" className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded">
-              Home
+              {t('home')}
             </Link>
             <Link
               href="/dashboard"
               className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded"
             >
-              Statistics
+              {t('statistics')}
             </Link>
             <Link
               href="/access-data"
               className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded"
             >
-              Access Data
+              {t('access_data')}
             </Link>
             <Link
               href="/subscription"
               className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded"
             >
-              Subscription
+              {t('subscription')}
             </Link>
-            <button
-              onClick={() => {
-                onFilterClick()
-                setMobileMenuOpen(false)
-              }}
-              className="w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded hover:opacity-90 transition"
-            >
-              Filter
-            </button>
           </nav>
         )}
       </div>

@@ -6,8 +6,10 @@ import { useState } from "react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 export default function AccessDataPage() {
+  const t = useTranslations("access_data");
   type AccessForm = {
     startDate: string
     endDate: string
@@ -50,10 +52,9 @@ export default function AccessDataPage() {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-12 md:py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">Download Raw Disaster Data</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">{t('title')}</h1>
             <p className="text-lg text-primary-foreground/90 max-w-2xl">
-              Access comprehensive disaster event data for your research, analysis, and reporting needs. Select your
-              preferred time period, locations, and export format to get started.
+              {t('desc')}
             </p>
           </div>
         </section>
@@ -64,10 +65,10 @@ export default function AccessDataPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Date Range Section */}
               <div className="bg-card border border-border rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">Select Time Frame</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">{t('form')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Start Date</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">{t('startDate')}</label>
                     <input
                       type="date"
                       value={formData.startDate}
@@ -76,7 +77,7 @@ export default function AccessDataPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">{t('endDate')}</label>
                     <input
                       type="date"
                       value={formData.endDate}
@@ -89,9 +90,9 @@ export default function AccessDataPage() {
 
               {/* Location Section */}
               <div className="bg-card border border-border rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">Select Locations</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">{t('seclocation')}</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Choose one or more locations to include in your download
+                  {t('locDesc')}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {locations.map((location) => (
@@ -110,23 +111,23 @@ export default function AccessDataPage() {
 
               {/* Export Format Section */}
               <div className="bg-card border border-border rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">Export Format</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">{t('expFormat')}</h2>
                 <div className="space-y-3">
                   {[
                     {
                       id: "csv",
-                      label: "CSV Format",
-                      description: "Comma-separated values, compatible with Excel and most analysis tools",
+                      label: t('csvFormat'),
+                      description: t('csvDesc'),
                     },
                     {
                       id: "json",
-                      label: "JSON Format",
-                      description: "Structured JSON data for programmatic access and API integration",
+                      label: t('jsonFormat'),
+                      description: t('jsonDesc'),
                     },
                     {
                       id: "raw",
-                      label: "Raw Data (.zip)",
-                      description: "Complete raw data dump with all fields and metadata",
+                      label: t('zipFormat'),
+                      description: t('zipDesc'),
                     },
                   ].map((format) => (
                     <label
@@ -156,32 +157,32 @@ export default function AccessDataPage() {
                   type="submit"
                   className="flex-1 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-md hover:opacity-90 transition"
                 >
-                  Download Data
+                  {t('btnDownload')}
                 </button>
                 <Link
                   href="/"
                   className="px-6 py-3 border border-border text-foreground font-semibold rounded-md hover:bg-secondary transition text-center"
                 >
-                  Cancel
+                  {t('btnCancel')}
                 </Link>
               </div>
 
               {/* Success Message */}
               {submitted && (
                 <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md">
-                  ✓ Download started! Check your downloads folder for the data file.
+                  {t('successDownload')}
                 </div>
               )}
             </form>
 
             {/* Info Box */}
             <div className="mt-12 bg-secondary/50 border border-border rounded-lg p-6">
-              <h3 className="font-semibold text-foreground mb-2">Data Format Information</h3>
+              <h3 className="font-semibold text-foreground mb-2">{t('infoFormat')}</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• CSV files include: event_id, event_type, location, severity, date, description</li>
-                <li>• JSON files contain structured data with nested metadata and coordinates</li>
-                <li>• Raw data includes complete event records with all available fields</li>
-                <li>• Data is updated daily and reflects events from the past 5 years</li>
+                <li>{t('info1')}</li>
+                <li>{t('info2')}</li>
+                <li>{t('info3')}</li>
+                <li>{t('info4')}</li>
               </ul>
             </div>
           </div>

@@ -1,0 +1,32 @@
+{
+  "access_data": {
+    "btnCancel": "Cancel",
+    "btnDownload": "Download Data",
+    "csvDesc": "Comma-separated values, compatible with Excel and most analysis tools",
+    "csvFormat": "CSV Format",
+    "desc": "Access comprehensive disaster event data for your research, analysis, and reporting needs. Select your preferred time period, locations, and export format to get started.",
+    "endDate": "End Date",
+    "expFormat": "Export Format",
+    "form": "Select Time Frame",
+    "info1": "• CSV files include: event_id, event_type, location, severity, date, description",
+    "info2": "• JSON files contain structured data with nested metadata and coordinates",
+    "info3": "• Raw data includes complete event records with all available fields",
+    "info4": "• Data is updated daily and reflects events from the past 5 years",
+    "infoFormat": "Data Format Information",
+    "jsonDesc": "Structured JSON data for programmatic access and API integration",
+    "jsonFormat": "JSON Format",
+    "locDesc": "Choose one or more locations to include in your download",
+    "seclocation": "Select Locations",
+    "startDate": "Start Date",
+    "successDownload": "✓ Download started! Check your downloads folder for the data file.",
+    "title": "Download Raw Disaster Data",
+    "zipDesc": "Complete raw data dump with all fields and metadata",
+    "zipFormat": "Raw Data (.zip)"
+  },
+  "header": {
+    "access_data": "Access Data",
+    "home": "Home",
+    "statistics": "Statistics",
+    "subscription": "Subscription"
+  }
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react" // <-- ADD useCallback
+import { useState, useCallback } from "react" 
 import Header from "@/components/header"
 import MapSection from "@/components/map-section"
 import FilterModal from "@/components/filter-modal"
@@ -14,8 +14,6 @@ export default function Home() {
   const [chatOpen, setChatOpen] = useState(false)
   const [selectedLocations, setSelectedLocations] = useState<string[]>(['Kuala Lumpur', 'Johor', 'Sarawak'])
 
-  // FIX: Wrap the handler with useCallback. This ensures the function reference is stable, 
-  // preventing the infinite render loop when passed to PreferredLocations.
   const handleLocationsChange = useCallback((locations: string[]) => {
     setSelectedLocations(locations)
   }, [setSelectedLocations])
