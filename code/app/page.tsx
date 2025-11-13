@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react" // <-- ADD useCallback
 import Header from "@/components/header"
 import MapSection from "@/components/map-section"
 import FilterModal from "@/components/filter-modal"
@@ -14,10 +14,11 @@ export default function Home() {
   const [chatOpen, setChatOpen] = useState(false)
   const [selectedLocations, setSelectedLocations] = useState<string[]>(['Kuala Lumpur', 'Johor', 'Sarawak'])
 
-  // Helper function to update the list of selected locations
-  const handleLocationsChange = (locations: string[]) => {
+  // FIX: Wrap the handler with useCallback. This ensures the function reference is stable, 
+  // preventing the infinite render loop when passed to PreferredLocations.
+  const handleLocationsChange = useCallback((locations: string[]) => {
     setSelectedLocations(locations)
-  }
+  }, [setSelectedLocations])
 
   return (
     <main className="min-h-screen bg-background">
@@ -28,9 +29,9 @@ export default function Home() {
         <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
       </section>
 
-      {/* 2. Pass the update function and initial state to PreferredLocations */}
+      {/* Pass the stable function and initial state to PreferredLocations */}
       <PreferredLocations onLocationsChange={handleLocationsChange} initialAlerts={selectedLocations} />
-      {/* 3. Pass the state down to NewsletterSection */}
+      {/* Pass the state down to NewsletterSection */}
       <NewsletterSection preferredLocations={selectedLocations} />
       <Footer />
 
