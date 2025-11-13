@@ -24,7 +24,7 @@ export default function AccessDataPage() {
 
   const [submitted, setSubmitted] = useState(false)
 
-  const locations = ["Selangor", "Kuala Lumpur", "Johor", "Sabah", "Sarawak", "Penang", "Kedah", "Terengganu", "Pahang"]
+  const locations = ["Selangor", "Kuala Lumpur", "Johor", "Sabah", "Sarawak", "Penang", "Kedah", "Terengganu", "Pahang", "Melacca", "Kelantan", "Perak", "Negeri Sembilan", "Perlis"]
 
   const handleLocationToggle = (location: string) => {
     setFormData((prev) => ({
