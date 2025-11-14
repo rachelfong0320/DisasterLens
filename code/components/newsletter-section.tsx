@@ -1,14 +1,16 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface NewsletterSectionProps {
-  preferredLocations: string[] // New prop to receive preferred locations
+  preferredLocations: string[] 
 }
 
 export default function NewsletterSection({ preferredLocations }: NewsletterSectionProps) {
+  const t = useTranslations("newsletterSection");
+
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
 
@@ -28,9 +30,9 @@ export default function NewsletterSection({ preferredLocations }: NewsletterSect
   return (
     <section className="w-full px-4 sm:px-6 lg:px-8 py-12 bg-primary">
       <div className="max-w-2xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-primary-foreground mb-2">Subscribe to Our Newsletter</h2>
+        <h2 className="text-3xl font-bold text-primary-foreground mb-2">{t("title")}</h2>
         <p className="text-primary-foreground opacity-90 mb-8">
-          Get the latest disaster alerts and data insights delivered to your inbox
+          {t("desc")}
         </p>
 
         <form onSubmit={handleSubscribe} className="flex gap-2 flex-col sm:flex-row">
@@ -38,7 +40,7 @@ export default function NewsletterSection({ preferredLocations }: NewsletterSect
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            placeholder={t("email")}
             required
             className="flex-1 px-4 py-3 border border-primary-foreground bg-primary-foreground text-foreground rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-primary-foreground"
           />
@@ -46,14 +48,14 @@ export default function NewsletterSection({ preferredLocations }: NewsletterSect
             type="submit"
             className="px-6 py-3 bg-accent text-accent-foreground rounded-lg font-medium hover:opacity-90 transition whitespace-nowrap"
           >
-            {subscribed ? "Subscribed!" : "Subscribe"}
+            {subscribed ? t("Subscribed") : t("Subscribe")}
           </button>
         </form>
 
         {/* Display the selected locations */}
         {preferredLocations.length > 0 && (
           <p className="mt-4 text-sm text-primary-foreground/70">
-            You will receive updates for: {preferredLocations.join(", ")}
+            {t("receiveUpdate")} {preferredLocations.join(", ")}
           </p>
         )}
 

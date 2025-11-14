@@ -5,8 +5,10 @@ import Footer from "@/components/footer"
 import MetricsCard from "@/components/metrics-card"
 import ExportModal from "@/components/export-modal"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 export default function Dashboard() {
+  const t = useTranslations("dashboard");
   const [exportOpen, setExportOpen] = useState(false)
 
   return (
@@ -18,23 +20,23 @@ export default function Dashboard() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Statistics & Analytics</h1>
-              <p className="text-muted-foreground mt-1">Disaster event data and trends</p>
+              <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
+              <p className="text-muted-foreground mt-1">{t("desc")}</p>
             </div>
             <button
               onClick={() => setExportOpen(true)}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition font-medium"
             >
-              Export Data
+              {t("btnExportData")}
             </button>
           </div>
 
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <MetricsCard label="Total Events" value="250" change="20%" trend="up" icon="📊" />
-            <MetricsCard label="Active Alerts" value="12" change="5%" trend="down" icon="🚨" />
-            <MetricsCard label="Affected Areas" value="47" change="12%" trend="up" icon="📍" />
-            <MetricsCard label="Response Time" value="2.4h" change="8%" trend="down" icon="⏱️" />
+            <MetricsCard label={t("totalEvent")} value="250" change="20%" trend="up" icon="📊" />
+            <MetricsCard label={t("activeAlerts")} value="12" change="5%" trend="down" icon="🚨" />
+            <MetricsCard label={t("affectedArea")} value="47" change="12%" trend="up" icon="📍" />
+            <MetricsCard label={t("responseTime")} value="2.4h" change="8%" trend="down" icon="⏱️" />
           </div>
 
           {/* Charts */}

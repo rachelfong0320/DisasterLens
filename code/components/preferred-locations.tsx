@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react" // <-- ADD useMemo
+import { useState, useEffect, useMemo } from "react" 
+import { useTranslations } from "next-intl"
 
 interface PreferredLocationsProps {
   onLocationsChange: (locations: string[]) => void;
@@ -8,6 +9,7 @@ interface PreferredLocationsProps {
 }
 
 export default function PreferredLocations({ onLocationsChange, initialAlerts }: PreferredLocationsProps) {
+  const t = useTranslations("preferredLocations");
   
   // Memoize the static list of locations
   const locations = useMemo(() => ([
@@ -58,8 +60,8 @@ export default function PreferredLocations({ onLocationsChange, initialAlerts }:
   return (
     <section className="w-full px-4 sm:px-6 lg:px-8 py-12 bg-secondary">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Set Preferred Locations</h2>
-        <p className="text-muted-foreground mb-8">Choose areas to receive alerts and updates</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">{t("title")}</h2>
+        <p className="text-muted-foreground mb-8">{t("decs")}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {locations.map((location) => (

@@ -23,10 +23,31 @@
     "zipDesc": "Pemindahan data mentah lengkap dengan semua medan dan metadata",
     "zipFormat": "Data Mentah (.zip)"
   },
+  "dashboard": {
+    "activeAlerts": "Amaran Aktif",
+    "affectedArea": "Kawasan Terjejas",
+    "btnExportData": "Eksport Data",
+    "desc": "Data dan tren acara bencana",
+    "responseTime": "Masa Respons",
+    "title": "Statistik & Analitik",
+    "totalEvent": "Jumlah Acara"
+  },
   "header": {
     "access_data": "Akses Data",
     "home": "Halaman Utama",
     "statistics": "Statistik",
     "subscription": "Langganan"
+  },
+  "newsletterSection": {
+    "desc": "Dapatkan amaran bencana terkini dan pandangan data dihantar ke peti masuk anda",
+    "email": "Masukkan emel anda",
+    "receiveUpdate": "Anda akan menerima kemas kini untuk:",
+    "Subscribe": "Langgan",
+    "Subscribed": "Ditempah!",
+    "title": "Langgan Surat Berita Kami"
+  },
+  "preferredLocations": {
+    "decs": "Pilih kawasan untuk menerima amaran dan kemas kini",
+    "title": "Tetapkan Lokasi Pilihan"
   }
 }

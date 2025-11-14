@@ -23,10 +23,31 @@
     "zipDesc": "Complete raw data dump with all fields and metadata",
     "zipFormat": "Raw Data (.zip)"
   },
+  "dashboard": {
+    "activeAlerts": "Active Alerts",
+    "affectedArea": "Affected Areas",
+    "btnExportData": "Export Data",
+    "desc": "Disaster event data and trends",
+    "responseTime": "Response Time",
+    "title": "Statistics & Analytics",
+    "totalEvent": "Total Events"
+  },
   "header": {
     "access_data": "Access Data",
     "home": "Home",
     "statistics": "Statistics",
     "subscription": "Subscription"
+  },
+  "newsletterSection": {
+    "desc": "Get the latest disaster alerts and data insights delivered to your inbox",
+    "email": "Enter your email",
+    "receiveUpdate": "You will receive updates for:",
+    "Subscribe": "Subscribe",
+    "Subscribed": "Subscribed!",
+    "title": "Subscribe to Our Newsletter"
+  },
+  "preferredLocations": {
+    "decs": "Choose areas to receive alerts and updates",
+    "title": "Set Preferred Locations"
   }
 }
