@@ -1,76 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-
-interface DisasterMarker {
-  id: string;
-  type: "flood" | "landslide" | "fire" | "storm" | "haze";
-  location: string;
-  severity: "low" | "medium" | "high";
-  latitude: number;
-  longitude: number;
-  description?: string;
-}
-
-const DISASTER_MARKERS: DisasterMarker[] = [
-  {
-    id: "1",
-    type: "flood",
-    location: "Terengganu",
-    severity: "high",
-    latitude: 5.31,
-    longitude: 103.32,
-    description: "Severe flooding reported",
-  },
-  {
-    id: "2",
-    type: "flood",
-    location: "Johor",
-    severity: "medium",
-    latitude: 1.48,
-    longitude: 103.74,
-    description: "Moderate water levels",
-  },
-  {
-    id: "3",
-    type: "landslide",
-    location: "Sabah",
-    severity: "high",
-    latitude: 5.98,
-    longitude: 117.53,
-    description: "Major landslide risk",
-  },
-  {
-    id: "4",
-    type: "haze",
-    location: "Sarawak",
-    severity: "medium",
-    latitude: 1.55,
-    longitude: 110.34,
-    description: "Air quality deteriorating",
-  },
-  {
-    id: "5",
-    type: "fire",
-    location: "Penang",
-    severity: "low",
-    latitude: 5.41,
-    longitude: 100.33,
-    description: "Minor fire incidents",
-  },
-];
+import { mockDisasterMarkers } from "@/data/mockDisasters";
+import { applyFilters } from "@/lib/filterUtils";
+import type { FilterOptions } from "@/components/disaster-filter-widget";
 
 // Create custom icons for different disaster types
-const getCustomIcon = (type: string, severity: string) => {
+const getCustomIcon = (type: string, severity?: string) => {
   const severityColors: Record<string, string> = {
     high: "#dc2626",
     medium: "#f97316",
     low: "#3b82f6",
   };
 
-  const color = severityColors[severity] || "#3b82f6";
+  const color = severityColors[severity || "low"] || "#3b82f6";
 
   return L.divIcon({
     html: `
@@ -97,7 +43,20 @@ const getCustomIcon = (type: string, severity: string) => {
   });
 };
 
-export default function LeafletMapContent() {
+interface LeafletMapContentProps {
+  filters?: FilterOptions;
+}
+
+export default function LeafletMapContent({
+  filters = {
+    disasterType: "",
+    state: "",
+    startDate: "",
+    endDate: "",
+  },
+}: LeafletMapContentProps) {
+  const filteredMarkers = applyFilters(filters);
+
   return (
     <MapContainer
       center={[4.21, 101.69]}
@@ -111,30 +70,38 @@ export default function LeafletMapContent() {
       />
 
       {/* Disaster markers */}
-      {DISASTER_MARKERS.map((marker) => (
+      {filteredMarkers.map((marker) => (
         <Marker
-          key={marker.id}
+          key={marker.event_id}
           position={[marker.latitude, marker.longitude]}
-          icon={getCustomIcon(marker.type, marker.severity)}
+          icon={getCustomIcon(marker.disaster_type)}
         >
           <Popup>
-            <div className="p-2">
-              <h3 className="font-semibold text-sm">{marker.location}</h3>
+            <div className="p-2 max-w-xs">
+              <h3 className="font-semibold text-sm">
+                {marker.location_name || marker.location_id}
+              </h3>
               <p className="text-xs text-gray-600 capitalize">
-                Type: {marker.type}
+                Type: {marker.disaster_type.replace("_", " ")}
               </p>
-              <p className="text-xs text-gray-600 capitalize">
-                Severity: {marker.severity}
+              <p className="text-xs text-gray-500 mt-1">
+                {new Date(marker.start_time).toLocaleDateString()}
               </p>
-              {marker.description && (
-                <p className="text-xs text-gray-600 mt-1">
-                  {marker.description}
-                </p>
-              )}
             </div>
           </Popup>
         </Marker>
       ))}
+
+      {/* No results message */}
+      {filteredMarkers.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-white/90 px-4 py-2 rounded-lg shadow">
+            <p className="text-sm text-gray-600">
+              No disasters found matching filters
+            </p>
+          </div>
+        </div>
+      )}
     </MapContainer>
   );
 }
