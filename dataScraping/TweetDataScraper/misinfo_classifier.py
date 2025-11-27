@@ -1,159 +1,190 @@
 import os
 import time
 import uuid
-from pymongo import MongoClient, errors
-from google import genai
-from pydantic import BaseModel, Field
-from typing import Literal, Union  # <-- ADDED Union HERE
+import asyncio
+from typing import Literal, List, Union, Optional # Added Union and Optional for Python 3.9 compatibility
 from dotenv import load_dotenv
+from pymongo import MongoClient, errors
+from pydantic import BaseModel, Field
+from openai import AsyncOpenAI  # <-- CHANGED: Import Async Client
+from tqdm.asyncio import tqdm_asyncio # <-- CHANGED: Async progress bar
 
-# Load environment variables from .env file
+# --- 1. Setup & Configuration ---
+
 load_dotenv()
 
-# --- 1. Define Output Structure ---
-# Changed to include a confidence score (simulated) for better data structure
-class ClassificationOutput(BaseModel):
-    """Schema for the misinformation classification output."""
-    check_label: Literal["MISINFORMATION", "AUTHENTIC", "UNCERTAIN"] = Field(
-        description="The classification label for the tweet content."
-    )
-    justification: str = Field(
-        description="A brief, one-sentence reason for the classification."
-    )
-    # Simulate a confidence field since the base API doesn't provide it directly.
-    # We ask the model to provide a score, which is stored as a string here.
-    confidence_score: Literal["HIGH", "MEDIUM", "LOW"] = Field(
-        description="Confidence level in the classification: HIGH, MEDIUM, or LOW."
-    )
-
-# --- 2. Configuration & MongoDB Connection ---
-
-# Database names from your existing setup (CleanedTweet is the source, the new one is the target)
 MONGO_URI = os.getenv("MONGO_URI")
-if not MONGO_URI:
-    raise ValueError("MONGO_URI environment variable not set. Please check your .env file.")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+if not MONGO_URI or not OPENAI_API_KEY:
+    raise ValueError("Missing environment variables. Check MONGO_URI and OPENAI_API_KEY.")
+
+# MongoDB Setup
 DB_NAME = "TweetData"
-SOURCE_COLLECTION_NAME = "CleanedTweet"
-TARGET_COLLECTION_NAME = "misinfo_classific"
+SOURCE_COLLECTION = "CleanedTweet"
+TARGET_COLLECTION = "misinfo_classific_data"
 
 mongo_client = MongoClient(MONGO_URI)
-source_collection = mongo_client[DB_NAME][SOURCE_COLLECTION_NAME]
-target_collection = mongo_client[DB_NAME][TARGET_COLLECTION_NAME]
+db = mongo_client[DB_NAME]
+source_collection = db[SOURCE_COLLECTION]
+target_collection = db[TARGET_COLLECTION]
 
-# Initialize Gemini Client (automatically uses GEMINI_API_KEY from environment)
+# Ensure indexes exist for speed
+# We use try-except to strictly avoid 'IndexKeySpecsConflict' if the index exists with different options
 try:
-    # We pass the API key explicitly here as a fallback in case the environment variable isn't loaded correctly 
-    # for the entire session, although os.getenv should handle it.
-    gemini_client = genai.Client()
-except Exception as e:
-    raise RuntimeError(f"Gemini Client initialization failed. Check GEMINI_API_KEY. Error: {e}")
+    source_collection.create_index("tweet_id", unique=True)
+except errors.OperationFailure:
+    # Index likely exists with different options (e.g., non-unique), which is fine for reading
+    pass
 
-# --- 3. Gemini API Function ---
-# CHANGED: Replaced 'dict | None' with 'Union[dict, None]'
-def classify_tweet_with_gemini(tweet_text: str) -> Union[dict, None]:
-    # System Instruction: Define the model's role and rules
-    system_instruction = (
-        "You are an expert social media misinformation classifier. "
-        "Analyze the provided text, which is a translation of a public disaster-related tweet from Malaysia. "
-        "Your task is to classify it into one of three categories: 'MISINFORMATION', 'AUTHENTIC', or 'UNCERTAIN'. "
-        "Also, provide your confidence in this classification (HIGH, MEDIUM, or LOW)."
-        "Your final output MUST strictly conform to the requested JSON schema."
+try:
+    target_collection.create_index("tweet_id", unique=True)
+except errors.OperationFailure:
+    pass
+
+# Initialize Async Client
+aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
+# --- 2. Advanced Output Schema ---
+
+class ClassificationOutput(BaseModel):
+    """Schema for the misinformation classification output."""
+    
+    reasoning: str = Field(
+        description="Step-by-step analysis of the tweet's content, tone, and specificity."
     )
-    
-    # Prompt: The user's input text
-    contents = [
-        {"role": "user", "parts": [{"text": f"Classify this tweet: {tweet_text}"}]}
-    ]
+    check_label: Literal["MISINFORMATION", "AUTHENTIC", "UNCERTAIN"] = Field(
+        description="The final classification label."
+    )
+    justification: str = Field(
+        description="A brief, one-sentence summary justification."
+    )
+    confidence_score: float = Field(
+        description="A float score between 0.0 and 1.0 representing confidence."
+    )
 
-    # Implement basic exponential backoff for resilience
-    for attempt in range(3):
-        try:
-            response = gemini_client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=contents,
-                config={
-                    "system_instruction": system_instruction,
-                    "response_mime_type": "application/json",
-                    "response_schema": ClassificationOutput,
-                    "temperature": 0.1 # Keep temperature low for factual classification
-                }
-            )
-            # Validate and return the structured data
-            return ClassificationOutput.model_validate_json(response.text).model_dump()
-            
-        except Exception as e:
-            print(f"Gemini API Error (Attempt {attempt + 1}): {e}")
-            if attempt < 2:
-                time.sleep(2 ** attempt) # Exponential backoff: 1s, 2s, 4s...
-            else:
-                return None
-    return None
+# --- 3. Enhanced Prompt (System Instruction) ---
 
-# --- 4. Main Processing Loop ---
-def process_tweets_for_classification():
-    # Only fetch tweets that have not yet been classified by checking the target collection
-    
-    # Get all tweet_ids that are already classified
-    classified_ids = target_collection.distinct("tweet_id")
-    
-    # Query for documents from the source collection where 'tweet_id' is NOT in the classified list
-    query = {"tweet_id": {"$nin": classified_ids}}
-    
-    # Use a batch size for efficient processing
-    batch_size = 50
-    
-    print(f"Starting classification. Source: {SOURCE_COLLECTION_NAME}, Target: {TARGET_COLLECTION_NAME}")
+SYSTEM_PROMPT = """
+You are an elite misinformation analyst specializing in Malaysian disaster events (floods, landslides, etc.).
+Your goal is to classify public tweets with high precision.
 
-    while True:
-        # Fetch the next batch of unclassified tweets
-        unclassified_tweets = list(source_collection.find(query).limit(batch_size))
+**Definitions:**
+1. **AUTHENTIC**: Contains specific, verifiable details (e.g., "Water level at Sungai Golok is 9.5m at 2PM"), first-hand witness accounts with photos/videos implied, or official government alerts (NADMA, MetMalaysia).
+2. **MISINFORMATION**: Contains debunked rumors, exaggerated panic without proof, conspiracy theories, or old footage reposted as new.
+3. **UNCERTAIN**: Vague complaints, questions ("Is it raining in KL?"), or unverified third-party hearsay.
 
-        if not unclassified_tweets:
-            print("All available tweets have been classified. Exiting.")
-            break
+**Instructions:**
+- Analyze the *specificity* of location and time.
+- Analyze the *tone* (factual vs. sensationalist).
+- If the tweet is an official alert or distinct first-hand report, label AUTHENTIC with high confidence (>0.85).
+- If the tweet is vague or opinionated, label UNCERTAIN.
+- First, think through your reasoning step-by-step in the 'reasoning' field to ensure accuracy.
+"""
 
-        print(f"Processing a batch of {len(unclassified_tweets)} unclassified tweets...")
-        
-        insert_documents = []
-        for tweet in unclassified_tweets:
-            tweet_id = tweet.get('tweet_id')
-            # Use the pre-processed and translated text
-            text = tweet.get('translated_text') 
+# --- 4. Async Classification Function ---
 
-            if not text:
-                print(f"Skipping tweet {tweet_id}: Missing translated_text.")
-                continue
+async def classify_tweet_async(tweet: dict, sem: asyncio.Semaphore) -> Union[dict, None]: # Changed return type hint for Python 3.9 compatibility
+    """
+    Classifies a single tweet using OpenAI with rate limiting.
+    """
+    tweet_id = tweet.get('tweet_id')
+    # Prefer translated text, fallback to cleaned, then raw
+    text = tweet.get('translated_text') or tweet.get('cleaned_text') or tweet.get('raw_text')
 
-            classification_result = classify_tweet_with_gemini(text)
-            
-            if classification_result:
-                # --- Create new classification document ---
-                new_doc = {
-                    "check_id": str(uuid.uuid4()), # Generate a new unique ID for the classification record
-                    "tweet_id": tweet_id,         # Reference to the original tweet
-                    "check_label": classification_result["check_label"],
-                    "confidence": classification_result["confidence_score"],
-                    "classification_justification": classification_result["justification"],
-                    "classification_model": "gemini-2.5-flash",
+    if not text or len(text) < 5:
+        return None
+
+    async with sem: # Wait for a free slot in the semaphore
+        for attempt in range(3):
+            try:
+                completion = await aclient.beta.chat.completions.parse(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": f"Tweet: {text}"},
+                    ],
+                    response_format=ClassificationOutput,
+                    temperature=0.1, # Low temperature for consistency
+                )
+                
+                result = completion.choices[0].message.parsed
+                
+                return {
+                    "check_id": str(uuid.uuid4()),
+                    "tweet_id": tweet_id,
+                    "check_label": result.check_label,
+                    "confidence": result.confidence_score,
+                    "reasoning": result.reasoning, # Capture the deep thinking
+                    "classification_justification": result.justification,
+                    "classification_model": "gpt-4o-mini",
                     "timestamp": time.time()
                 }
-                insert_documents.append(new_doc)
-            else:
-                # Add the failed ID back to the exclusion list for this run to avoid immediate retry
-                classified_ids.append(tweet_id)
 
+            except Exception as e:
+                if "429" in str(e): # Rate limit error
+                    await asyncio.sleep(2 ** (attempt + 1)) # Exponential backoff
+                else:
+                    print(f"Error processing {tweet_id}: {e}")
+                    break
+        return None
 
-        # --- 5. Insert New Classification Records into the Target Collection ---
-        if insert_documents:
+# --- 5. Main Async Loop ---
+
+async def main():
+    # Rate Limit Control (Adjust based on your OpenAI Tier)
+    # Tier 1 usually allows ~500 RPM. A semaphore of 20-30 is usually safe.
+    # Initialize inside main() so it attaches to the correct event loop
+    sem = asyncio.Semaphore(20)
+
+    batch_size = 100 # Larger batch size for async
+    print(f"🚀 Starting Async Classification.")
+    print(f"Source: {SOURCE_COLLECTION} | Target: {TARGET_COLLECTION}")
+
+    while True:
+        # 1. Fetch IDs that are ALREADY classified
+        # We do this every loop to ensure we don't re-do work if the script restarts
+        classified_ids = target_collection.distinct("tweet_id")
+        print(f"Found {len(classified_ids)} already classified tweets.")
+
+        # 2. Query for tweets NOT IN that list
+        query = {"tweet_id": {"$nin": classified_ids}}
+        
+        # Fetch a batch of unclassified tweets
+        # Convert cursor to list immediately for async processing
+        cursor = source_collection.find(query).limit(batch_size)
+        batch_tweets = list(cursor)
+
+        if not batch_tweets:
+            print("All tweets classified! Exiting.")
+            break
+
+        print(f"\nProcessing batch of {len(batch_tweets)} tweets concurrently...")
+
+        # 3. Process batch concurrently
+        # This creates a list of tasks and runs them all at once
+        # Pass the semaphore to the worker function
+        tasks = [classify_tweet_async(tweet, sem) for tweet in batch_tweets]
+        
+        # tqdm_asyncio.gather shows the progress bar as tasks complete
+        results = await tqdm_asyncio.gather(*tasks, desc="Classifying")
+
+        # 4. Filter out None results (failed/skipped)
+        valid_results = [res for res in results if res is not None]
+
+        # 5. Bulk Insert
+        if valid_results:
             try:
-                target_collection.insert_many(insert_documents, ordered=False)
-                print(f"Successfully inserted {len(insert_documents)} new classification records into {TARGET_COLLECTION_NAME}.")
+                # ordered=False allows valid docs to be inserted even if one fails (e.g. duplicate)
+                target_collection.insert_many(valid_results, ordered=False)
+                print(f"Saved {len(valid_results)} records to MongoDB.")
             except errors.BulkWriteError as bwe:
-                # Handle cases where some inserts might fail (e.g. duplicate check_id, though UUID should prevent this)
-                print(f"Bulk write error encountered. Check logs for details: {bwe.details}")
+                print(f"Bulk write warning: {bwe.details['nInserted']} inserted, some failed (likely duplicates).")
         else:
-            print("No new successful classifications in this batch.")
-            
+            print("No valid classifications in this batch.")
+
+        # Small pause between batches to be nice to the database
+        await asyncio.sleep(1)
+
 if __name__ == "__main__":
-    process_tweets_for_classification()
+    asyncio.run(main())
