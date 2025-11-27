@@ -140,16 +140,28 @@ def run_once(combined_query):
 
     except Exception as e:
         logging.error(f"Error: {e}")
-
-if __name__ == "__main__":
+        
+def start_scraping_job():
+    """Main entry point for the scraper."""
+    logging.basicConfig(level=logging.INFO)
+    logging.info("--- Starting Scraping Job ---")
     
-    # Disaster keywords
     bm_keywords = ["banjir", "tanah runtuh", "ribut", "jerebu", "kebakaran hutan", "mendapan tanah", "gempa bumi", "tsunami"]
     en_keywords = ["flood", "landslide", "storm", "haze", "forest fire", "sinkhole", "earthquake"]
     all_keywords = bm_keywords + en_keywords
     
+    # Construct queries
     queries = [f"{d} {l}" for d in all_keywords for l in malaysia_keywords]
     
+    # Run the threads
     with ThreadPoolExecutor(max_workers=10) as executor:
+        # Note: If run_once has a 'while True' loop, this will run forever.
+        # Ideally, run_once should have a logic to stop after fetching X pages 
+        # or if the pipeline is a scheduled cron job.
         for q in queries:
             executor.submit(run_once, q)
+            
+    logging.info("Scraping Job Complete.")
+
+if __name__ == "__main__":
+    start_scraping_job()
