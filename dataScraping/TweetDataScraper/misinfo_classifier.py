@@ -6,8 +6,8 @@ from typing import Literal, List, Union, Optional # Added Union and Optional for
 from dotenv import load_dotenv
 from pymongo import MongoClient, errors
 from pydantic import BaseModel, Field
-from openai import AsyncOpenAI  # <-- CHANGED: Import Async Client
-from tqdm.asyncio import tqdm_asyncio # <-- CHANGED: Async progress bar
+from openai import AsyncOpenAI 
+from tqdm.asyncio import tqdm_asyncio 
 
 # --- 1. Setup & Configuration ---
 
