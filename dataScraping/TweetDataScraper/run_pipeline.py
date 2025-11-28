@@ -3,6 +3,7 @@ import asyncio
 import logging
 from main_scraperTweet import start_scraping_job
 from main_misinfoClassifier import run_classification_job
+from main_dataCombine import process_authentic_tweets
 
 # ---------------------------------------------------------
 # SILENCE NOISY LOGS
@@ -38,6 +39,18 @@ def run_pipeline():
         asyncio.run(run_classification_job())
     except Exception as e:
         print(f"Classifier Error: {e}")
+
+    print("\n Pipeline Finished Successfully.")
+
+    # 3. Run Data Enricher (Synchronous)
+    print("\n" + "="*40)
+    print("STEP 3: ENRICHING & MIGRATING AUTHENTIC DATA")
+    print("="*40 + "\n")
+    
+    try:
+        process_authentic_tweets()
+    except Exception as e:
+        print(f"Enricher Error: {e}")
 
     print("\n Pipeline Finished Successfully.")
 
