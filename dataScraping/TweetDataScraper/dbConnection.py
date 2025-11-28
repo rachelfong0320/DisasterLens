@@ -1,6 +1,6 @@
 import logging
 from pymongo import MongoClient, errors
-from config import MONGO_URI, DB_NAME, COLLECTION_NAME
+from config import MONGO_URI, DB_NAME, TWEET_COLLECTION, MISINFO_COLLECTION
 
 """
 This script connects to a MongoDB database and defines functionality for storing cleaned tweet data.
@@ -16,8 +16,16 @@ Note:
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
-collection = db[COLLECTION_NAME]
-collection.create_index("tweet_id", unique=True)
+# Export specific collections
+tweet_collection = db[TWEET_COLLECTION]
+misinfo_collection = db[MISINFO_COLLECTION]
+
+# Ensure indexes
+try:
+    tweet_collection.create_index("tweet_id", unique=True)
+    misinfo_collection.create_index("tweet_id", unique=True)
+except Exception:
+    pass
 
 # Check if mongoDB connected successfully
 try:
@@ -28,7 +36,7 @@ except Exception as e:
     
 def insert_tweet(tweet_info):
     try:
-        collection.insert_one(tweet_info)
+        tweet_collection.insert_one(tweet_info)
         logging.info(f"Tweet {tweet_info['tweet_id']} inserted.")
     except errors.DuplicateKeyError:
         logging.info("Duplicate tweet skipped.")
