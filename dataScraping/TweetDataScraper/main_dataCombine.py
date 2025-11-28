@@ -6,7 +6,7 @@ from pymongo import MongoClient, errors
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 
-# Import your existing configs
+# Import configs
 from config import MONGO_URI, DB_NAME, COMBINED_DB_NAME ,TWEET_COLLECTION, MISINFO_COLLECTION, POSTS_COLLECTION
 
 # Setup Logging
