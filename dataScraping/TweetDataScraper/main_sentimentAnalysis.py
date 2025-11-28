@@ -12,6 +12,12 @@ from config import MONGO_URI, OPENAI_API_KEY, COMBINED_DB_NAME, POSTS_COLLECTION
 from schemas import SentimentOutput
 from prompts import SENTIMENT_SYSTEM_PROMPT
 
+# SILENCE NOISY LOGS (For tests and clarity) -->> can be deleted in future
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
