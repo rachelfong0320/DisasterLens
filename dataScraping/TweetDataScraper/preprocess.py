@@ -15,17 +15,17 @@ Overview:
 This script provides functions for cleaning, translating, and tokenizing tweet text to prepare it for further analysis or storage.
 
 Key Features:
-1. **clean_text(text)**:
+1. Clean_text(text):
    - Removes URLs, mentions (@user), emojis, and special characters.
    - Strips and normalizes whitespace.
    - Outputs clean, alphanumeric-only text.
 
-2. **translate_to_english(text)**:
+2. Translate_to_english(text):
    - Detects the language of the input text using `langdetect`.
    - Translates non-English text to English using `deep_translator` and Google Translate.
    - Falls back to original text if detection or translation fails.
 
-3. **tokenize_and_clean(text)**:
+3. Tokenize_and_clean(text):
    - Uses spaCy for tokenization.
    - Converts text to lowercase and removes stopwords (both English and Bahasa Melayu).
    - Returns a list of clean, meaningful tokens.

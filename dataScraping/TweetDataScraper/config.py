@@ -3,6 +3,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from dotenv import load_dotenv
+from pymongo import MongoClient
 import os
 
 """
@@ -22,10 +23,14 @@ Note:
 
 load_dotenv()
 
-# MongoDB
+# API Keys
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
+
+# Database Config
 DB_NAME = "TweetData"
-COLLECTION_NAME = "CleanedTweet"
+TWEET_COLLECTION = "CleanedTweet"
+MISINFO_COLLECTION = "misinfo_classific"
 
 # Twitter API
 RAPID_API_URL = "https://twitter241.p.rapidapi.com/search-v2"
