@@ -29,8 +29,10 @@ MONGO_URI = os.getenv("MONGO_URI")
 
 # Database Config
 DB_NAME = "TweetData"
+COMBINED_DB_NAME = "SocialMediaPosts"
 TWEET_COLLECTION = "CleanedTweet"
 MISINFO_COLLECTION = "misinfo_classific"
+POSTS_COLLECTION = "posts_data"
 
 # Twitter API
 RAPID_API_URL = "https://twitter241.p.rapidapi.com/search-v2"
