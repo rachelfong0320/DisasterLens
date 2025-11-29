@@ -10,7 +10,7 @@ from pymongo import errors
 # Import from our new modules
 from config import OPENAI_API_KEY
 from dbConnection import tweet_collection, misinfo_collection
-from classifier_schemas import ClassificationOutput
+from dataScraping.TweetDataScraper.schemas import ClassificationOutput
 from prompts import MISINFO_SYSTEM_PROMPT
 
 # Initialize Async Client
