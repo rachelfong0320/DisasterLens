@@ -33,6 +33,7 @@ COMBINED_DB_NAME = "SocialMediaPosts"
 TWEET_COLLECTION = "CleanedTweet"
 MISINFO_COLLECTION = "misinfo_classific"
 POSTS_COLLECTION = "posts_data"
+SENTIMENT_COLLECTION = "sentiment_check"
 
 # Twitter API
 RAPID_API_URL = "https://twitter241.p.rapidapi.com/search-v2"
