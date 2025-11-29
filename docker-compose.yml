@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    # Point to the .env file inside your backend folder
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
