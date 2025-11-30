@@ -1,6 +1,6 @@
 import time
 import logging
-from backend.app.config import session, HEADERS, RAPID_API_URL
+from config import session, HEADERS, RAPID_API_URL
 from preprocess import clean_text, translate_to_english, tokenize_and_clean
 from helpers import is_location_in_malaysia, malaysia_keywords
 from dbConnection import insert_tweet
@@ -103,8 +103,6 @@ def run_once(combined_query):
 
                         raw_text = tweet_legacy.get('full_text', '')
                         cleaned_text = clean_text(raw_text)
-                        translated_text = translate_to_english(cleaned_text)
-                        tokens = tokenize_and_clean(translated_text)
 
                         hashtags = tweet_legacy.get('entities', {}).get('hashtags', [])
                         tweet_hashtags = ','.join(tag.get('text', '') for tag in hashtags) if hashtags else 'null'
@@ -113,8 +111,6 @@ def run_once(combined_query):
                             'tweet_id': tweet_id,
                             'raw_text': raw_text,
                             'cleaned_text': cleaned_text,
-                            'translated_text': translated_text,
-                            'tokens': tokens,
                             'tweet_created_at': tweet_legacy.get('created_at', ''),
                             'tweet_hashtags': tweet_hashtags,
                             'location': location,

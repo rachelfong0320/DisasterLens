@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import re
 import time
+import json
 from datetime import datetime, timezone
 from collections import Counter
 from openai import OpenAI
@@ -21,9 +22,6 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # ==========================================
 # CONFIGURATION
 # ==========================================
-# Set this to True if you want to ERASE existing keywords and start fresh.
-# Use with caution! It removes 'keywords' and 'keywords_generated' fields.
-RESET_ALL = False 
 
 def generate_main_topic(text: str):
     """
@@ -39,12 +37,12 @@ def generate_main_topic(text: str):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a very famous and expert disaster analyst. Extract the SINGLE most important event and location from the text. Format: '[Event] in [Location]' or just '[Event]' if no location. Keep it short (max 5 words). Examples: 'Flood in Johor', 'Landslide Ampang', 'Heavy Rain'. Return ONLY the phrase."
+                    "content": "You are a disaster analyst. Extract the SINGLE most important event and location from the text. Format: '[Event] in [Location]' or just '[Event]' if no location. Keep it short (max 5 words). Examples: 'Flood in Johor', 'Landslide Ampang', 'Heavy Rain'. Return ONLY the phrase."
                 },
                 {"role": "user", "content": text}
             ],
             temperature=0.3,
-            max_tokens=20 # Keep it very short
+            max_tokens=20 
         )
         topic = response.choices[0].message.content.strip().lower()
         # Remove any trailing punctuation
@@ -54,37 +52,61 @@ def generate_main_topic(text: str):
         print(f"Error generating AI topic: {e}")
         return None
 
-def normalize_term(term: str):
+def consolidate_topics(topics_list):
     """
-    Normalizes a phrase to handle word order differences.
-    e.g., "Johor Flood" -> "flood johor"
-    e.g., "Flood in Johor" -> "flood in johor" -> (sort) -> "flood in johor"
+    Uses OpenAI to group similar variations of topics into a single canonical name.
+    Input: ["landslide along km48 sibubintulu road", "landslide in sibu bintulu road"]
+    Output: {"landslide along km48 sibubintulu road": "Landslide Sibu-Bintulu Road", ...}
     """
-    if not term:
-        return None
+    if not topics_list:
+        return {}
         
-    # Remove punctuation except spaces
-    clean_term = re.sub(r'[^\w\s]', '', term).lower()
+    # Remove duplicates for the API call
+    unique_topics = list(set(topics_list))
     
-    # Remove common stop words that don't add meaning to the trend
-    stop_words = {'in', 'at', 'the', 'is', 'a', 'of', 'on'}
-    words = [w for w in clean_term.split() if w not in stop_words]
+    # For efficiency, if there are too many unique topics, process in batches.
+    # Here we process all at once for simplicity, assuming < 100 unique topics.
+    # In production, you'd chunk this list.
     
-    # Sort alphabetically to unify "Flood Johor" and "Johor Flood"
-    words.sort()
-    return " ".join(words)
+    print(f"Asking AI to consolidate {len(unique_topics)} unique topics...")
+    
+    prompt = (
+        "You are a strict data normalization expert. I have a list of disaster-related topics. "
+        "Your goal is to MERGE variations that refer to the same event into a single, standardized, Capitalized Name.\n\n"
+        "CRITICAL RULES:\n"
+        "1. Treat 'Landslide Sibu', 'Landslide Bintulu', 'Landslide KM48' as the SAME event if they likely refer to the 'Sibu-Bintulu Road Landslide'.\n"
+        "2. Treat 'Flood Johor', 'Johor Bahru Flooding', 'Floods in JB' as the SAME event: 'Flood in Johor'.\n"
+        "3. Ignore minor differences like 'in', 'at', 'road', 'jalan', 'km'.\n\n"
+        "Input List:\n" + "\n".join(unique_topics) + "\n\n"
+        "Return ONLY a valid JSON object where keys are the input topics and values are the standardized group name.\n"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You output only valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3, # Slightly higher temp allows for better semantic matching
+            response_format={"type": "json_object"}
+        )
+        
+        content = response.choices[0].message.content
+        mapping = json.loads(content)
+        return mapping
+    except Exception as e:
+        print(f"Error consolidating topics: {e}")
+        # Fallback: map topics to themselves if AI fails
+        return {t: t for t in unique_topics}
+
 
 def process_posts_and_analyze_trends():
-    print("🚀 Starting Single-Keyword Generation & Trend Analysis...")
+    print("\n" + "="*40)
+    print("STEP 5: KEYWORD & HASHTAG TRACKING")
+    print("="*40 + "\n")
 
-    # --- OPTIONAL: RESET ---
-    if RESET_ALL:
-        print("⚠️ RESET DETECTED: Clearing previous keyword data...")
-        db_connection.posts_data_collection.update_many(
-            {}, 
-            {"$unset": {"keywords": "", "keywords_generated": ""}}
-        )
-        print("✅ Data cleared. Starting fresh generation.")
+    print("Starting Single-Keyword Generation & Trend Analysis...")
 
     # --- PHASE 1: Generate Keyword (One Main Topic) ---
     
@@ -92,7 +114,7 @@ def process_posts_and_analyze_trends():
     total_to_generate = db_connection.posts_data_collection.count_documents(query)
     cursor = db_connection.posts_data_collection.find(query)
     
-    print(f"📊 Generating main topic for {total_to_generate} posts...")
+    print(f"Generating main topic for {total_to_generate} posts...")
 
     count = 0
     for post in cursor:
@@ -132,26 +154,28 @@ def process_posts_and_analyze_trends():
         if count % 10 == 0:
             print(f"   - Generated for {count}/{total_to_generate} posts")
 
-    print("✅ Phase 1 Complete.")
+    print("Phase 1 Complete.")
 
-    # --- PHASE 2: Analyze Trends ---
+    # --- PHASE 2: Analyze Trends (With Consolidation) ---
     
-    print("📊 Analyzing trends from ALL posts...")
+    print("Analyzing trends from ALL posts...")
     
     all_posts = db_connection.posts_data_collection.find({})
     
-    keyword_counter = Counter()
+    # 1. Collect ALL raw terms first
+    raw_keywords = []
     hashtag_counter = Counter()
 
     for post in all_posts:
-        # A. Process Keyword (String)
+        # A. Collect Keyword (String)
         topic = post.get("keywords")
         if topic and isinstance(topic, str):
-            normalized = normalize_term(topic)
-            if normalized:
-                keyword_counter[normalized] += 1
+            # Basic cleanup before list collection
+            clean_topic = re.sub(r'[^\w\s]', '', topic).lower()
+            if clean_topic:
+                raw_keywords.append(clean_topic)
 
-        # B. Process Hashtags (List/String)
+        # B. Process Hashtags (List/String) - Standard count is fine for hashtags
         raw_hashtags = post.get("hashtag") or post.get("hashtags") or post.get("tweet_hashtags")
         
         tag_list = []
@@ -167,14 +191,31 @@ def process_posts_and_analyze_trends():
                 if clean_tag:
                     hashtag_counter[clean_tag] += 1
 
+    # 2. Consolidate Keywords via AI
+    # This is the critical step you asked for.
+    # It sends ALL collected raw keywords to OpenAI to group them semantically.
+    topic_mapping = consolidate_topics(raw_keywords)
+    
+    # 3. Count the Consolidated Topics
+    final_keyword_counter = Counter()
+    for raw_k in raw_keywords:
+        # Get the standardized name from the map. 
+        # e.g. raw_k="landslide sibu" -> standardized_name="Landslide Sibu-Bintulu Road"
+        standardized_name = topic_mapping.get(raw_k, raw_k)
+        final_keyword_counter[standardized_name] += 1
+
+
     # --- PHASE 3: Save Analysis ---
     
-    print("💾 Saving analysis to 'tracking_keyword' collection...")
+    print("Saving analysis to 'tracking_keyword' collection...")
     
     tracking_collection = db_connection.analytics_db["tracking_keyword"]
     
-    # Save Keywords (Topics)
-    for term, freq in keyword_counter.items():
+    # Optional: Clear old data to prevent mixing old un-consolidated terms with new consolidated ones
+    # tracking_collection.delete_many({"type": "keyword"}) 
+    
+    # Save Keywords (Topics) - These are now consolidated
+    for term, freq in final_keyword_counter.items():
         doc = {
             "term": term,
             "type": "keyword",
@@ -201,7 +242,9 @@ def process_posts_and_analyze_trends():
             upsert=True
         )
         
-    print(f"🎉 Complete! Found {len(keyword_counter)} unique topics.")
+    print(f"🎉 Complete!")
+    print(f"   - Unique Consolidated Topics: {len(final_keyword_counter)}")
+    print(f"   - Unique Hashtags: {len(hashtag_counter)}")
 
 if __name__ == "__main__":
     process_posts_and_analyze_trends()
