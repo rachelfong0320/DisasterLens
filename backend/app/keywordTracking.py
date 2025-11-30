@@ -211,40 +211,33 @@ def process_posts_and_analyze_trends():
     
     tracking_collection = db_connection.analytics_db["tracking_keyword"]
     
-    # Optional: Clear old data to prevent mixing old un-consolidated terms with new consolidated ones
-    # tracking_collection.delete_many({"type": "keyword"}) 
+    tracking_collection.delete_many({}) 
+    new_documents = []
     
     # Save Keywords (Topics) - These are now consolidated
     for term, freq in final_keyword_counter.items():
-        doc = {
+        new_documents.append({
             "term": term,
             "type": "keyword",
             "frequency": freq,
             "updated_at": datetime.now(timezone.utc)
-        }
-        tracking_collection.update_one(
-            {"term": term, "type": "keyword"}, 
-            {"$set": doc}, 
-            upsert=True
-        )
+        })
 
     # Save Hashtags
     for term, freq in hashtag_counter.items():
-        doc = {
+        new_documents.append({
             "term": f"#{term}", 
             "type": "hashtag",
             "frequency": freq,
             "updated_at": datetime.now(timezone.utc)
-        }
-        tracking_collection.update_one(
-            {"term": f"#{term}", "type": "hashtag"}, 
-            {"$set": doc}, 
-            upsert=True
-        )
+        })
+
+    if new_documents:
+        tracking_collection.insert_many(new_documents)
         
-    print(f"🎉 Complete!")
-    print(f"   - Unique Consolidated Topics: {len(final_keyword_counter)}")
-    print(f"   - Unique Hashtags: {len(hashtag_counter)}")
+    print(f"Complete!")
+    print(f" - Unique Consolidated Topics: {len(final_keyword_counter)}")
+    print(f" - Unique Hashtags: {len(hashtag_counter)}")
 
 if __name__ == "__main__":
     process_posts_and_analyze_trends()
