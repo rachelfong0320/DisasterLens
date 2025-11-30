@@ -1,6 +1,6 @@
 import time
 import logging
-from config import session, HEADERS, RAPID_API_URL
+from backend.app.config import session, HEADERS, RAPID_API_URL
 from preprocess import clean_text, translate_to_english, tokenize_and_clean
 from helpers import is_location_in_malaysia, malaysia_keywords
 from dbConnection import insert_tweet
