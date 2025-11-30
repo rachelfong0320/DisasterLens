@@ -67,38 +67,49 @@ def consolidate_topics(topics_list):
     # For efficiency, if there are too many unique topics, process in batches.
     # Here we process all at once for simplicity, assuming < 100 unique topics.
     # In production, you'd chunk this list.
+    batch_size = 100
+    mapping = {}
     
-    print(f"Asking AI to consolidate {len(unique_topics)} unique topics...")
-    
-    prompt = (
-        "You are a strict data normalization expert. I have a list of disaster-related topics. "
-        "Your goal is to MERGE variations that refer to the same event into a single, standardized, Capitalized Name.\n\n"
-        "CRITICAL RULES:\n"
-        "1. Treat 'Landslide Sibu', 'Landslide Bintulu', 'Landslide KM48' as the SAME event if they likely refer to the 'Sibu-Bintulu Road Landslide'.\n"
-        "2. Treat 'Flood Johor', 'Johor Bahru Flooding', 'Floods in JB' as the SAME event: 'Flood in Johor'.\n"
-        "3. Ignore minor differences like 'in', 'at', 'road', 'jalan', 'km'.\n\n"
-        "Input List:\n" + "\n".join(unique_topics) + "\n\n"
-        "Return ONLY a valid JSON object where keys are the input topics and values are the standardized group name.\n"
-    )
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You output only valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3, # Slightly higher temp allows for better semantic matching
-            response_format={"type": "json_object"}
-        )
+    for i in range(0, len(unique_topics), batch_size):
+        batch = unique_topics[i:i + batch_size]
+        print(f"Asking AI to consolidate batch {i//batch_size + 1} with {len(batch)} topics...")
         
-        content = response.choices[0].message.content
-        mapping = json.loads(content)
-        return mapping
-    except Exception as e:
-        print(f"Error consolidating topics: {e}")
-        # Fallback: map topics to themselves if AI fails
-        return {t: t for t in unique_topics}
+        prompt = (
+            "You are a strict data normalization expert. I have a list of disaster-related topics. "
+            "Many refer to the same event but are phrased differently (e.g., different word order, extra prepositions, abbreviations). "
+            "Group them by the specific event and assign a single, standardized, Capitalized Name for that event. "
+            "Prefer the most detailed/descriptive version if multiple exist.\n\n"
+            "CRITICAL RULES:\n"
+            "1. Treat 'Landslide Sibu', 'Landslide Bintulu', 'Landslide KM48', 'Landslide Sibu-Bintulu Road' as the SAME event: 'Landslide Sibu-Bintulu Road'.\n"
+            "2. Treat 'Flood Johor', 'Johor Bahru Flooding', 'Floods in JB' as the SAME event: 'Flood in Johor'.\n"
+            "3. Ignore minor differences like 'in', 'at', 'road', 'jalan', 'km' when matching, but keep specific location details (like 'Sibu-Bintulu') in the output name.\n"
+            "4. Output MUST be valid JSON where keys are the input topics and values are the standardized group name.\n\n"
+            "Input List:\n" + json.dumps(batch) + "\n\n" # Use json.dumps for safer formatting
+            "Return ONLY the JSON object."
+        )
+
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You output only valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1, # Lower temperature for more deterministic output
+                response_format={"type": "json_object"}
+            )
+            
+            content = response.choices[0].message.content
+            batch_mapping = json.loads(content)
+            mapping.update(batch_mapping)
+            
+        except Exception as e:
+            print(f"Error consolidating topics batch: {e}")
+            # Fallback: map topics to themselves if AI fails for this batch
+            for t in batch:
+                mapping[t] = t
+                
+    return mapping
 
 
 def process_posts_and_analyze_trends():
