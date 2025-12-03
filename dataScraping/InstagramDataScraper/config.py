@@ -1,6 +1,7 @@
 import os
 import re
 from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
 load_dotenv()
 
@@ -14,12 +15,18 @@ HEADERS = {
     "X-RapidAPI-Host": API_HOST
 }
 
-# MongoDB Configuration
 MONGO_USERNAME = os.getenv("MONGO_USERNAME").strip()
 MONGO_PASSWORD = os.getenv("MONGO_PASSWORD").strip()
 MONGO_URI = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@disasterlens.cnayord.mongodb.net/?retryWrites=true&w=majority&appName=DisasterLens"
 DB_NAME = "Instagram"
 COLLECTION_NAME = "cleaned_posts"
+MISINFO_COLLECTION = "misinfo_classific_data"
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY").strip()
+
+#Initialize async OpenAI client 
+aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
 
 # malaysia_keywords is used for API query construction (broad match)
 # malaysia_locations is used for post-filtering (detailed city/location match)

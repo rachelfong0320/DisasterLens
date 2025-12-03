@@ -88,7 +88,7 @@ async def run_all_fetches():
     print(f"\nTotal posts fetched: {len(all_posts)}")
     return all_posts
 
-async def main():
+async def run_scraping_job():
     """Main execution function"""
     try:
         # 1. Fetch data
@@ -130,4 +130,4 @@ async def main():
         traceback.print_exc()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_scraping_job())
