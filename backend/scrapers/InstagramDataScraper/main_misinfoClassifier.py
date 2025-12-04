@@ -6,10 +6,10 @@ from typing import Union
 from pymongo import errors
 from tqdm.asyncio import tqdm_asyncio
 
-from config import aclient
-from dbConnection import DatabaseConnection
-from classifier_schemas import ClassificationOutput
-from prompts import MISINFO_SYSTEM_PROMPT_INSTAGRAM
+from scrapers.InstagramDataScraper.config import aclient
+from scrapers.InstagramDataScraper.dbConnection import DatabaseConnection
+from scrapers.InstagramDataScraper.classifier_schemas import ClassificationOutput
+from scrapers.InstagramDataScraper.prompts import MISINFO_SYSTEM_PROMPT_INSTAGRAM
 
 db = DatabaseConnection()
 
