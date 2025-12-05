@@ -1,11 +1,13 @@
 from pymongo import MongoClient
-from config import MONGO_URI, DB_NAME, COLLECTION_NAME
+from scrapers.InstagramDataScraper.config import MONGO_URI, DB_NAME, COLLECTION_NAME, MISINFO_COLLECTION
+
 
 class DatabaseConnection:
     def __init__(self):
         self.client = MongoClient(MONGO_URI)
         self.db = self.client[DB_NAME]
         self.collection = self.db[COLLECTION_NAME]
+        self.misinfo_collection = self.db[MISINFO_COLLECTION]
 
     def insert_post(self, post_info):
         """Insert a single post into the database"""
@@ -14,7 +16,7 @@ class DatabaseConnection:
         except Exception as e:
             print(f"Error inserting post: {e}")
             return None
-
+        
     def insert_many_posts(self, posts):
         """Insert multiple posts into the database"""
         try:
@@ -22,6 +24,30 @@ class DatabaseConnection:
         except Exception as e:
             print(f"Error inserting posts: {e}")
             return None
+        
+    def mark_as_attempted(self, ig_post_id):
+        """Mark a post as classification attempted"""
+        self.collection.update_one(
+            {"ig_post_id": ig_post_id},
+            {"$set": {"classification_attempted": True}},
+        )
+
+    def get_unclassified_posts(self, batch_size=100):
+        """Fetch posts not yet classified or attempted"""
+        classified_ids = self.misinfo_collection.distinct("ig_post_id")
+        query = {
+            "ig_post_id": {"$nin": classified_ids},
+            "classification_attempted": {"$ne": True},
+        }
+        return list(self.collection.find(query).limit(batch_size))
+
+    def insert_many_classifications(self, results):
+        """Insert classified results into the misinfo collection"""
+        try:
+            return self.misinfo_collection.insert_many(results, ordered=False)
+        except Exception as e:
+            print(f"Error inserting classification results: {e}")
+            return None     
 
     def format_post_for_db(self, row):
         """Format a pandas row for database insertion"""
