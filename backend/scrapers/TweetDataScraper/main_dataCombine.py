@@ -130,10 +130,6 @@ def process_single_tweet(doc):
         return 0
 
 def run_enrichment_pipeline():
-    print("\n" + "="*40)
-    print("STEP 3: CONCURRENT DATA ENRICHMENT")
-    print("="*40 + "\n")
-
     # 1. INCREMENTAL LOGIC: Get IDs we already have
     # Fetching only _id is very fast even for 100k+ records
     logging.info("Fetching existing IDs to skip...")
