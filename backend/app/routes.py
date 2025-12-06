@@ -1,4 +1,5 @@
 # app/routes.py
+from scrapers.InstagramDataScraper.main_misinfoClassifier import run_classification_job
 from fastapi import APIRouter, HTTPException
 from app.database import db_connection 
 from typing import List
@@ -28,3 +29,12 @@ async def get_ig_posts(limit: int = 50):
         return posts
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+#  NEW — Run the real classification job (same as your main script)
+@router.post("/test/run_ig_classifier", response_description="Run Instagram misinfo classification")
+async def trigger_ig_classifier():
+    try:
+        await run_classification_job()
+        return {"message": "Instagram misinfo classification completed successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Classification job failed: {e}")
