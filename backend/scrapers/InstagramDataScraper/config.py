@@ -20,7 +20,10 @@ MONGO_PASSWORD = os.getenv("MONGO_PASSWORD").strip()
 MONGO_URI = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@disasterlens.cnayord.mongodb.net/?retryWrites=true&w=majority&appName=DisasterLens"
 DB_NAME = "Instagram"
 COLLECTION_NAME = "cleaned_posts"
+COMBINED_DB_NAME = "SocialMediaPosts"
 MISINFO_COLLECTION = "misinfo_classific_data"
+POSTS_COLLECTION = "posts_data"
+
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY").strip()
 
