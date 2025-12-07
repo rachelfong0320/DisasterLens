@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from scrapers.InstagramDataScraper.config import MONGO_URI, DB_NAME, COLLECTION_NAME, MISINFO_COLLECTION
+from config import MONGO_URI, DB_NAME, COLLECTION_NAME, MISINFO_COLLECTION
 
 
 class DatabaseConnection:
