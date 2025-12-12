@@ -53,3 +53,5 @@ wasabi==1.1.3
 weasel==0.4.3
 wrapt==2.0.1
 elasticsearch==8.11.0
+kafka-python==2.0.2
+aiokafka==0.8.1

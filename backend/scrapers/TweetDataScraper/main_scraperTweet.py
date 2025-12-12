@@ -1,10 +1,12 @@
 import time
 import logging
+import json
 from config import session, HEADERS, RAPID_API_URL
 from preprocess import clean_text, translate_to_english, tokenize_and_clean
 from helpers import is_location_in_malaysia, malaysia_keywords
 from dbConnection import insert_tweet
 from concurrent.futures import ThreadPoolExecutor
+from kafka import KafkaProducer
 
 """
 Real-Time Twitter Scraper for Disaster-Related Tweets in Malaysia
@@ -39,6 +41,11 @@ Run this script as a standalone process. It will start multiple threads to concu
 Note:
 Make sure your `.env` file is properly configured with valid RAPIDAPI credentials and MongoDB URI before running this script.
 """
+
+producer = KafkaProducer(
+    bootstrap_servers=['kafka:9092'], # Use 'localhost:9092' if running outside docker
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
 
 def run_once(combined_query):
     seen_ids=set()
@@ -123,7 +130,9 @@ def run_once(combined_query):
                             'professional_type': professional_type
                         }
 
-                        insert_tweet(tweet_info)
+                        """insert_tweet(tweet_info)""" # Commented out to send to Kafka instead
+                        producer.send('tweets_topic', tweet_info)
+                        logging.info(f"Sent tweet {tweet_id} to Kafka")
 
                         if item.get('entryId', '').startswith('cursor-bottom'):
                             next_cursor = content.get('value')

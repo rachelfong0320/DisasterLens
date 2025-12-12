@@ -3,9 +3,11 @@ import aiohttp
 import pandas as pd
 import traceback
 import time
+import json
 from config import HEADERS, BASE_URL, keywords
 from preprocess import parse_disaster_post, process_dataframe
 from dbConnection import DatabaseConnection
+from aiokafka import AIOKafkaProducer
 
 # Limit concurrent tasks
 semaphore = asyncio.Semaphore(40)  
