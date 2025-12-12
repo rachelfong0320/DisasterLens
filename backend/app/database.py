@@ -23,6 +23,18 @@ class Database:
         self.ig_collection = self.ig_db["cleaned_posts"]
 
         self.combined_db = self.client[COMBINED_DB_NAME]
+
+        self.analytics_db = self.client["SocialMediaPosts"]
+        self.posts_data_collection = self.analytics_db["posts_data"]
+        self.tracking_collection = self.analytics_db["tracking_data"]
+
+        self.sub_db = self.client["Subscriptions"]
+        self.subscriber_collection = self.sub_db["subscriber"]
+
+        try:
+            self.subscriber_collection.create_index("email", unique=True)
+        except Exception:
+            pass
         
         # 1. The main combined post collection (Twitter + Instagram)
         self.posts_collection = self.combined_db[POSTS_COLLECTION_NAME] 
@@ -55,8 +67,18 @@ class Database:
         except Exception:
             return None        
 
-        self.analytics_db = self.client["SocialMediaPosts"]
-        self.posts_data_collection = self.analytics_db["posts_data"]
-        self.tracking_collection = self.analytics_db["tracking_data"]
+    def get_subscribers_for_location(self, disaster_location: str):
+        """Finds all emails subscribed to a location mentioned in the disaster."""
+        # Simple regex matching: find subscriptions where the subscribed place is inside the tweet's location string
+        # e.g., if tweet location is "Sungai Buloh, Selangor", find subs for "Selangor" or "Sungai Buloh"
+        
+        # NOTE: Ideally, you should normalize locations. For MVP, we fetch all and filter in Python
+        # or use a text search. Here is a simple python-side filter approach:
+        all_subs = list(self.subscriptions_collection.find())
+        matches = []
+        for sub in all_subs:
+            if sub['location'].lower() in disaster_location.lower():
+                matches.append(sub['email'])
+        return list(set(matches)) # Return unique emails
 
 db_connection = Database()

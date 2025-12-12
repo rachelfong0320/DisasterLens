@@ -1,5 +1,7 @@
 # app/routes.py
+import time
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, EmailStr
 from app.database import db_connection 
 from typing import List
 from starlette.concurrency import run_in_threadpool
@@ -8,6 +10,10 @@ from jobs.main_incidentClassifier import run_incident_classification_batch
 from jobs.main_incidentClassifier import sweep_incident_classification_job
 
 router = APIRouter()
+
+class SubscriberModel(BaseModel):
+    email: EmailStr
+    locations: List[str]
 
 # 1. Endpoint for all UNIFIED posts (Replaces /tweets and /instagram)
 @router.get("/posts/unified", response_description="List all unified social media posts (Twitter + Instagram)")
@@ -80,6 +86,39 @@ async def get_ig_posts(limit: int = 50):
         return posts
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.post("/subscribe", response_description="Subscribe user to alerts")
+async def subscribe_user(subscription: SubscriberModel):
+    """
+    Saves user email and preferred locations to the 'subscriber' collection 
+    in the 'Subscriptions' database.
+    """
+    if not subscription.locations:
+        raise HTTPException(status_code=400, detail="At least one location is required.")
+
+    try:
+        # Use 'update_one' with 'upsert=True'. 
+        # This creates a new entry if the email doesn't exist, 
+        # or updates the locations if the email is already there.
+        db_connection.subscriber_collection.update_one(
+            {"email": subscription.email},
+            {
+                "$set": {
+                    "locations": subscription.locations,
+                    "updatedAt": time.time()
+                },
+                "$setOnInsert": {
+                    "createdAt": time.time()
+                }
+            },
+            upsert=True
+        )
+        return {"message": "Subscription successful", "data": subscription}
+        
+    except Exception as e:
+        print(f"Subscription Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     
 
     
