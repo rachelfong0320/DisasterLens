@@ -25,7 +25,7 @@ MISINFO_COLLECTION = "misinfo_classific_data"
 POSTS_COLLECTION = "posts_data"
 
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY").strip()
+OPENAI_API_KEY = os.getenv("IG_OPENAI_API_KEY").strip()
 
 #Initialize async OpenAI client 
 aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)

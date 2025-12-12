@@ -11,7 +11,7 @@ from tqdm.asyncio import tqdm_asyncio
 # 'IncidentClassificationOutput' and 'INCIDENT_SYSTEM_PROMPT' are assumed to be sibling files/constants.
 # 'db' refers to the centralized connection object exposed by backend/app/database.py.
 from config import OPENAI_API_KEY 
-from .incident_schemas import IncidentClassificationOutput 
+from .schemas import IncidentClassificationOutput 
 from .prompts import INCIDENT_SYSTEM_PROMPT 
 from app.database import db_connection as db 
 
