@@ -55,4 +55,8 @@ class Database:
         except Exception:
             return None        
 
+        self.analytics_db = self.client["SocialMediaPosts"]
+        self.posts_data_collection = self.analytics_db["posts_data"]
+        self.tracking_collection = self.analytics_db["tracking_data"]
+
 db_connection = Database()
