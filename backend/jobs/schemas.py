@@ -39,11 +39,15 @@ class TopicExtractionOutput(BaseModel):
         ...,
         description="The SINGLE most important event and location, max 5 words. Example: 'Flood in Johor'."
     )
-    
-# --- Sentiment Analysis Schema (Placeholder until friend provides full details) ---
-# NOTE: This is required if your friend's code uses structured output.
-class SentimentAnalysisOutput(BaseModel):
-    sentiment_label: str = Field(..., description="The classified sentiment: 'positive', 'negative', or 'neutral'.")
-    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence score for the sentiment.")
+
+# Define the schema for the sentiment classification output
+class SentimentOutput(BaseModel):
+    """Schema for disaster sentiment classification."""
+    reasoning: str = Field(description="Reasoning based on disaster urgency.")
+    sentiment_label: Literal["Urgent", "Warning", "Informational"] = Field(
+        validation_alias='sentiment',
+        description="Urgent: Life threatening. Warning: Caution needed. Informational: General news."
+    )
+    confidence_score: float = Field(description="Confidence level between 0.0 and 1.0.")
 
        

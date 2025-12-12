@@ -7,6 +7,7 @@ from starlette.concurrency import run_in_threadpool
 from jobs.main_incidentClassifier import run_incident_classification_batch
 from jobs.main_incidentClassifier import sweep_incident_classification_job
 from jobs.main_keywordTracking import run_trend_analysis_sweep
+from jobs.main_sentimentAnalysis import run_sentiment_job_sweep
 
 router = APIRouter()
 
@@ -65,7 +66,17 @@ async def trigger_trend_analysis(batch_size: int = 50):
         posts_processed = await run_in_threadpool(run_trend_analysis_sweep, batch_size) 
         return {"message": f"Trend Analysis Sweep completed. Processed {posts_processed} posts and updated analytics tables."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Trend Analysis job failed: {e}")        
+        raise HTTPException(status_code=500, detail=f"Trend Analysis job failed: {e}")  
+
+@router.post("/test/run_sentiment_analysis", response_description="Run Sentiment Analysis Sweep on combined data")
+async def trigger_sentiment_analysis(batch_size: int = 100):
+    """Triggers the full sentiment analysis sweep job."""
+    try:
+        # Run the synchronous sweep function in a threadpool
+        posts_analyzed = await run_in_threadpool(run_sentiment_job_sweep, batch_size) 
+        return {"message": f"Sentiment Analysis job completed. {posts_analyzed} total posts analyzed."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Sentiment Analysis job failed: {e}")          
        
 @router.get("/tweets", response_description="List all tweets")
 async def get_tweets(limit: int = 50):

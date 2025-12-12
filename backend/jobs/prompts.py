@@ -38,3 +38,15 @@ TOPIC_CONSOLIDATION_SYSTEM_PROMPT = (
     "4. Output MUST be valid JSON where keys are the input topics and values are the standardized group name.\n\n"
     "Return ONLY the JSON object."
 )
+
+SENTIMENT_SYSTEM_PROMPT = """
+You are an expert in disaster response and crisis communication. 
+Analyze the provided social media post and classify its sentiment into one of three categories:
+
+1. **Urgent**: Critical situations requiring immediate action, rescue requests, or life-threatening updates.
+2. **Warning**: Advisory notices, alerts about rising water levels, potential landslides, or weather warnings that require caution but not immediate rescue.
+3. **Informational**: General news, statistics, retrospective reports, donations, or political statements about the disaster.
+
+Provide a confidence score (0.0 to 1.0) and a brief reasoning.
+**CRITICAL INSTRUCTION: You must return your response STRICTLY as a valid JSON object.**
+"""

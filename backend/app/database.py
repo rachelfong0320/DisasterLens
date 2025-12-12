@@ -1,5 +1,5 @@
 # app/database.py
-from pymongo import MongoClient,UpdateOne
+from pymongo import MongoClient,UpdateOne, errors
 import os
 from dotenv import load_dotenv
 from collections import Counter
@@ -13,7 +13,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 COMBINED_DB_NAME = "SocialMediaPosts"
 POSTS_COLLECTION_NAME = "posts_data"
 INCIDENT_COLLECTION_NAME = "incident_classification"
-SENTIMENT_COLLECTION_NAME = "sentiment_analysis"
+SENTIMENT_COLLECTION_NAME = "sentiment_check"
 
 
 class Database:
@@ -40,7 +40,6 @@ class Database:
             # Ignore index creation errors at startup, but having this index prevents duplicate work
             pass
         
-        # 3. Sentiment analysis results (Friend's part)
         self.sentiment_collection = self.combined_db[SENTIMENT_COLLECTION_NAME]
 
     def get_unclassified_incident_posts(self, batch_size=100):
@@ -125,5 +124,26 @@ class Database:
                 analytics_collection.insert_many(new_documents)
                 return len(new_documents)
             return 0
+    
+    def get_unclassified_sentiment_posts(self, batch_size=100):
+        """Fetches posts from the unified posts_collection not yet classified for sentiment."""
+        # Find all post_ids that already exist in the sentiment results collection
+        classified_ids = self.sentiment_collection.distinct("post_id") 
+        
+        query = {
+            "postId": {"$nin": list(classified_ids)},
+        }
+        return list(self.posts_collection.find(query).limit(batch_size))
+        
+    def insert_many_sentiments(self, results: List[Dict[str, Any]]):
+        """Inserts sentiment analysis results into the dedicated collection."""
+        try:
+            # NOTE: You need to import 'errors' from pymongo at the top of database.py
+            self.sentiment_collection.insert_many(results, ordered=False)
+            return len(results)
+        except errors.BulkWriteError as bwe:
+            return bwe.details['nInserted']
+        except Exception as e:
+            return None 
 
 db_connection = Database()
