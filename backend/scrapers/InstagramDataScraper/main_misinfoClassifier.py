@@ -6,10 +6,10 @@ from typing import Union
 from pymongo import errors
 from tqdm.asyncio import tqdm_asyncio
 
-from config import aclient
-from dbConnection import DatabaseConnection
-from classifier_schemas import ClassificationOutput
-from prompts import MISINFO_SYSTEM_PROMPT_INSTAGRAM
+from .config import aclient
+from .dbConnection import DatabaseConnection
+from .classifier_schemas import ClassificationOutput
+from .prompts import MISINFO_SYSTEM_PROMPT_INSTAGRAM
 
 db = DatabaseConnection()
 
