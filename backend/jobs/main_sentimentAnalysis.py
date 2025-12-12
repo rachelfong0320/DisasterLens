@@ -1,5 +1,3 @@
-# backend/jobs/main_sentimentAnalysis.py (FINAL LOGIC FILE)
-
 import time
 import uuid
 import asyncio
@@ -11,7 +9,6 @@ from tqdm.asyncio import tqdm_asyncio
 
 # --- Centralized Imports ---
 from openai import AsyncOpenAI
-from app.database import db_connection as db # Centralized DB instance
 from config import OPENAI_API_KEY 
 
 # Relative Imports for sibling files
@@ -85,7 +82,7 @@ async def analyze_sentiment_async(post: dict, sem: asyncio.Semaphore) -> Union[d
 # ASYNC BATCH RUNNER
 # ==========================================
 
-async def run_sentiment_job_batch_async(batch_size: int = 100) -> int:
+async def run_sentiment_job_batch_async(db, batch_size: int = 100) -> int:
     """
     ASYNCHRONOUS BATCH RUNNER: Fetches a batch, runs analysis, and saves results.
     """
@@ -118,7 +115,7 @@ async def run_sentiment_job_batch_async(batch_size: int = 100) -> int:
 # SYNCHRONOUS SWEEP MANAGER (FastAPI Entry Point)
 # ==========================================
 
-def run_sentiment_job_sweep(batch_size: int = None) -> int:
+def run_sentiment_job_sweep(db, batch_size: int = None) -> int:
     """
     SYNCHRONOUS ENTRY POINT: Orchestrates the continuous sweeping of the sentiment job.
     """
@@ -129,7 +126,7 @@ def run_sentiment_job_sweep(batch_size: int = None) -> int:
     
     while True:
         # Run the ASYNC batch runner synchronously using asyncio.run()
-        analyzed_count = asyncio.run(run_sentiment_job_batch_async(BATCH_SIZE_TO_USE))
+        analyzed_count = asyncio.run(run_sentiment_job_batch_async(db, BATCH_SIZE_TO_USE))
         
         if analyzed_count == 0:
             logging.info("Sentiment analysis sweep complete. No new posts found.")

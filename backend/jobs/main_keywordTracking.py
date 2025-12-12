@@ -12,7 +12,6 @@ from typing import List, Dict, Any, Union
 
 # --- Centralized Imports ---
 from openai import AsyncOpenAI, OpenAI 
-from app.database import db_connection as db 
 from config import OPENAI_API_KEY 
 
 from .schemas import TopicExtractionOutput
@@ -53,7 +52,7 @@ async def generate_main_topic_async(post: dict) -> Union[str, None]:
         return {"post_id": post_id, "topic": None} # Return for bulk update
 
 
-async def run_topic_generation_batch_async(batch_size: int = 100) -> int:
+async def run_topic_generation_batch_async(db, batch_size: int = 100) -> int:
     """
     ASYNCHRONOUS BATCH RUNNER (Phase 1): Orchestrates workers and handles bulk DB I/O.
     """
@@ -114,7 +113,7 @@ def consolidate_topics_sync(topics_list: List[str]) -> Dict[str, str]:
     return mapping
 
 
-def run_trend_analysis_sweep(batch_size: int = None):
+def run_trend_analysis_sweep(db, batch_size: int = None):
     """
     MAIN ENTRY POINT: Orchestrates the entire trend analysis (Generation + Consolidation).
     Accepts batch_size to fix API error.
@@ -128,7 +127,7 @@ def run_trend_analysis_sweep(batch_size: int = None):
     total_generated = 0
     while True:
         # CRITICAL FIX: Run the ASYNC batch runner synchronously here
-        posts_generated_count = asyncio.run(run_topic_generation_batch_async(batch_size=BATCH_SIZE_TO_USE)) 
+        posts_generated_count = asyncio.run(run_topic_generation_batch_async(db, batch_size=BATCH_SIZE_TO_USE)) 
         
         if posts_generated_count == 0: break
         total_generated += posts_generated_count
