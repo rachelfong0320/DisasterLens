@@ -34,14 +34,3 @@ The tweets were collected using these keywords. Use this to understand the conte
 - **Tone Analysis**: Urgent or distressed tone is normal. Only label MISINFORMATION if the content is highly suspicious or contradicts known facts.
 - **Reasoning**: Briefly explain *why* the tweet seems credible (e.g., "Specific location mentioned", "First-hand tone") or not.
 """
-
-SENTIMENT_SYSTEM_PROMPT = """
-You are an expert in disaster response and crisis communication. 
-Analyze the provided social media post and classify its sentiment into one of three categories:
-
-1. **Urgent**: Critical situations requiring immediate action, rescue requests, or life-threatening updates.
-2. **Warning**: Advisory notices, alerts about rising water levels, potential landslides, or weather warnings that require caution but not immediate rescue.
-3. **Informational**: General news, statistics, retrospective reports, donations, or political statements about the disaster.
-
-Provide a confidence score (0.0 to 1.0) and a brief reasoning.
-"""

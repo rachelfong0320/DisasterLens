@@ -11,9 +11,8 @@ from tqdm.asyncio import tqdm_asyncio
 # 'IncidentClassificationOutput' and 'INCIDENT_SYSTEM_PROMPT' are assumed to be sibling files/constants.
 # 'db' refers to the centralized connection object exposed by backend/app/database.py.
 from config import OPENAI_API_KEY 
-from .incident_schemas import IncidentClassificationOutput 
+from .schemas import IncidentClassificationOutput 
 from .prompts import INCIDENT_SYSTEM_PROMPT 
-from app.database import db_connection as db 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
@@ -65,7 +64,7 @@ async def classify_incident_async(post: dict, sem: asyncio.Semaphore) -> Union[d
                     break
         return None
 
-async def run_incident_classification_batch(batch_size: int = 100) -> int:
+async def run_incident_classification_batch(db, batch_size: int = 100) -> int:
     """
     ASYNCHRONOUS ENTRY POINT: Executes one batch of classification jobs.
     FIXED: Now runs as an ASYNC function, removing the need for asyncio.run() and fixing the conflict.
@@ -100,7 +99,7 @@ async def run_incident_classification_batch(batch_size: int = 100) -> int:
         
     return len(valid_results)
 
-def sweep_incident_classification_job(batch_size: int = 100) -> int:
+def sweep_incident_classification_job(db, batch_size: int = 100) -> int:
     """
     SYNCHRONOUS ENTRY POINT (Called by FastAPI test endpoint).
     Continuously calls the async batch processor until all posts are classified.
@@ -115,7 +114,7 @@ def sweep_incident_classification_job(batch_size: int = 100) -> int:
             # 1. Run the ASYNC batch job synchronously and get the count.
             # We must use asyncio.run() here because this is a synchronous function 
             # and it needs to execute the async job logic.
-            classified_count = asyncio.run(run_incident_classification_batch(batch_size))
+            classified_count = asyncio.run(run_incident_classification_batch(db,batch_size))
         except Exception as e:
             # Handle potential event loop errors if the threadpool isn't perfectly isolated
             logging.error(f"Sweep interrupted by error: {e}")
@@ -132,37 +131,3 @@ def sweep_incident_classification_job(batch_size: int = 100) -> int:
         time.sleep(1) 
         
     return total_classified
-# def run_incident_classification_batch(batch_size: int = 100) -> int:
-    """
-    SYNCHRONOUS ENTRY POINT (Called by the external job scheduler/FastAPI test endpoint).
-    Fetches a batch of unclassified data from the unified table and processes it.
-    """
-    # 1. Fetch posts from the unified posts_data collection
-    try:
-        batch_posts = db.get_unclassified_incident_posts(batch_size=batch_size) 
-    except Exception as e:
-        logging.error(f"Database fetch error in incident classifier: {e}")
-        return 0
-    
-    if not batch_posts:
-        logging.info("No new posts in the combined collection to classify.")
-        return 0
-
-    logging.info(f"Starting classification for {len(batch_posts)} posts...")
-
-    # 2. Run the asynchronous workers concurrently
-    sem = asyncio.Semaphore(10) 
-    tasks = [classify_incident_async(post, sem) for post in batch_posts]
-    
-    # asyncio.run handles the event loop call synchronously
-    results = asyncio.run(tqdm_asyncio.gather(*tasks, desc="Classifying Incidents")) 
-
-    valid_results = [res for res in results if res is not None]
-
-    # 3. Store results (FR-022)
-    if valid_results:
-        # Writes to the incident_classification table via the centralized DB connection
-        db.insert_many_incidents(valid_results) 
-        logging.info(f"Successfully saved {len(valid_results)} incident classifications.")
-        
-    return len(valid_results)
