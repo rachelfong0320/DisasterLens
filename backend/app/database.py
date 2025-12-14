@@ -30,6 +30,9 @@ class Database:
 
         self.sub_db = self.client["Subscriptions"]
         self.subscriber_collection = self.sub_db["subscriber"]
+        self.notification_queue = self.sub_db["notification_queue"]
+
+        self.notification_queue.create_index([("user_email", 1), ("status", 1)])
 
         try:
             self.subscriber_collection.create_index("email", unique=True)

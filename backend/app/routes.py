@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr
 from app.database import db_connection 
 from typing import List
 from starlette.concurrency import run_in_threadpool
+from app.services.notifications_services import process_notification_queue
 
 from jobs.main_incidentClassifier import run_incident_classification_batch
 from jobs.main_incidentClassifier import sweep_incident_classification_job
@@ -119,6 +120,18 @@ async def subscribe_user(subscription: SubscriberModel):
     except Exception as e:
         print(f"Subscription Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@router.post("/test/process_notifications", response_description="Force process notification queue")
+async def trigger_notifications():
+    """
+    Manually triggers the email sending batch. 
+    In production, this would be called by a cron job every 15 mins.
+    """
+    try:
+        count = await run_in_threadpool(process_notification_queue)
+        return {"message": f"Processed queue. Sent {count} emails."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 
     
