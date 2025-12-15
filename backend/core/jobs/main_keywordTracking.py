@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Union
 
 # --- Centralized Imports ---
 from openai import AsyncOpenAI, OpenAI 
-from config import OPENAI_API_KEY 
+from core.config import OPENAI_API_KEY 
 
 from .schemas import TopicExtractionOutput
 from .prompts import TOPIC_GENERATION_SYSTEM_PROMPT, TOPIC_CONSOLIDATION_SYSTEM_PROMPT

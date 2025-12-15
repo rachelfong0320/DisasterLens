@@ -3,9 +3,9 @@ import aiohttp
 import pandas as pd
 import traceback
 import time
-from config import HEADERS, BASE_URL, keywords
-from preprocess import parse_disaster_post, process_dataframe
-from dbConnection import DatabaseConnection
+from core.config import HEADERS_IG, RAPID_API_URL_IG, keywords
+from .preprocess import parse_disaster_post, process_dataframe
+from .dbConnection import DatabaseConnection
 
 # Limit concurrent tasks
 semaphore = asyncio.Semaphore(40)  
@@ -23,8 +23,8 @@ async def fetch_data(session, keyword, pagination_token=None):
         try:
             async with semaphore:
                 async with session.get(
-                    BASE_URL,
-                    headers=HEADERS,
+                    RAPID_API_URL_IG,
+                    headers=HEADERS_IG,
                     params=params,
                     timeout=TIMEOUT
                 ) as response:

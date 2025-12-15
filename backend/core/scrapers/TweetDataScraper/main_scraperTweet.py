@@ -1,9 +1,9 @@
 import time
 import logging
-from config import session, HEADERS, RAPID_API_URL
-from preprocess import clean_text, translate_to_english, tokenize_and_clean
-from helpers import is_location_in_malaysia, malaysia_keywords
-from dbConnection import insert_tweet
+from core.config import session_twitter, HEADERS_TWITTER , RAPID_API_URL_TWITTER
+from .preprocess import clean_text, translate_to_english, tokenize_and_clean
+from .helpers import is_location_in_malaysia, malaysia_keywords
+from .dbConnection import insert_tweet
 from concurrent.futures import ThreadPoolExecutor
 
 """
@@ -59,7 +59,7 @@ def run_once(combined_query):
                 del params["cursor"]
 
             logging.info(f"[{combined_query}] Sending request to Twitter API...")
-            response = session.get(RAPID_API_URL, headers=HEADERS, params=params)
+            response = session_twitter.get(RAPID_API_URL_TWITTER, headers=HEADERS_TWITTER, params=params)
             if response.status_code != 200:
                 logging.warning(f"Non-200 response: {response.status_code}. Sleeping 10s.")
                 time.sleep(10)
