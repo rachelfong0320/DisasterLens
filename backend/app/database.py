@@ -31,6 +31,7 @@ class Database:
         self.analytics_db = self.client["SocialMediaPosts"]
         self.posts_data_collection = self.analytics_db["posts_data"]
         self.tracking_collection = self.analytics_db["tracking_data"]
+        self.combined_disaster_posts_collection = self.analytics_db["combined_disaster_posts"]
 
         self.sub_db = self.client["Subscriptions"]
         self.subscriber_collection = self.sub_db["subscriber"]
