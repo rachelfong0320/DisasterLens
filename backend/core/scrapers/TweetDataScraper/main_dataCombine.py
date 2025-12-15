@@ -7,7 +7,7 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 
 # Import configs
-from config import MONGO_URI, DB_NAME, COMBINED_DB_NAME ,TWEET_COLLECTION, MISINFO_COLLECTION, POSTS_COLLECTION
+from core.config import MONGO_URI, DB_TWEET, COMBINED_DB_NAME ,TWEET_COLLECTION, TWEET_MISINFO_COLLECTION, POSTS_COLLECTION
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -20,8 +20,8 @@ MAX_WORKERS = 10  # Number of parallel threads
 GEO_REQUEST_DELAY = 1.1  # Seconds to wait between API calls (required by Nominatim)
 
 # Database Setup
-src_db = client[DB_NAME]
-misinfo_col = src_db[MISINFO_COLLECTION]
+src_db = client[DB_TWEET]
+misinfo_col = src_db[TWEET_MISINFO_COLLECTION]
 tweet_col = src_db[TWEET_COLLECTION]
 dest_db = client[COMBINED_DB_NAME]
 posts_col = dest_db[POSTS_COLLECTION]

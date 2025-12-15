@@ -2,7 +2,7 @@ import emoji
 import re
 from langdetect import detect
 from deep_translator import GoogleTranslator
-from config import malaysia_locations
+from core.config import malaysia_locations
 
 failed_translations = []
 

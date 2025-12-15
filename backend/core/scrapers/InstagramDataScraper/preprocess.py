@@ -1,5 +1,5 @@
 import pandas as pd
-from helpers import safe_get, clean_caption, clean_hashtag, translate_caption, contains_malaysia_location
+from .helpers import safe_get, clean_caption, clean_hashtag, translate_caption, contains_malaysia_location
 
 def parse_disaster_post(posts):
     """Parse raw Instagram posts into structured format"""

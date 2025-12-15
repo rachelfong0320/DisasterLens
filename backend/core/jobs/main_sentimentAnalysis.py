@@ -9,7 +9,7 @@ from tqdm.asyncio import tqdm_asyncio
 
 # --- Centralized Imports ---
 from openai import AsyncOpenAI
-from config import OPENAI_API_KEY 
+from core.config import OPENAI_API_KEY 
 
 # Relative Imports for sibling files
 from .schemas import SentimentOutput # Now imported from the unified schemas.py

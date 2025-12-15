@@ -1,6 +1,6 @@
 import logging
 from pymongo import MongoClient, errors
-from config import MONGO_URI, DB_NAME, TWEET_COLLECTION, MISINFO_COLLECTION
+from core.config import MONGO_URI, DB_TWEET, TWEET_COLLECTION, TWEET_MISINFO_COLLECTION
 
 """
 This script connects to a MongoDB database and defines functionality for storing cleaned tweet data.
@@ -15,10 +15,10 @@ Note:
 """
 
 client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
+db = client[DB_TWEET]
 # Export specific collections
 tweet_collection = db[TWEET_COLLECTION]
-misinfo_collection = db[MISINFO_COLLECTION]
+misinfo_collection = db[TWEET_MISINFO_COLLECTION]
 
 # Ensure indexes
 try:

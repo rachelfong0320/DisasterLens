@@ -6,7 +6,7 @@ from typing import Union
 from pymongo import errors
 from tqdm.asyncio import tqdm_asyncio
 
-from .config import aclient
+from core.config import ACLIENT
 from .dbConnection import DatabaseConnection
 from .classifier_schemas import ClassificationOutput
 from .prompts import MISINFO_SYSTEM_PROMPT_INSTAGRAM
@@ -37,7 +37,7 @@ async def classify_instagram_post(post: dict, sem: asyncio.Semaphore) -> Union[d
     async with sem:
         for attempt in range(3):
             try:
-                completion = await aclient.beta.chat.completions.parse(
+                completion = await ACLIENT.beta.chat.completions.parse(
                     model="gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": MISINFO_SYSTEM_PROMPT_INSTAGRAM},

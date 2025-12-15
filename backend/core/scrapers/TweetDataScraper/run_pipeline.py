@@ -1,9 +1,9 @@
 # run_pipeline.py
 import asyncio
 import logging
-from main_scraperTweet import start_scraping_job
-from main_misinfoClassifier import run_classification_job
-from main_dataCombine import run_enrichment_pipeline
+from .main_scraperTweet import start_scraping_job
+from .main_misinfoClassifier import run_classification_job
+from .main_dataCombine import run_enrichment_pipeline
 
 # ---------------------------------------------------------
 # SILENCE NOISY LOGS

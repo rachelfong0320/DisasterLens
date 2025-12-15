@@ -4,12 +4,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pymongo import MongoClient, errors
 
 # Import configs
-from config import (
+from core.config import (
     MONGO_URI, 
-    DB_NAME, 
+    DB_INSTAGRAM, 
     COMBINED_DB_NAME, 
-    COLLECTION_NAME, 
-    MISINFO_COLLECTION, 
+    IG_COLLECTION, 
+    IG_MISINFO_COLLECTION, 
     POSTS_COLLECTION 
 ) 
 
@@ -23,9 +23,9 @@ client = MongoClient(MONGO_URI)
 MAX_WORKERS = 10  # Number of parallel threads
 
 # Database Setup
-src_db = client[DB_NAME]
-raw_post_col = src_db[COLLECTION_NAME] # Raw Instagram posts
-misinfo_col = src_db[MISINFO_COLLECTION] # Instagram Misinfo results
+src_db = client[DB_INSTAGRAM]
+raw_post_col = src_db[IG_COLLECTION] # Raw Instagram posts
+misinfo_col = src_db[IG_MISINFO_COLLECTION] # Instagram Misinfo results
 dest_db = client[COMBINED_DB_NAME]
 posts_col = dest_db[POSTS_COLLECTION] # Combined posts collection
 
@@ -89,7 +89,7 @@ def run_enrichment_pipeline():
         # Filter AUTHENTIC only
         { "$match": { "check_label": "AUTHENTIC" } },
         { "$lookup": {
-            "from": COLLECTION_NAME, # Raw Instagram posts collection (from config)
+            "from": IG_COLLECTION, # Raw Instagram posts collection (from config)
             "localField": "ig_post_id",
             "foreignField": "ig_post_id",
             "as": "details"

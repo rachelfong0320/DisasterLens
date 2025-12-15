@@ -1,13 +1,13 @@
-from pymongo import MongoClient
-from config import MONGO_URI, DB_NAME, COLLECTION_NAME, MISINFO_COLLECTION
+from pymongo import MongoClient,errors
+from core.config import MONGO_URI, DB_INSTAGRAM, IG_COLLECTION, IG_MISINFO_COLLECTION
 
 
 class DatabaseConnection:
     def __init__(self):
         self.client = MongoClient(MONGO_URI)
-        self.db = self.client[DB_NAME]
-        self.collection = self.db[COLLECTION_NAME]
-        self.misinfo_collection = self.db[MISINFO_COLLECTION]
+        self.db = self.client[DB_INSTAGRAM]
+        self.collection = self.db[IG_COLLECTION]
+        self.misinfo_collection = self.db[IG_MISINFO_COLLECTION]
 
     def insert_post(self, post_info):
         """Insert a single post into the database"""

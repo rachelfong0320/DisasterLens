@@ -1,12 +1,11 @@
-# backend/jobs/main_geoProcessor.py
-
 import logging
 from typing import Dict, Any, List
 from pymongo import UpdateOne
+
 # Assuming config.py and opencage are available
 try:
     from opencage.geocoder import OpenCageGeocode 
-    from config import OPEN_CAGE_KEY # Ensure this key name matches your config.py
+    from core.config import OPEN_CAGE_KEY 
     # Initialize OpenCage client globally
     geocoder = OpenCageGeocode(OPEN_CAGE_KEY)
 except Exception:
