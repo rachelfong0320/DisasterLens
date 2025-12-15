@@ -5,6 +5,7 @@ import time
 from typing import Dict, Any
 
 from core.processor.event_creator import run_event_creator_pipeline
+from core.processor.event_consolidator import run_master_event_consolidator
 
 # 1. Setup path for import resolution 
 # Import the specific scraper pipeline runners
@@ -63,15 +64,24 @@ def run_master_pipeline(analytics_batch_size: int = 100) -> Dict[str, Any]:
         results['analytics_sweep'] = f"CRITICAL FAILED: Analytics sweep failed: {e}"
         logging.error(results['analytics_sweep'])
 
-     # --- STEP 3: EVENT CONSOLIDATION ---
-    logging.info("--- 3. START FINAL EVENT CONSOLIDATION JOB ---")
+    logging.info("--- 2b. EXECUTING EVENT CREATOR (POST-LEVEL SAVE) ---")
     try:
-        consolidation_report = run_event_creator_pipeline()
-        results['event_consolidation'] = consolidation_report
+        creation_report = run_event_creator_pipeline()
+        results['post_creation'] = creation_report
+        logging.info(f"Event Creator Result: {results['post_creation']}")
+    except Exception as e:
+        results['post_creation'] = f"CRITICAL FAILED: Post Creation failed: {e}"
+        logging.error(results['post_creation']) 
+
+    # --- STEP 3: MASTER EVENT CONSOLIDATION (EVENT-LEVEL AGGREGATION) ---
+    logging.info("--- 3. START MASTER EVENT CONSOLIDATION JOB ---")
+    try:
+        consolidation_count = run_master_event_consolidator()
+        results['event_consolidation'] = f"Success: Consolidated {consolidation_count} posts into unique events."
         logging.info(f"Consolidation Result: {results['event_consolidation']}")
     except Exception as e:
-        results['event_consolidation'] = f"CRITICAL FAILED: Event Consolidation failed: {e}"
-        logging.error(results['event_consolidation'])   
+        results['event_consolidation'] = f"CRITICAL FAILED: Master Consolidation failed: {e}"
+        logging.error(results['event_consolidation'])
 
     # --- FINAL REPORT ---
     end_time = time.time()
@@ -89,3 +99,15 @@ if __name__ == "__main__":
     print("\nFINAL MASTER PIPELINE REPORT:")
     for key, value in final_report.items():
         print(f"  - {key}: {value}")
+
+
+
+            #  # --- STEP 3: EVENT CONSOLIDATION ---
+    # logging.info("--- 3. START FINAL EVENT CONSOLIDATION JOB ---")
+    # try:
+    #     consolidation_report = run_event_creator_pipeline()
+    #     results['event_consolidation'] = consolidation_report
+    #     logging.info(f"Consolidation Result: {results['event_consolidation']}")
+    # except Exception as e:
+    #     results['event_consolidation'] = f"CRITICAL FAILED: Event Consolidation failed: {e}"
+    #     logging.error(results['event_consolidation'])   

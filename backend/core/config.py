@@ -38,6 +38,7 @@ IG_MISINFO_COLLECTION = "misinfo_classific_data" # Renamed to avoid IG/Tweet con
 POSTS_COLLECTION = "posts_data"
 SENTIMENT_COLLECTION = "sentiment_check"
 INCIDENT_COLLECTION = "incident_classification"
+DISASTER_POSTS_COLLECTION = "combined_disaster_posts"
 DISASTER_EVENTS_COLLECTION = "disaster_events"
 
 # =================================================================

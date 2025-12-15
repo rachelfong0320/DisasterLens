@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from datetime import datetime
 import logging
 from typing import Union
-from core.config import MONGO_URI, COMBINED_DB_NAME,DISASTER_EVENTS_COLLECTION
+from core.config import MONGO_URI, COMBINED_DB_NAME, DISASTER_POSTS_COLLECTION
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ def save_disaster_event(event_data: dict) -> Union[str, None]:
         if not client: return None
 
         db = client[COMBINED_DB_NAME]
-        collection = db[DISASTER_EVENTS_COLLECTION]
+        collection = db[DISASTER_POSTS_COLLECTION]
 
         # Use post_id (the original post ID) for Idempotency Check
         post_identifier = event_data.get("post_id") # <--- USE "post_id" KEY
