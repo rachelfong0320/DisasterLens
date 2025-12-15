@@ -1,0 +1,96 @@
+from pymongo import MongoClient,errors
+from core.config import MONGO_URI, DB_INSTAGRAM, IG_COLLECTION, IG_MISINFO_COLLECTION
+
+
+class DatabaseConnection:
+    def __init__(self):
+        self.client = MongoClient(MONGO_URI)
+        self.db = self.client[DB_INSTAGRAM]
+        self.collection = self.db[IG_COLLECTION]
+        self.misinfo_collection = self.db[IG_MISINFO_COLLECTION]
+
+    def insert_post(self, post_info):
+        """Insert a single post into the database"""
+        try:
+            return self.collection.insert_one(post_info)
+        except Exception as e:
+            print(f"Error inserting post: {e}")
+            return None
+        
+    def insert_many_posts(self, posts):
+        """Insert multiple posts into the database"""
+        try:
+            return self.collection.insert_many(posts)
+        except Exception as e:
+            print(f"Error inserting posts: {e}")
+            return None
+        
+    def mark_as_attempted(self, ig_post_id):
+        """Mark a post as classification attempted"""
+        self.collection.update_one(
+            {"ig_post_id": ig_post_id},
+            {"$set": {"classification_attempted": True}},
+        )
+
+    def get_unclassified_posts(self, batch_size=100):
+        """Fetch posts not yet classified or attempted"""
+        classified_ids = self.misinfo_collection.distinct("ig_post_id")
+        query = {
+            "ig_post_id": {"$nin": classified_ids},
+            "classification_attempted": {"$ne": True},
+        }
+        return list(self.collection.find(query).limit(batch_size))
+
+    def insert_many_classifications(self, results):
+        """Insert classified results into the misinfo collection"""
+        try:
+            return self.misinfo_collection.insert_many(results, ordered=False)
+        except Exception as e:
+            print(f"Error inserting classification results: {e}")
+            return None 
+
+    def get_unclassified_incident_posts(self, batch_size=100):
+        """Fetch posts from the COMBINED table (posts_col) not yet classified for incident type."""
+        # Find post IDs already classified for incident type
+        classified_ids = self.incident_collection.distinct("post_id") 
+        
+        # FR-019: Query the combined posts collection (`posts_col`) using 'postId'
+        query = {
+            "postId": {"$nin": classified_ids},
+        }
+        return list(self.posts_col.find(query).limit(batch_size))
+
+    def insert_many_incidents(self, results):
+        """Insert classified incident results into the new incident_classification collection (FR-022)."""
+        try:
+            return self.incident_collection.insert_many(results, ordered=False)
+        except errors.BulkWriteError:
+             print("Partial write completed (duplicates skipped).")
+             return None
+        except Exception as e:
+            print(f"Error inserting incident classification results: {e}")
+            return None
+
+    def format_post_for_db(self, row):
+        """Format a pandas row for database insertion"""
+        return {
+            "ig_post_id": row["ig_post_id"],
+            "created_at": row["created_at"],
+            "description": row["description"],
+            "cleaned_description": row["cleaned_description"],
+            "hashtags": row["cleaned_hashtags_str"],   
+            "author_id": row["author_id"],
+            "author_username": row["author_username"],
+            "author_full_name": row["author_full_name"],
+            "is_verified": bool(row["account_is_verified"]),
+            "address": row["address"],
+            "city": row["city"],
+            "location_name": row["location_name"],
+            "location_short_name": row["location_short_name"],
+            "latitude": float(row["latitude"]) if row["latitude"] else None,
+            "longitude": float(row["longitude"]) if row["longitude"] else None,
+            "reported_as_spam": row["reported_as_spam"],
+            "gen_ai_detection_method": row["gen_ai_detection_method"],
+            "high_risk_genai_flag": bool(row["high_risk_genai_flag"]),
+            "integrity_review_decision": row["integrity_review_decision"],
+        }

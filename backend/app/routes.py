@@ -6,9 +6,9 @@ from app.database import db_connection
 from typing import List
 from starlette.concurrency import run_in_threadpool
 from app.services.notifications_services import process_notification_queue
+from starlette.background import BackgroundTasks
 
-from jobs.main_incidentClassifier import run_incident_classification_batch
-from jobs.main_incidentClassifier import sweep_incident_classification_job
+from core.run_root_pipeline import run_master_pipeline
 
 router = APIRouter()
 
@@ -16,54 +16,30 @@ class SubscriberModel(BaseModel):
     email: EmailStr
     locations: List[str]
 
-# 1. Endpoint for all UNIFIED posts (Replaces /tweets and /instagram)
-@router.get("/posts/unified", response_description="List all unified social media posts (Twitter + Instagram)")
-async def get_unified_posts(limit: int = 50):
+# Helper function to run the pipeline synchronously in a thread
+def run_pipeline_sync(batch_size: int):
+    """Placeholder for the synchronous execution of the master pipeline."""
     try:
-        # Queries the unified posts_data collection
-        posts = list(db_connection.posts_collection.find().limit(limit))
-        for post in posts:
-            post["_id"] = str(post["_id"])
-        return posts
+        # Calls the master function we imported
+        results = run_master_pipeline(analytics_batch_size=batch_size)
+        return results
     except Exception as e:
-        # Use database connection from app/database.py
-        raise HTTPException(status_code=500, detail=str(e))
-
-# 2. Endpoint for Incident Classification results (Your Part - FR-023: Visualization)
-@router.get("/analysis/incidents", response_description="List incident classification results")
-async def get_incident_classifications(limit: int = 50):
-    try:
-        # Queries the centralized incident_classification table
-        incidents = list(db_connection.incident_collection.find().limit(limit))
-        for incident in incidents:
-            incident["_id"] = str(incident["_id"])
-        return incidents
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/test/run_incident_classifier", response_description="Run Incident Classification on combined data")
-async def trigger_incident_classifier(batch_size: int = 100, continuous: bool = False):
+        # You can log or handle this error as needed
+        raise e
+    
+@router.post("/run_master_pipeline", response_description="Run the entire pipeline (Scrape, Classify, Combine)")
+async def trigger_master_pipeline(background_tasks: BackgroundTasks, batch_size: int = 100):
     """
-    Trigger the incident classifier.
-    - If `continuous` is False (default) this runs a single async batch and returns the number classified.
-    - If `continuous` is True this runs the synchronous sweeping function in a threadpool until no more posts remain.
+    Triggers the full, resource-intensive master pipeline in the background.
+    Execution may take a long time and should not block the server.
     """
-    try:
-        if continuous:
-            # NOTE: The sweeping function is SYNCHRONOUS, so run it in a threadpool to avoid blocking.
-            posts_classified = await run_in_threadpool(
-                sweep_incident_classification_job, # The synchronous sweeping function
-                batch_size                         # Pass the batch size argument
-            )
-            return {"message": f"Incident Classification sweep completed. {posts_classified} total posts classified."}
-
-        # Default / preferred path: run a single async batch inside the FastAPI event loop.
-        posts_classified = await run_incident_classification_batch(batch_size)
-        return {"message": f"Incident Classification batch completed. {posts_classified} posts classified."}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Classification job failed: {e}")
-       
+    # Use BackgroundTasks to run the synchronous threadpool job
+    background_tasks.add_task(run_in_threadpool, run_pipeline_sync, batch_size)
+    
+    return {"message": "Master pipeline execution initiated in the background.", 
+            "status": "Accepted", 
+            "note": "Check logs for progress. This may take several minutes."}
+    
 @router.get("/tweets", response_description="List all tweets")
 async def get_tweets(limit: int = 50):
     try:
