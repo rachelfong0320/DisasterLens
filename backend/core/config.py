@@ -1,15 +1,3 @@
-# import os
-# import re
-# from dotenv import load_dotenv
-# from openai import AsyncOpenAI
-
-# load_dotenv()
-# OPENAI_API_KEY = os.getenv("IG_OPENAI_API_KEY").strip()
-# MONGO_USERNAME = os.getenv("MONGO_USERNAME").strip()
-# MONGO_PASSWORD = os.getenv("MONGO_PASSWORD").strip()
-# MONGO_URI = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@disasterlens.cnayord.mongodb.net/?retryWrites=true&w=majority&appName=DisasterLens"
-# OPEN_CAGE_KEY = os.getenv("OPEN_CAGE_KEY").strip()
-
 import os
 import requests
 from requests.adapters import HTTPAdapter
@@ -49,6 +37,8 @@ TWEET_MISINFO_COLLECTION = "misinfo_classific"
 IG_MISINFO_COLLECTION = "misinfo_classific_data" # Renamed to avoid IG/Tweet conflict
 POSTS_COLLECTION = "posts_data"
 SENTIMENT_COLLECTION = "sentiment_check"
+INCIDENT_COLLECTION = "incident_classification"
+DISASTER_EVENTS_COLLECTION = "disaster_events"
 
 # =================================================================
 # 3. TWITTER/RAPID API SETUP (from Tweet config)

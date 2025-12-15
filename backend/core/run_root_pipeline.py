@@ -4,6 +4,8 @@ import logging
 import time
 from typing import Dict, Any
 
+from core.processor.event_creator import run_event_creator_pipeline
+
 # 1. Setup path for import resolution 
 # Import the specific scraper pipeline runners
 try:
@@ -60,6 +62,16 @@ def run_master_pipeline(analytics_batch_size: int = 100) -> Dict[str, Any]:
     except Exception as e:
         results['analytics_sweep'] = f"CRITICAL FAILED: Analytics sweep failed: {e}"
         logging.error(results['analytics_sweep'])
+
+     # --- STEP 3: EVENT CONSOLIDATION ---
+    logging.info("--- 3. START FINAL EVENT CONSOLIDATION JOB ---")
+    try:
+        consolidation_report = run_event_creator_pipeline()
+        results['event_consolidation'] = consolidation_report
+        logging.info(f"Consolidation Result: {results['event_consolidation']}")
+    except Exception as e:
+        results['event_consolidation'] = f"CRITICAL FAILED: Event Consolidation failed: {e}"
+        logging.error(results['event_consolidation'])   
 
     # --- FINAL REPORT ---
     end_time = time.time()
