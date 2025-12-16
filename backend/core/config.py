@@ -40,6 +40,8 @@ SENTIMENT_COLLECTION = "sentiment_check"
 INCIDENT_COLLECTION = "incident_classification"
 DISASTER_POSTS_COLLECTION = "combined_disaster_posts"
 DISASTER_EVENTS_COLLECTION = "disaster_events"
+ANALYTICS_COLLECTION = "event_analytics"
+KEYWORD_COLLECTION = "tracking_keyword"
 
 # =================================================================
 # 3. TWITTER/RAPID API SETUP (from Tweet config)
@@ -108,3 +110,47 @@ disasters_clean = [re.sub(r'[\r\n]', '', d).strip() for d in disasters]
 
 keywords = [f"{d} {s}" for d in disasters_clean for s in malaysia_keywords_clean]
 
+# =================================================================
+# 7. MALAYSIAN STATE - DISTRICT MAPPING (from disaster_data.py
+MALAYSIA_STATE_DISTRICT_MAP = {
+    # Selangor (Central)
+    "selangor": ["shah alam", "petaling jaya", "klang", "sepang", "gombak", "hulu langat", "kuala langat", "kuala selangor", "sabak bernam", "hulu selangor"],
+
+    # Federal Territories (Often handled separately, but included for filtering major cities)
+    "kuala lumpur": ["kuala lumpur", "putrajaya", "labuan"],
+    "putrajaya": ["putrajaya"], 
+
+    # Johor (South)
+    "johor": ["johor bahru", "muar", "kulai", "batu pahat", "kota tinggi", "mersing", "pontian", "segamat", "kluai", "tangkak"],
+
+    # Penang / Pulau Pinang (North)
+    "penang": ["george town", "butterworth", "balık pulau", "seberang perai", "timur laut", "seberang perai utara", "seberang perai tengah", "seberang perai selatan"],
+    "pulau pinang": ["george town", "butterworth", "balık pulau", "seberang perai", "timur laut", "seberang perai utara", "seberang perai tengah", "seberang perai selatan"],
+
+    # Perak (North)
+    "perak": ["ipoh", "kuala kangsar", "taiping", "hilir perak", "kinta", "batang padang", "manjung", "kerian", "larut", "matang", "selama"],
+
+    # Kedah (North)
+    "kedah": ["alor setar", "sungai petani", "langkawi", "kota setar", "kuala muda", "kubang pasu", "yan", "pendang", "padang terap"],
+
+    # Pahang (East Coast)
+    "pahang": ["kuantan", "temerloh", "bentong", "pekan", "rompin", "lipis", "jerantut", "maran", "bera"],
+
+    # Kelantan (East Coast)
+    "kelantan": ["kota bharu", "kuala krai", "pasir mas", "tanah merah", "machang", "bachok", "tumpat"],
+
+    # Terengganu (East Coast)
+    "terengganu": ["kuala terengganu", "dungun", "kemaman", "marang", "besut", "setiu"],
+
+    # Negeri Sembilan
+    "negeri sembilan": ["seremban", "port dickson", "jempol", "kuala pilah", "rembau"],
+
+    # Melaka
+    "melaka": ["melaka tengah", "jasin", "alor gajah"],
+
+    # Sarawak (East Malaysia)
+    "sarawak": ["kuching", "miri", "sibu", "bintulu", "muka", "samarahan", "serian", "kapit"],
+
+    # Sabah (East Malaysia)
+    "sabah": ["kota kinabalu", "sandakan", "tawau", "lahad datu", "kudat", "ranau", "tuaran"]
+}
