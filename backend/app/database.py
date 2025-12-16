@@ -32,12 +32,10 @@ class Database:
         self.posts_data_collection = self.analytics_db["posts_data"]
         self.tracking_collection = self.analytics_db["tracking_data"]
         self.combined_disaster_posts_collection = self.analytics_db["combined_disaster_posts"]
+        self.disaster_events_collection = self.analytics_db["disaster_events"]
 
         self.sub_db = self.client["Subscriptions"]
         self.subscriber_collection = self.sub_db["subscriber"]
-        self.notification_queue = self.sub_db["notification_queue"]
-
-        self.notification_queue.create_index([("user_email", 1), ("status", 1)])
 
         try:
             self.subscriber_collection.create_index("email", unique=True)

@@ -24,11 +24,9 @@ DEFAULT_COOLDOWN_MINUTES = 60
 # Load SMTP configuration directly from environment variables
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
-# We use the provided SMTP_EMAIL for both authentication and the sender address
 SMTP_USERNAME = os.getenv("SMTP_EMAIL") 
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SENDER_ADDRESS = SMTP_USERNAME # The "From" address is the authenticated user
-# -------------------------------------------
+SENDER_ADDRESS = SMTP_USERNAME
 
 
 def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
