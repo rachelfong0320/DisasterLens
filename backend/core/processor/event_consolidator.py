@@ -3,14 +3,17 @@ from datetime import timedelta, datetime, timezone
 from typing import Dict, Any, Optional
 from pymongo.database import Database
 from pymongo.collection import Collection
+from bson.objectid import ObjectId
 # We only import the output collection name here, as the input collection 
 # is handled by the calling function (run_master_event_consolidator).
 from core.db.disaster_event_saver import get_mongo_client
 from core.config import DISASTER_EVENTS_COLLECTION, DISASTER_POSTS_COLLECTION, COMBINED_DB_NAME
+from core.jobs.alert_generator import process_event_for_alerts
 
 # --- CONFIGURATION (Ensuring timedelta is correctly defined) ---
 TIME_WINDOW_HOURS = 24
 TIME_WINDOW = timedelta(hours=TIME_WINDOW_HOURS)
+DEFAULT_ALERT_COOLDOWN_MINUTES = 60
 # ---------------------------------------------------------------
 
 logger = logging.getLogger(__name__)
@@ -67,6 +70,9 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
         # Calculate the new aggregated times
         new_start_time = min(existing_start_time, post_time) 
         new_recent_time = max(existing_recent_time, post_time) 
+
+        # Check if this update actually advances the 'most_recent_report' time
+        is_significant_update = new_recent_time > existing_recent_time
         
         update_operation = {
             "$set": {
@@ -82,6 +88,12 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
             update_operation
         )
         logger.info(f"Post {post_id} linked to existing event: {event_id}")
+
+        # --- ALERT GENERATION TRIGGER (Update) ---
+        if is_significant_update:
+             # Trigger alerts only if a new report time updates the event
+            process_event_for_alerts(existing_master_event["_id"])
+        # -----------------------------------------
         return event_id
         
     else:
@@ -106,6 +118,11 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
         
         master_collection.insert_one(new_master_event)
         logger.info(f"Created new master event: {event_id}")
+
+        # --- ALERT GENERATION TRIGGER (Creation) ---
+        # A new event always triggers the first alert
+        process_event_for_alerts(new_master_event["_id"])
+        # -------------------------------------------
         return event_id
 
 def run_master_event_consolidator():
