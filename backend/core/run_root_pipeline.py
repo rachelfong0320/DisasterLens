@@ -100,14 +100,3 @@ if __name__ == "__main__":
     for key, value in final_report.items():
         print(f"  - {key}: {value}")
 
-
-
-            #  # --- STEP 3: EVENT CONSOLIDATION ---
-    # logging.info("--- 3. START FINAL EVENT CONSOLIDATION JOB ---")
-    # try:
-    #     consolidation_report = run_event_creator_pipeline()
-    #     results['event_consolidation'] = consolidation_report
-    #     logging.info(f"Consolidation Result: {results['event_consolidation']}")
-    # except Exception as e:
-    #     results['event_consolidation'] = f"CRITICAL FAILED: Event Consolidation failed: {e}"
-    #     logging.error(results['event_consolidation'])   
