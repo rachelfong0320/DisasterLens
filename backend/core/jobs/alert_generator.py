@@ -100,7 +100,6 @@ def process_event_for_alerts(event_id: ObjectId) -> int:
     """
     Checks the event's alert cooldown and triggers emails to matching subscribers.
     """
-    # TODO: Change DB once YONGJING sets up the proper collections
     events_collection = db_connection.disaster_events_collection #
     subscribers_collection = db_connection.subscriber_collection #
 
@@ -111,8 +110,12 @@ def process_event_for_alerts(event_id: ObjectId) -> int:
         logger.error(f"Event ID {event_id} not found for alerting.")
         return 0
 
-    # TODO: Change 'location_district' to the appropriate field once DB is finalized
-    event_location = event.get("location_district")
+    event_location = event.get("location_state")
+    logger.info(
+    f"[ALERT DEBUG] Event ID={event.get('event_id')} | "
+    f"location_state={event_location} | "
+    f"type={type(event_location)}"
+)
     
     if not event_location:
         logger.warning(f"Event {event['event_id']} has no location, skipping alert generation.")
@@ -137,9 +140,12 @@ def process_event_for_alerts(event_id: ObjectId) -> int:
     
     # 4. Send notifications
     for subscriber in subscribers:
-        subscriber_email = subscriber.get("email") # Get the recipient's email from the subscriber document
+        subscriber_email = subscriber.get("email") 
+        logger.info(
+        f"[ALERT DEBUG] Sending alert to subscriber email={subscriber.get('email')}"
+    )
         if subscriber_email:
-            _send_notification_email(subscriber_email, event) # Call send function
+            _send_notification_email(subscriber_email, event)
             emails_sent += 1
 
     # 5. If alerts were sent, update the disaster event to reset the cooldown timer

@@ -36,7 +36,7 @@ export default function NewsletterSection({ preferredLocations }: NewsletterSect
           },
           body: JSON.stringify({
             email: email,
-            locations: preferredLocations,
+            locations: preferredLocations.map(loc => loc.toLowerCase()),
           }),
         })
 
