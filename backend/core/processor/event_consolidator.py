@@ -35,12 +35,14 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
     master_collection: Collection = db[DISASTER_EVENTS_COLLECTION]
     
     post_id = new_post_event.get('post_id')
+
     event_type = new_post_event.get('disaster_type') 
-    post_district = new_post_event.get('location', {}).get('district') 
+    post_district = new_post_event.get('location', {}).get('district').lower() 
+    post_state = new_post_event.get('location', {}).get('state').lower()
     post_time: datetime = new_post_event.get('start_time')
     post_coordinates = new_post_event.get('location', {}).get('lat_lon') 
 
-    if not all([post_id, event_type, post_district, post_time, post_coordinates]):
+    if not all([post_id, event_type, post_district, post_state, post_time, post_coordinates]):
         logger.warning(f"Skipping consolidation for post {post_id}: Missing critical data.")
         return None
 
@@ -77,15 +79,26 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
         update_operation = {
             "$set": {
                 "start_time": new_start_time,           
-                "most_recent_report": new_recent_time    
+                "most_recent_report": new_recent_time,
+                "location_state": post_state,    
             },
-            "$inc": { "total_posts_count": 1 },
             "$addToSet": { "related_post_ids": post_id } 
         }
         
         master_collection.update_one(
             {"_id": existing_master_event["_id"]},
             update_operation
+        )
+
+        master_collection.update_one(
+        {"_id": existing_master_event["_id"]},
+        [ # Pass an array of stages for an Aggregation Update
+            { 
+                "$set": { 
+                    "total_posts_count": { "$size": "$related_post_ids" } 
+                    } 
+                }
+            ]
         )
         logger.info(f"Post {post_id} linked to existing event: {event_id}")
 
@@ -106,6 +119,7 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
             # Output key for the Master table
             "classification_type": event_type, 
             "location_district": post_district,
+            "location_state": post_state,
             "start_time": post_time, 
             "most_recent_report": post_time,
             "geometry": { 

@@ -1,7 +1,7 @@
 # app/main.py
 from fastapi import FastAPI
-from app.routes import router
 from fastapi.middleware.cors import CORSMiddleware
+from app.routes import disaster_data, pipeline_ops
 
 app = FastAPI(title="DisasterLens API")
 
@@ -14,7 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(disaster_data.router, prefix="/api/v1") 
+app.include_router(pipeline_ops.router, prefix="/api/v1")   
 
 @app.get("/")
 def read_root():
