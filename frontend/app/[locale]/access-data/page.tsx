@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 
 export default function AccessDataPage() {
   const t = useTranslations("access_data");
@@ -268,7 +267,7 @@ export default function AccessDataPage() {
               {/* Export Format Section */}
               <div className="bg-card border border-border rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-foreground mb-4">
-                  {t("expFormat")}
+                  {t("expFormat")} <span className="text-red-500">*</span>
                 </h2>
                 <div className="space-y-3">
                   {[
@@ -328,13 +327,6 @@ export default function AccessDataPage() {
                   {t("btnCancel")}
                 </Link>
               </div>
-
-              {/* Success Message */}
-              {isExporting && (
-                <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md">
-                  {t("successDownload")}
-                </div>
-              )}
             </form>
 
             {/* Info Box */}

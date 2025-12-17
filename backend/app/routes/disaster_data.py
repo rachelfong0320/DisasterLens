@@ -369,22 +369,14 @@ async def export_disaster_events(
 
     # Filter by Date Range
     if start_date or end_date:
-        date_query = {}
-        if start_date:
-            try:
-                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00').split('T')[0])
-                date_query["$gte"] = start_dt
-            except ValueError:
-                pass 
-        if end_date:
-            try:
-                end_dt_str = end_date.replace('Z', '+00:00').split('T')[0]
-                end_dt = datetime.fromisoformat(end_dt_str).replace(hour=23, minute=59, second=59)
-                date_query["$lte"] = end_dt
-            except ValueError:
-                pass
-        if date_query:
-            query["start_time"] = date_query
+        date_query = {}  
+    if start_date:
+        date_query["$gte"] = datetime.combine(start_date, datetime.min.time())
+    if end_date:
+        date_query["$lte"] = datetime.combine(end_date, datetime.max.time())
+    query["start_time"] = date_query
+
+
 
     # Filter by Location
     if location:
