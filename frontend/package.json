@@ -57,6 +57,7 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.60.0",
     "react-leaflet": "^5.0.0",
+    "react-leaflet-cluster": "^4.0.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "latest",
     "save-dev": "^0.0.1-security",
