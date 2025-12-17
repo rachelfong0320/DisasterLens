@@ -17,8 +17,8 @@ export default function LeafletMap() {
   const [filters, setFilters] = useState<FilterOptions>({
     disasterType: "",
     state: "",
-    startDate: "",
-    endDate: "",
+    startDate: "2023-01-01",
+    endDate: "2025-12-31",
   });
 
   return (

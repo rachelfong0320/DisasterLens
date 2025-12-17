@@ -1,30 +1,28 @@
-import { mockDisasterMarkers, DisasterMarker } from "@/data/mockDisasters";
-import type { FilterOptions } from "@/components/disaster-filter-widget";
+// src/lib/filterUtils.ts
+import { DisasterEvent, FilterOptions } from "@/lib/types/disaster";
 
-export function applyFilters(filters: FilterOptions): DisasterMarker[] {
-  return mockDisasterMarkers.filter((marker) => {
-    // Filter by disaster type
-    if (filters.disasterType && marker.disaster_type !== filters.disasterType) {
+export function applyFilters(events: DisasterEvent[], filters: FilterOptions): DisasterEvent[] {
+  if (!events || !Array.isArray(events)) return [];
+
+  return events.filter((event) => {
+    // 1. Type Filter: If filter is empty, let everything through
+    if (filters.disasterType && event.classification_type !== filters.disasterType) {
       return false;
     }
 
-    // Filter by state
-    if (filters.state && marker.state !== filters.state) {
-      return false;
-    }
-
-    // Filter by date range
-    const markerStart = new Date(marker.start_time);
-    const markerEnd = marker.end_time ? new Date(marker.end_time) : markerStart;
-
+    // 2. Date Filter: Ensure the event falls BETWEEN start and end
+    const eventDate = new Date(event.start_time);
+    
     if (filters.startDate) {
-      const filterStart = new Date(filters.startDate + "T00:00:00Z");
-      if (markerEnd < filterStart) return false;
+      const start = new Date(filters.startDate);
+      if (eventDate < start) return false;
     }
 
     if (filters.endDate) {
-      const filterEnd = new Date(filters.endDate + "T23:59:59Z");
-      if (markerStart > filterEnd) return false;
+      const end = new Date(filters.endDate);
+      // Set end of day for the end filter
+      end.setHours(23, 59, 59); 
+      if (eventDate > end) return false;
     }
 
     return true;

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { mockDisasterMarkers } from "@/data/mockDisasters";
 import { applyFilters } from "@/lib/filterUtils";
 import type { FilterOptions } from "@/components/disaster-filter-widget";
+import { DisasterEvent } from "@/lib/types/disaster";
 
 // Create custom icons for different disaster types
 const getCustomIcon = (type: string, severity?: string) => {
@@ -55,53 +55,67 @@ export default function LeafletMapContent({
     endDate: "",
   },
 }: LeafletMapContentProps) {
-  const filteredMarkers = applyFilters(filters);
+  const [events, setEvents] = useState<DisasterEvent[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  return (
-    <MapContainer
-      center={[4.21, 101.69]}
-      zoom={6}
-      style={{ width: "100%", height: "100%" }}
-    >
-      {/* OpenStreetMap tiles */}
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+  const filteredMarkers = applyFilters(events, filters);
 
-      {/* Disaster markers */}
-      {filteredMarkers.map((marker) => (
-        <Marker
-          key={marker.event_id}
-          position={[marker.latitude, marker.longitude]}
-          icon={getCustomIcon(marker.disaster_type)}
-        >
-          <Popup>
-            <div className="p-2 max-w-xs">
-              <h3 className="font-semibold text-sm">
-                {marker.location_name || marker.location_id}
-              </h3>
-              <p className="text-xs text-gray-600 capitalize">
-                Type: {marker.disaster_type.replace("_", " ")}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {new Date(marker.start_time).toLocaleDateString()}
-              </p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+  useEffect(()=>{
+    const fetchEvents = async () => {
+      setLoading(true);
+      try{
+        //Construct the query parameters based on filters
+        const params = new URLSearchParams();
+        if(filters.disasterType) params.append('disasterType', filters.disasterType);
+        if(filters.state) params.append('state', filters.state);
+        if(filters.startDate) params.append('start_date', filters.startDate);
+        if(filters.endDate) params.append('end_date', filters.endDate);
 
-      {/* No results message */}
-      {filteredMarkers.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/90 px-4 py-2 rounded-lg shadow">
-            <p className="text-sm text-gray-600">
-              No disasters found matching filters
-            </p>
-          </div>
+        const response = await fetch(`http://localhost:8000/api/v1/events/filtered?${params.toString()}`);
+        const data = await response.json();
+        console.log("filters applied:", filters);
+          console.log("response data:", data);
+        setEvents(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  },[filters]);
+
+
+
+return (
+    <div className="relative w-full h-full">
+      {loading && (
+        <div className="absolute top-2 right-2 z-[1000] bg-white px-2 py-1 rounded shadow text-xs">
+          Updating Map...
         </div>
       )}
-    </MapContainer>
+      
+      <MapContainer center={[4.21, 101.69]} zoom={6} style={{ width: "100%", height: "100%" }}>
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        {Array.isArray(events) && events.map((event) => (
+          <Marker
+            key={event.event_id}
+            // Note: Your backend returns 'geometry', adjust if it's GeoJSON or lat/lng
+            position={[event.geometry.coordinates[1], event.geometry.coordinates[0]]}
+            icon={getCustomIcon(event.classification_type)}
+          >
+            <Popup>
+              <div className="p-2">
+                <h3 className="font-bold uppercase text-red-600">{event.classification_type}</h3>
+                <p className="text-sm">{event.location_district}, {event.location_state}</p>
+                <p className="text-xs text-gray-500">Reports: {event.total_posts_count}</p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
   );
 }
