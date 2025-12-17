@@ -148,7 +148,7 @@ export default function LeafletMapContent({
           ))}
         </MarkerClusterGroup>
 
-        <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 backdrop-blur-sm p-3 rounded-lg border border-gray-200 shadow-lg">
+        <div className="absolute bottom-6 left-6 z-1000 bg-white/90 backdrop-blur-sm p-3 rounded-lg border border-gray-200 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-[10px] text-white font-bold border border-white shadow-sm">
               #

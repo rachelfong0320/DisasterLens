@@ -28,7 +28,7 @@ export default function LeafletMap() {
     <section className="w-full px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-foreground">Disaster Map</h2>
+          <h2 className="text-3xl font-bold text-foreground">Disaster Map</h2>        
           
          <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -80,6 +80,33 @@ export default function LeafletMap() {
             >
               <LeafletMapContent filters={filters} />
             </Suspense>
+          </div>
+
+          {/* Dynamic Filter Summary Ribbon */}
+          <div className="bg-gray-50 border-l-4 border-blue-500 p-3 mb-4 rounded-r-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-sm text-gray-700">
+              <span className="font-medium">Current View: </span>
+              
+              {/* Disaster Type */}
+              <span className="font-bold text-blue-600">
+                {filters.disasterType ? filters.disasterType.replace("_", " ").toUpperCase() : "All Disasters"}
+              </span>
+              
+              <span> in </span>
+              
+              {/* State */}
+              <span className="font-bold text-gray-900">
+                {filters.state || "All States"}
+              </span>
+
+              {/* Date Range */}
+              <span className="text-gray-500 ml-1">
+                {/* If date is empty, it shows a default string, otherwise shows the date */}
+                {filters.startDate || "2023-01-01"} 
+                <span className="mx-1 text-gray-400">→</span> 
+                {filters.endDate || "2025-12-31"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
