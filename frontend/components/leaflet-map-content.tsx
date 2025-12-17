@@ -107,7 +107,7 @@ export default function LeafletMapContent({
   return (
     <div className="relative w-full h-full">
       {loading && (
-        <div className="absolute top-2 right-2 z-[1000] bg-white px-2 py-1 rounded shadow text-xs font-bold">
+        <div className="absolute top-2 right-2 z-1000 bg-white px-2 py-1 rounded shadow text-xs font-bold">
           Updating Map...
         </div>
       )}
@@ -147,6 +147,18 @@ export default function LeafletMapContent({
             </Marker>
           ))}
         </MarkerClusterGroup>
+
+        <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 backdrop-blur-sm p-3 rounded-lg border border-gray-200 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-[10px] text-white font-bold border border-white shadow-sm">
+              #
+            </div>
+            <p className="text-xs text-gray-700 font-medium leading-tight">
+              Numbers represent the <br /> 
+              <span className="text-red-700 font-bold text-sm">Total Incidents</span> reported
+            </p>
+          </div>
+        </div>
       </MapContainer>
     </div>
   );
