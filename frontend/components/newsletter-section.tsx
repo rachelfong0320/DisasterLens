@@ -28,8 +28,7 @@ export default function NewsletterSection({ preferredLocations }: NewsletterSect
       setLoading(true);
       try {
         // 2. Call the Backend API
-        // Ensure this URL matches your FastAPI server address (default is localhost:8000)
-        const response = await fetch("http://localhost:8000/subscribe", {
+        const response = await fetch("http://localhost:8000/api/v1/subscribe", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
