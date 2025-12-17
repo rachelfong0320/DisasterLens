@@ -68,7 +68,7 @@ export default function ChatbotWidget({ isOpen, onToggle }: ChatbotWidgetProps) 
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 bg-card border border-border rounded-lg shadow-2xl flex flex-col z-40 h-96 max-h-[80vh]">
+        <div className="fixed bottom-24 right-6 w-80 bg-card border border-border rounded-lg shadow-2xl flex flex-col z-9999 h-96 max-h-[80vh]">
           {/* Header */}
           <div className="bg-primary text-primary-foreground px-4 py-3 rounded-t-lg">
             <h3 className="font-semibold">DisasterLens Chatbot</h3>
