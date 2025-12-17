@@ -10,18 +10,17 @@ export function applyFilters(events: DisasterEvent[], filters: FilterOptions): D
       return false;
     }
 
-    // 2. Date Filter: Ensure the event falls BETWEEN start and end
-    const eventDate = new Date(event.start_time);
-    
-    if (filters.startDate) {
-      const start = new Date(filters.startDate);
-      if (eventDate < start) return false;
+    // 2. State
+    if (filters.state && event.location_state.toLowerCase() !== filters.state.toLowerCase()) {
+      return false;
     }
 
+    // 3. Date Filter: Ensure the event falls BETWEEN start and end
+    const eventDate = new Date(event.start_time);
+    if (filters.startDate && eventDate < new Date(filters.startDate)) return false;
     if (filters.endDate) {
       const end = new Date(filters.endDate);
-      // Set end of day for the end filter
-      end.setHours(23, 59, 59); 
+      end.setHours(23, 59, 59);
       if (eventDate > end) return false;
     }
 

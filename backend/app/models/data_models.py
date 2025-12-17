@@ -16,6 +16,7 @@ class DisasterEvent(BaseModel):
     event_id: str
     classification_type: str
     location_district: str
+    location_state: str
     start_time: datetime
     most_recent_report: datetime
     geometry: Geometry

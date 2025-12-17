@@ -82,51 +82,40 @@ async def get_filtered_events(
     if disaster_type:
         query_filter["classification_type"] = disaster_type.lower() 
 
+    unknown_terms = ["unknown district", "unknown state", "unknown", ""]
+
     if state:
+        # Set the state equality filter
+        query_filter["location_state"] = {"$eq": state.lower(), "$nin": unknown_terms}
+        
+        # Add districts if they exist in your map
         districts = MALAYSIA_STATE_DISTRICT_MAP.get(state.lower())
         if districts:
-            query_filter["location_district"] = {"$in": districts}
+            query_filter["location_district"] = {"$in": districts, "$nin": unknown_terms}
+    else:
+        # Default global "Unknown" filtering
+        query_filter["location_state"] = {"$nin": unknown_terms, "$exists": True}
+        query_filter["location_district"] = {"$nin": unknown_terms, "$exists": True}
 
-    # Filter out 'Unknown' districts/states (using $nin for not in)
-    unknown_terms = ["unknown district", "unknown state", "unknown", ""]
-    
-    query_filter["location_district"] = {
-        **query_filter.get("location_district", {}), # Preserve existing district filters (if 'state' was provided)
-        "$nin": unknown_terms,
-        "$exists": True
-    }
-    
-    query_filter["location_state"] = {
-        **query_filter.get("location_state", {}), # Preserve existing state filters (though none are currently applied directly)
-        "$nin": unknown_terms,
-        "$exists": True
-    }
-
-    # Execute the query
-    events = []
-    # FIX: Since we need to project the size of related_post_ids for accuracy, 
-    # we should use an aggregation pipeline here instead of .find()
-    
+    # 4. Aggregation Pipeline
     pipeline = [
         { "$match": query_filter },
-        
-        # Stage 2: Project the final document, calculating the accurate total_posts_count
         { "$project": {
             "_id": 0,
             "total_posts_count": { "$size": "$related_post_ids" },            
-            "event_id": "$event_id",
-            "classification_type": "$classification_type",
-            "location_district": "$location_district",
-            "location_state": "$location_state",
-            "start_time": "$start_time",
-            "most_recent_report": "$most_recent_report",
-            "geometry": "$geometry",
-            "related_post_ids": "$related_post_ids"
+            "event_id": 1,
+            "classification_type": 1,
+            "location_district": 1,
+            "location_state": 1,
+            "start_time": 1,
+            "most_recent_report": 1,
+            "geometry": 1,
+            "related_post_ids": 1
         }}
     ]
 
+    events = []
     cursor = collection.aggregate(pipeline) 
-    
     for doc in cursor:
         events.append(DisasterEvent(**doc))
         
