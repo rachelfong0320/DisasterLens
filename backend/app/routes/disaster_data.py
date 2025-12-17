@@ -1,5 +1,9 @@
 # app/routes/disaster_data.py
-
+import csv
+import io
+import json
+import pandas as pd
+from fastapi.responses import StreamingResponse
 from datetime import datetime, date, timezone
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -344,3 +348,177 @@ async def get_top_keywords_filtered(
     results = list(post_collection.aggregate(pipeline))
     
     return results
+
+@router.get(
+    "/events/export",
+    response_model=None,
+)
+async def export_disaster_events(
+    db: Database = Depends(get_db),
+    format: str = Query(..., description="Export format: csv, excel, json, or raw"),
+    limit: Optional[int] = Query(None, description="Limit the number of records (Amount)"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    location: Optional[str] = Query(None, description="Malaysian State (e.g., selangor)"),
+    category: Optional[str] = Query(None, description="Category of disaster (e.g., flood)"),
+    severity: Optional[str] = Query(None, description="Severity level (e.g., Urgent, Informational, Warning)"),
+    keyword: Optional[str] = Query(None, description="Search keyword in title or description"),
+):
+    # 1. Build the MongoDB Query
+    query = {}
+
+    # Filter by Date Range
+    if start_date or end_date:
+        date_query = {}
+        if start_date:
+            try:
+                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00').split('T')[0])
+                date_query["$gte"] = start_dt
+            except ValueError:
+                pass 
+        if end_date:
+            try:
+                end_dt_str = end_date.replace('Z', '+00:00').split('T')[0]
+                end_dt = datetime.fromisoformat(end_dt_str).replace(hour=23, minute=59, second=59)
+                date_query["$lte"] = end_dt
+            except ValueError:
+                pass
+        if date_query:
+            query["start_time"] = date_query
+
+    # Filter by Location
+    if location:
+        query["$or"] = [
+            {"location.state": {"$regex": location, "$options": "i"}},
+            {"location.district": {"$regex": location, "$options": "i"}}
+        ]
+
+    # Filter by Category
+    if category and category.lower() != "all":
+        query["disaster_type"] = {"$regex": category, "$options": "i"}
+
+    # Filter by Severity
+    if severity and severity.lower() != "all":
+        query["sentiment.label"] = {"$regex": severity, "$options": "i"}
+
+    # Filter by Keyword
+    if keyword:
+        keyword_filter = [
+            {"post_text": {"$regex": keyword, "$options": "i"}},
+            {"keywords": {"$regex": keyword, "$options": "i"}}
+        ]
+        
+        if "$or" in query:
+            query["$and"] = [
+                {"$or": query.pop("$or")},
+                {"$or": keyword_filter}
+            ]
+        else:
+            query["$or"] = keyword_filter
+
+    # 2. Fetch Data (Synchronous)
+    try:
+        collection = db[DISASTER_POSTS_COLLECTION]
+
+        # Use synchronous find and sort
+        cursor = collection.find(query).sort("start_time", -1)
+        
+        if limit and limit > 0:
+            cursor = cursor.limit(limit)
+            
+        # Synchronously convert cursor to list
+        documents = list(cursor)
+        
+    except Exception as e:
+        print(f"Export Database Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    # 3. Process Data for Export
+    data_list = []
+    for doc in documents:
+        flat_doc = {}
+        
+        # ID and Metadata
+        flat_doc["id"] = str(doc.get("_id", ""))
+        flat_doc["post_id"] = doc.get("post_id", "")
+        flat_doc["status"] = doc.get("classification_status", "")
+        flat_doc["disaster_type"] = doc.get("disaster_type", "none")
+        
+        # Time
+        st = doc.get("start_time")
+        if isinstance(st, datetime):
+            flat_doc["start_time"] = st.isoformat()
+        else:
+            flat_doc["start_time"] = str(st) if st else ""
+
+        # Content
+        flat_doc["post_text"] = doc.get("post_text", "")
+        
+        # Flatten Location
+        loc = doc.get("location", {})
+        if isinstance(loc, dict):
+            flat_doc["state"] = loc.get("state", "")
+            flat_doc["district"] = loc.get("district", "")
+            lat_lon = loc.get("lat_lon", [])
+            if isinstance(lat_lon, list) and len(lat_lon) >= 2:
+                flat_doc["longitude"] = lat_lon[0]
+                flat_doc["latitude"] = lat_lon[1]
+        
+        # Flatten Sentiment
+        sent = doc.get("sentiment", {})
+        if isinstance(sent, dict):
+            flat_doc["sentiment_label"] = sent.get("label", "")
+            flat_doc["sentiment_confidence"] = sent.get("confidence", "")
+            flat_doc["sentiment_reasoning"] = sent.get("reasoning", "")
+
+        flat_doc["keywords"] = doc.get("keywords", "")
+
+        if format in ["json", "raw"]:
+            clean_doc = doc.copy()
+            clean_doc["_id"] = str(clean_doc["_id"])
+            if isinstance(clean_doc.get("start_time"), datetime):
+                clean_doc["start_time"] = clean_doc["start_time"].isoformat()
+            data_list.append(clean_doc)
+        else:
+            data_list.append(flat_doc)
+
+    if not data_list:
+        if format in ["json", "raw"]:
+            data_list = [{"message": "No data found"}]
+        else:
+            data_list = [] 
+
+    filename_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # 4. Generate File
+    if format in ["json", "raw"]:
+        json_str = json.dumps(data_list, default=str, indent=2)
+        return StreamingResponse(
+            io.StringIO(json_str),
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename=disaster_data_{filename_timestamp}.json"}
+        )
+
+    elif format == "csv":
+        df = pd.DataFrame(data_list)
+        stream = io.StringIO()
+        df.to_csv(stream, index=False)
+        return StreamingResponse(
+            iter([stream.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=disaster_data_{filename_timestamp}.csv"}
+        )
+
+    elif format == "excel":
+        df = pd.DataFrame(data_list)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Disaster Data')
+        output.seek(0)
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=disaster_data_{filename_timestamp}.xlsx"}
+        )
+
+    raise HTTPException(status_code=400, detail="Invalid format specified")
