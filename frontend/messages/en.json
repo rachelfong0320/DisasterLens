@@ -23,6 +23,11 @@
     "zipDesc": "Complete raw data dump with all fields and metadata",
     "zipFormat": "Raw Data (.zip)"
   },
+  "ChatbotWidget": {
+    "chat": "Hello! How can I help you find disaster information today?",
+    "chatdesc": "Emergency Query",
+    "desc": "Ask about current or historical disasters by location, time or type"
+  },
   "dashboard": {
     "activeAlerts": "Active Alerts",
     "affectedArea": "Affected Areas",

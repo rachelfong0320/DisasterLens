@@ -4,6 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import ChatbotWidget from "@/components/chatbot-widget";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -29,6 +30,7 @@ export default function AccessDataPage() {
   const [severity, setSeverity] = useState<string | undefined>(undefined);
   const [keyword, setKeyword] = useState("");
   const [amount, setAmount] = useState("100");
+  const [chatOpen, setChatOpen] = useState(false);
 
   const handleExport = async (e?: React.FormEvent) => {
     if (e && typeof e.preventDefault === "function") e.preventDefault();
@@ -113,6 +115,7 @@ export default function AccessDataPage() {
   return (
     <main className="min-h-screen bg-background flex flex-col">
       <Header onFilterClick={() => {}} />
+      <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
 
       <div className="flex-1">
         {/* Hero Section */}
