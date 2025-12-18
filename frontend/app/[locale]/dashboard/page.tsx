@@ -4,12 +4,76 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import MetricsCard from "@/components/metrics-card"
 import ExportModal from "@/components/export-modal"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { 
+  Waves, 
+  Mountain, 
+  Wind, 
+  CloudFog, 
+  Flame, 
+  CircleSlash, 
+  Activity, 
+  AlertTriangle 
+} from "lucide-react"
+import { LucideIcon } from "lucide-react"
+import TimeFilter from "@/components/time-filter"
 
 export default function Dashboard() {
   const t = useTranslations("dashboard");
   const [exportOpen, setExportOpen] = useState(false)
+  const [stats, setStats] = useState<any>(null); // Replace 'any' with your stats type
+  const [loading, setLoading] = useState(true);
+  const currentYear = new Date().getFullYear();
+  const today = new Date().toISOString().split('T')[0];
+
+  // Start with 2025-01-01 by default
+  const [dateRange, setDateRange] = useState({ 
+    start: "2024-01-01", 
+    end: "2024-12-31" 
+  });
+
+    const disasterConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
+    flood: { label: "Flood", icon: Waves, color: "text-blue-500" },
+    landslide: { label: "Landslide", icon: Mountain, color: "text-amber-700" },
+    storm: { label: "Storm", icon: Wind, color: "text-purple-500" },
+    haze: { label: "Haze", icon: CloudFog, color: "text-orange-400" },
+    "forest fire": { label: "Forest Fire", icon: Flame, color: "text-red-500" },
+    sinkhole: { label: "Sinkhole", icon: CircleSlash, color: "text-emerald-800" },
+    earthquake: { label: "Earthquake", icon: Activity, color: "text-stone-600" },
+    tsunami: { label: "Tsunami", icon: AlertTriangle, color: "text-cyan-600" },
+  };
+
+  useEffect(() => {
+      async function getStats() {
+        try {
+          const response = await fetch('http://localhost:8000/api/v1/analytics/filtered?start_date=2023-01-01&end_date=2025-12-31');
+          const data = await response.json();
+          
+          // 1. Get the list from backend
+          let counts = [...(data.type_counts || [])];
+
+          // 2. Check if "tsunami" exists in the list
+          const hasTsunami = counts.some(item => item.type.toLowerCase() === "tsunami");
+
+          // 3. If missing, put 0 as default
+          if (!hasTsunami) {
+            counts.push({
+              type: "tsunami",
+              frequency: 0
+            });
+          }
+
+          setStats({ ...data, type_counts: counts });
+
+        } catch (e) {
+          console.error("Fetch failed", e);
+        } finally {
+          setLoading(false);
+        }
+      }
+      getStats();
+    }, []);  
 
   return (
     <main className="min-h-screen bg-background">
@@ -23,20 +87,30 @@ export default function Dashboard() {
               <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
               <p className="text-muted-foreground mt-1">{t("desc")}</p>
             </div>
-            <button
-              onClick={() => setExportOpen(true)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition font-medium"
-            >
-              {t("btnExportData")}
-            </button>
+            <div className="flex items-center gap-3">
+              <TimeFilter 
+                onRangeChange={(start, end) => setDateRange({ start, end })} 
+              />
+              <button onClick={() => setExportOpen(true)} className="...">
+                Export Data
+              </button>
+            </div>
           </div>
 
-          {/* Key Metrics */}
+          {/* Grid for 8 Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <MetricsCard label={t("totalEvent")} value="250" change="20%" trend="up" icon="📊" />
-            <MetricsCard label={t("activeAlerts")} value="12" change="5%" trend="down" icon="🚨" />
-            <MetricsCard label={t("affectedArea")} value="47" change="12%" trend="up" icon="📍" />
-            <MetricsCard label={t("responseTime")} value="2.4h" change="8%" trend="down" icon="⏱️" />
+             {Object.entries(disasterConfig).map(([key, config]) => {
+              const dataItem = stats?.type_counts?.find((item: any) => item.type === key);
+              return (
+                <MetricsCard
+                  key={key}
+                  label={config.label}
+                  value={dataItem ? dataItem.frequency.toString() : "0"}
+                  icon={config.icon}
+                  iconColor={config.color}
+                />
+                );
+              })}
           </div>
 
           {/* Charts */}
@@ -198,4 +272,18 @@ export default function Dashboard() {
       <ExportModal isOpen={exportOpen} onClose={() => setExportOpen(false)} />
     </main>
   )
+}
+
+function getDisasterIcon(type: string) {
+  const icons: any = {
+    flood: "🌊",
+    landslide: "⛰️",
+    storm: "⛈️",
+    haze: "🌫️",
+    "forest fire": "🔥",
+    sinkhole: "🕳️",
+    earthquake: "🫨",
+    tsunami: "🌊",
+  };
+  return icons[type] || "🚨";
 }

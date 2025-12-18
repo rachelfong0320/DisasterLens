@@ -5,90 +5,103 @@ import {
   Bar,
   LineChart,
   Line,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  AreaChart,
+  Area,
 } from "recharts"
+
+interface ChartData {
+  name: string
+  value: number
+}
 
 interface EventsChartProps {
   title: string
-  type: "bar" | "line" | "pie"
+  type: "bar" | "line" | "area"
+  data: ChartData[]
+  color?: string
 }
 
-const data = {
-  bar: [
-    { name: "Jan", events: 45 },
-    { name: "Feb", events: 52 },
-    { name: "Mar", events: 38 },
-    { name: "Apr", events: 61 },
-    { name: "May", events: 55 },
-    { name: "Jun", events: 67 },
-  ],
-  pie: [
-    { name: "Flood", value: 120 },
-    { name: "Landslide", value: 85 },
-    { name: "Fire", value: 25 },
-    { name: "Haze", value: 15 },
-    { name: "Storm", value: 5 },
-  ],
-  line: [
-    { month: "Week 1", events: 20 },
-    { month: "Week 2", events: 35 },
-    { month: "Week 3", events: 28 },
-    { month: "Week 4", events: 45 },
-  ],
-}
-
-const COLORS = ["#3366cc", "#33cccc", "#cccc33", "#cc6633", "#cc3333"]
-
-export default function EventsChart({ title, type }: EventsChartProps) {
+export default function EventsChart({ title, type, data, color = "#3b82f6" }: EventsChartProps) {
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">{title}</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        {type === "bar" && (
-          <BarChart data={data.bar}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis stroke="var(--muted-foreground)" />
-            <YAxis stroke="var(--muted-foreground)" />
-            <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }} />
-            <Bar dataKey="events" fill="var(--chart-1)" />
-          </BarChart>
-        )}
-        {type === "line" && (
-          <LineChart data={data.line}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis stroke="var(--muted-foreground)" />
-            <YAxis stroke="var(--muted-foreground)" />
-            <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }} />
-            <Line type="monotone" dataKey="events" stroke="var(--chart-2)" strokeWidth={2} />
-          </LineChart>
-        )}
-        {type === "pie" && (
-          <PieChart>
-            <Pie
-              data={data.pie}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, value }) => `${name}: ${value}`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {data.pie.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        )}
-      </ResponsiveContainer>
+    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">{title}</h3>
+      
+      <div className="h-[300px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          {type === "bar" && (
+            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                dy={10}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#9ca3af', fontSize: 12 }} 
+              />
+              <Tooltip 
+                cursor={{ fill: '#f9fafb' }}
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              />
+              <Bar dataKey="value" fill={color} radius={[4, 4, 0, 0]} barSize={30} />
+            </BarChart>
+          )}
+
+          {type === "line" && (
+            <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                dy={10}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#9ca3af', fontSize: 12 }} 
+              />
+              <Tooltip 
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="value" 
+                stroke={color} 
+                strokeWidth={3} 
+                dot={{ r: 4, fill: color, strokeWidth: 2, stroke: '#fff' }} 
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          )}
+
+          {type === "area" && (
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor={color} stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+              <Tooltip />
+              <Area type="monotone" dataKey="value" stroke={color} fillOpacity={1} fill="url(#colorValue)" strokeWidth={3} />
+            </AreaChart>
+          )}
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }
