@@ -45,12 +45,6 @@ export default function Header({ onFilterClick }: HeaderProps) {
             >
               {t("access_data")}
             </Link>
-            <Link
-              href="/subscription"
-              className="text-sm font-medium text-foreground hover:text-primary transition"
-            >
-              {t("subscription")}
-            </Link>
           </nav>
 
           {/* Right side actions */}
