@@ -23,6 +23,11 @@
     "zipDesc": "Pemindahan data mentah lengkap dengan semua medan dan metadata",
     "zipFormat": "Data Mentah (.zip)"
   },
+  "ChatbotWidget": {
+    "chat": "Halo! Bagaimana saya boleh membantu anda mencari maklumat bencana hari ini?",
+    "chatdesc": "Pertanyaan Kecemasan",
+    "desc": "Tanya tentang bencana semasa atau sejarah mengikut lokasi, masa atau jenis"
+  },
   "dashboard": {
     "activeAlerts": "Amaran Aktif",
     "affectedArea": "Kawasan Terjejas",

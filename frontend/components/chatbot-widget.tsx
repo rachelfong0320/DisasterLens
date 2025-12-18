@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { AlertTriangle, Zap, Send, X, Bot } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface ChatMessage {
   id: string;
@@ -19,11 +20,12 @@ export default function ChatbotWidget({
   isOpen,
   onToggle,
 }: ChatbotWidgetProps) {
+  const t = useTranslations("ChatbotWidget");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "1",
       type: "bot",
-      message: "Hello! How can I help you find disaster information today?",
+      message: t("chat"),
       timestamp: new Date(),
     },
   ]);
@@ -129,13 +131,10 @@ export default function ChatbotWidget({
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <h3 className="font-bold text-lg tracking-tight">
-                  DisasterLens AI
+                  DisasterLens AI Chatbot
                 </h3>
               </div>
-              <p className="text-xs opacity-90 font-medium">
-                Ask about current or historical disasters by location, time or
-                type
-              </p>
+              <p className="text-xs opacity-90 font-medium">{t("desc")}</p>
             </div>
 
             {/* Decorative corner accent */}
@@ -213,7 +212,7 @@ export default function ChatbotWidget({
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="w-3 h-3 text-primary animate-pulse" />
               <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-                Emergency Query
+                {t("chatdesc")}
               </span>
             </div>
             <div className="flex gap-2">
