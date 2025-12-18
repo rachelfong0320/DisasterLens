@@ -1,7 +1,9 @@
 {
   "access_data": {
+    "amoutofdata": "Jumlah data",
     "btnCancel": "Batal",
     "btnDownload": "Muat Turun Data",
+    "choose": "Pilih apa yang anda mahu",
     "csvDesc": "Nilai yang dipisahkan dengan koma, serasi dengan Excel dan kebanyakan alat analisis",
     "csvFormat": "Format CSV",
     "desc": "Akses data acara bencana yang komprehensif untuk keperluan penyelidikan, analisis, dan pelaporan anda. Pilih tempoh masa, lokasi, dan format eksport yang anda inginkan untuk memulakan.",
@@ -15,13 +17,21 @@
     "infoFormat": "Maklumat Format Data",
     "jsonDesc": "Data JSON yang terstruktur untuk akses programatik dan integrasi API",
     "jsonFormat": "Format JSON",
+    "keyword": "Kata kunci",
     "locDesc": "Pilih satu atau lebih lokasi untuk disertakan dalam muat turun anda",
     "seclocation": "Pilih Lokasi",
+    "severity": "Keterukan",
     "startDate": "Tarikh Mula",
     "successDownload": "✓ Muat turun telah bermula! Semak folder muat turun anda untuk fail data.",
     "title": "Muat Turun Data Bencana Mentah",
+    "type": "Jenis Bencana",
     "zipDesc": "Pemindahan data mentah lengkap dengan semua medan dan metadata",
     "zipFormat": "Data Mentah (.zip)"
+  },
+  "ChatbotWidget": {
+    "chat": "Halo! Bagaimana saya boleh membantu anda mencari maklumat bencana hari ini?",
+    "chatdesc": "Pertanyaan Kecemasan",
+    "desc": "Tanya tentang bencana semasa atau sejarah mengikut lokasi, masa atau jenis"
   },
   "dashboard": {
     "activeAlerts": "Amaran Aktif",
