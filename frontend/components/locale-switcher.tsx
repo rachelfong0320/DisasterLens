@@ -1,8 +1,14 @@
-'use client';
+"use client";
 
-import { usePathname, useRouter } from '@/i18n/navigation';
-import { useLocale } from 'next-intl';
-
+import { usePathname, useRouter } from "@/i18n/navigation";
+import { useLocale } from "next-intl";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 export default function LocaleSwitcher() {
   const locale = useLocale();
   const router = useRouter();
@@ -16,12 +22,14 @@ export default function LocaleSwitcher() {
   };
 
   return (
-    <select
-      className="w-16 h-8 text-sm font-semibold flex justify-between gap-1 border-2 hover:bg-secondary/50"
-      value={locale}
-      onChange={e => switchLocale(e.target.value)}>
-      <option value="en">EN</option>
-      <option value="ms">MS</option>
-    </select>
+    <Select value={locale} onValueChange={switchLocale}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select language" />
+      </SelectTrigger>
+      <SelectContent className="z-[3000]" position="popper">
+        <SelectItem value="en">EN</SelectItem>
+        <SelectItem value="ms">MS</SelectItem>
+      </SelectContent>
+    </Select>
   );
 }
