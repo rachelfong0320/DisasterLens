@@ -193,7 +193,7 @@ export default function AccessDataPage() {
               {/* Filter Section */}
               <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
                 <h2 className="text-xl font-semibold text-foreground mb-6">
-                  Choose what you want
+                  {t("choose")}
                 </h2>
 
                 <div className="space-y-6">
@@ -204,7 +204,7 @@ export default function AccessDataPage() {
                       className="text-sm font-medium flex items-center gap-2"
                     >
                       <Hash className="w-4 h-4 text-muted-foreground" />
-                      Amount of data
+                      {t("amoutofdata")}
                     </Label>
                     <Input
                       id="amount"
@@ -223,7 +223,7 @@ export default function AccessDataPage() {
                       className="text-sm font-medium flex items-center gap-2"
                     >
                       <Search className="w-4 h-4 text-muted-foreground" />
-                      Keyword
+                      {t("keyword")}
                     </Label>
                     <Input
                       id="keyword"
@@ -241,7 +241,7 @@ export default function AccessDataPage() {
                       htmlFor="disaster-type"
                       className="text-sm font-medium"
                     >
-                      Disaster Type
+                      {t("type")}
                     </Label>
                     <Select value={category} onValueChange={setCategory}>
                       <SelectTrigger id="disaster-type" className="h-11">
@@ -260,7 +260,7 @@ export default function AccessDataPage() {
                   {/* Severity */}
                   <div className="space-y-2">
                     <Label htmlFor="severity" className="text-sm font-medium">
-                      Severity
+                      {t("severity")}
                     </Label>
                     <Select value={severity} onValueChange={setSeverity}>
                       <SelectTrigger id="severity" className="h-11">
@@ -294,7 +294,7 @@ export default function AccessDataPage() {
                       className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
                     >
                       <X className="w-4 h-4" />
-                      Clear all
+                      {t("btnCancel")}
                     </button>
                   )}
                 </div>
