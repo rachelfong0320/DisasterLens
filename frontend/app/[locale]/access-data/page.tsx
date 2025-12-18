@@ -121,13 +121,30 @@ export default function AccessDataPage() {
       <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
 
       <div className="flex-1">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-12 md:py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 text-primary-foreground py-16 md:py-20">
+          {/* Animated gradient orbs */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-1/2 -left-1/4 w-96 h-96 bg-primary-foreground/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute top-1/4 -right-1/4 w-[32rem] h-[32rem] bg-primary/20 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="absolute -bottom-1/3 left-1/3 w-80 h-80 bg-primary-foreground/5 rounded-full blur-3xl animate-pulse delay-500" />
+          </div>
+
+          {/* Animated grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_80%)]" />
+
+          {/* Content */}
+          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative">
+                <FileDown className="w-12 h-12 animate-bounce" />
+                <div className="absolute inset-0 w-12 h-12 bg-primary-foreground/20 rounded-full blur-xl animate-pulse" />
+              </div>
+              <div className="h-px flex-1 bg-gradient-to-r from-primary-foreground/50 to-transparent" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance drop-shadow-lg">
               {t("title")}
             </h1>
-            <p className="text-lg text-primary-foreground/90 max-w-2xl">
+            <p className="text-lg text-primary-foreground/95 max-w-2xl drop-shadow-md">
               {t("desc")}
             </p>
           </div>
