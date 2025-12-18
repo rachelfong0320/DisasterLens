@@ -23,6 +23,7 @@ services:
     environment:
       - ES_HOST=http://disasterlens_es:9200
       - discovery.type=single-node
+      - xpack.security.http.ssl.enabled=false
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
