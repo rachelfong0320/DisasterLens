@@ -1,7 +1,9 @@
 {
   "access_data": {
+    "amoutofdata": "Amount of data",
     "btnCancel": "Cancel",
     "btnDownload": "Download Data",
+    "choose": "Choose what you want",
     "csvDesc": "Comma-separated values, compatible with Excel and most analysis tools",
     "csvFormat": "CSV Format",
     "desc": "Access comprehensive disaster event data for your research, analysis, and reporting needs. Select your preferred time period, locations, and export format to get started.",
@@ -15,11 +17,14 @@
     "infoFormat": "Data Format Information",
     "jsonDesc": "Structured JSON data for programmatic access and API integration",
     "jsonFormat": "JSON Format",
+    "keyword": "Keyword",
     "locDesc": "Choose one or more locations to include in your download",
     "seclocation": "Select Locations",
+    "severity": "Severity",
     "startDate": "Start Date",
     "successDownload": "✓ Download started! Check your downloads folder for the data file.",
     "title": "Download Raw Disaster Data",
+    "type": "Disaster Type",
     "zipDesc": "Complete raw data dump with all fields and metadata",
     "zipFormat": "Raw Data (.zip)"
   },
