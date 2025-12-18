@@ -70,7 +70,7 @@ export default function ChatbotWidget({
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        message: data.reply, // Accessing the 'reply' key from your FastAPI response
+        message: data.reply,
         timestamp: new Date(),
       };
 
