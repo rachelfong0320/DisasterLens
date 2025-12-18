@@ -115,7 +115,7 @@ export default function ChatbotWidget({
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 bg-card border-2 border-primary/20 rounded-2xl shadow-2xl flex flex-col z-50 h-[32rem] max-h-[85vh] animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-24 right-6 w-96 bg-card border-2 border-primary/20 rounded-2xl shadow-2xl flex flex-col z-1000 h-[32rem] max-h-[85vh] animate-in slide-in-from-bottom-5 duration-300">
           <div className="relative bg-gradient-to-r from-primary via-primary to-primary/90 text-primary-foreground px-6 py-4 rounded-t-2xl overflow-hidden">
             {/* Animated background pattern */}
             <div className="absolute inset-0 opacity-50">
