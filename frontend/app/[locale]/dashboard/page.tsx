@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ChatbotWidget from "@/components/chatbot-widget";
@@ -101,19 +99,23 @@ export default function Dashboard() {
   }, [stats, dateRange.start]);
 
     // Transform data for Chart 2: Top Districts (Bar)
-  const districtData = useMemo(() => {
-    if (!stats?.district_ranking) return [];
+  const districtData = useMemo(() => {    
+    // If no data, return placeholders with 0 values
+    if (!stats?.district_ranking || stats.district_ranking.length === 0) {
+    return ["Area 1", "Area 2", "Area 3", "Area 4", "Area 5"].map(name => ({ 
+      name, 
+      value: 0, 
+      state: "" 
+      }));
+    }
 
     return [...stats.district_ranking]
-      .sort((a: any, b: any) => {
-        if (b.event_count !== a.event_count) return b.event_count - a.event_count;
-        return a.district.localeCompare(b.district);
-      })
+      .sort((a: any, b: any) => b.event_count - a.event_count)
       .slice(0, 5)
       .map((item: any) => ({
         name: item.district.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
         value: item.event_count,
-        state: item.state // Add this line to pass state data to the chart
+        state: item.state
       }));
   }, [stats]);
 
@@ -133,22 +135,21 @@ const sentimentData = useMemo(() => {
   }, [stats]);
 
   const keywordChartData = useMemo(() => {
-    if (!keywords) return [];
+  if (!keywords || keywords.length === 0) {
+    // Adding index (i) to the name so React sees unique keys
+    return Array(5).fill(null).map((_, i) => ({ 
+      name: `Slot ${i + 1}`, 
+      value: 0 
+    }));
+  }
 
-    return [...keywords]
-      .sort((a: any, b: any) => {
-        // 1. Primary Sort: Frequency (Highest first)
-        if (b.frequency !== a.frequency) {
-          return b.frequency - a.frequency;
-        }
-        // 2. Tie-breaker: Alphabetical Order
-        return a.keyword.localeCompare(b.keyword);
-      })
-      .slice(0, 5) 
-      .map((item: any) => ({
-        name: item.keyword.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
-        value: item.frequency
-      }));
+  return [...keywords]
+    .sort((a: any, b: any) => b.frequency - a.frequency)
+    .slice(0, 5) 
+    .map((item: any) => ({
+      name: item.keyword.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
+      value: item.frequency
+    }));
   }, [keywords]);
 
 return (
