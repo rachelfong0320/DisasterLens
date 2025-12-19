@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  LabelList
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -72,8 +73,29 @@ export default function EventTrendChart({
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
-                <Bar dataKey="value" fill={color} radius={[4, 4, 0, 0]} barSize={40} />
-              </BarChart>
+                <Bar dataKey="value" fill={color} radius={[4, 4, 0, 0]} barSize={40}>
+                  <LabelList 
+                    dataKey="value" 
+                    position="top"
+                    content={(props: any) => {
+                      const { x, y, width, value } = props;
+                      return (
+                        <text 
+                          x={x + width / 2} 
+                          y={y - 10} 
+                          fill={color} 
+                          textAnchor="middle" 
+                          fontSize="12" 
+                          fontWeight="bold"
+                          className="hidden print:block" // Hidden on UI, visible in PDF
+                        >
+                          {value > 0 ? value : ""}
+                        </text>
+                      );
+                    }}
+                  />
+                </Bar>              
+                </BarChart>
             ) : (
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -96,15 +118,28 @@ export default function EventTrendChart({
                 <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke={color}
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorValue)"
-                  animationDuration={1200}
-                />
+                <Area type="monotone" dataKey="value" stroke={color} strokeWidth={3} fillOpacity={1} fill="url(#colorValue)">
+                  <LabelList 
+                    dataKey="value" 
+                    position="top"
+                    content={(props: any) => {
+                      const { x, y, value } = props;
+                      return (
+                        <text 
+                          x={x} 
+                          y={y - 10} 
+                          fill="#4b5563" 
+                          textAnchor="middle" 
+                          fontSize="11" 
+                          fontWeight="bold"
+                          className="hidden print:block" // Hidden on UI, visible in PDF
+                        >
+                          {value > 0 ? value : ""}
+                        </text>
+                      );
+                    }}
+                  />
+                </Area>
               </AreaChart>
             )}
           </ResponsiveContainer>
