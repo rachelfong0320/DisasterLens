@@ -15,7 +15,8 @@ def get_historical_disasters(location=None, disaster_type=None, month=None):
         must_clauses.append({
             "multi_match": {
                 "query": location, 
-                "fields": ["location_state", "location_district", "location.state", "location.district"]
+                "fields": ["location_state", "location_district", "location.state", "location.district"],
+                "fuzziness": "AUTO"
             }
         })
     if disaster_type:
@@ -28,21 +29,48 @@ def get_historical_disasters(location=None, disaster_type=None, month=None):
         m_code = month_map.get(month.lower(), "01")
         query["bool"]["must"].append({"wildcard": {"start_time": f"*-{m_code}-*"}})
 
-    res = es.search(
-        index="disaster_events", 
-        query=query, 
-        size=5,
-        sort=[{"start_time": {"order": "desc"}}] 
-    )
-    return [hit["_source"] for hit in res["hits"]["hits"]]
+    # 3. Build Query with STRICT SORTING
+    search_body = {
+        "query": {
+            "bool": {
+                "must": must_clauses if must_clauses else [{"match_all": {}}]
+            }
+        },
+        # CRITICAL: This ensures the landslide in Pahang comes first
+        "sort": [{"start_time": {"order": "desc"}}], 
+        "size": 5
+    }
+
+    try:
+        res = es.search(index="disaster_events", body=search_body)
+        results = [hit["_source"] for hit in res["hits"]["hits"]]
+        
+        # LOGGING FOR TRACKING: Check your 'docker logs -f backend'
+        print(f"--- DEBUG ES RESULTS for {location} ---")
+        for r in results:
+            print(f"Date: {r.get('start_time')} | Type: {r.get('classification_type')} | State: {r.get('location_state')}")
+            
+        return results
+    except Exception as e:
+        print(f"ES Error: {e}")
+        return []
 
 async def chatbot_response(user_text):
     client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     messages = [
-        {"role": "system", "content": "You are DisasterLens Assistant. Use the historical search tool to answer questions. Answer in the user's language (English or Bahasa Melayu)."},
-        {"role": "user", "content": user_text}
-    ]
+    {
+        "role": "system", 
+        "content": (
+            "You are DisasterLens AI. You have access to a database of Malaysian disasters. "
+            "When you use the search tool, the results are automatically SORTED BY DATE (newest first). "
+            "The very first result in the list is the LATEST occurrence. "
+            "If the user asks for the 'newest' or 'latest', look at the first result. "
+            "Be specific about the date and location (state/district) mentioned in that record."
+        )
+    },
+    {"role": "user", "content": user_text}
+]
 
     tools = [{
         "type": "function",
@@ -83,9 +111,17 @@ async def chatbot_response_with_data(user_input):
     client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     messages = [
-        {"role": "system", "content": "You are DisasterLens AI..."},
-        {"role": "user", "content": user_input}
-    ]
+    {
+        "role": "system", 
+        "content": (
+            "You are DisasterLens AI, an expert on Malaysian disaster data. "
+            "The database contains specific Malaysian states and districts (e.g., Pahang, Kuching, Penang). "
+            "If a user asks about 'Malaysia' generally, search without a location filter. "
+            "ALWAYS look for the newest records by date. "
+        )
+    },
+    {"role": "user", "content": user_input}
+]
 
     tools = [{
         "type": "function",
