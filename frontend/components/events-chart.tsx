@@ -1,94 +1,115 @@
 "use client"
 
+import React from 'react'
 import {
-  BarChart,
+  Area,
+  AreaChart,
   Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-interface EventsChartProps {
-  title: string
-  type: "bar" | "line" | "pie"
+interface EventTrendChartProps {
+  title?: string;
+  type?: "area" | "bar" | "line";
+  color?: string;
+  data: {
+    _id?: { year: number; month: number };
+    total_events?: number;
+    name?: string; 
+    value?: number;
+  }[];
 }
 
-const data = {
-  bar: [
-    { name: "Jan", events: 45 },
-    { name: "Feb", events: 52 },
-    { name: "Mar", events: 38 },
-    { name: "Apr", events: 61 },
-    { name: "May", events: 55 },
-    { name: "Jun", events: 67 },
-  ],
-  pie: [
-    { name: "Flood", value: 120 },
-    { name: "Landslide", value: 85 },
-    { name: "Fire", value: 25 },
-    { name: "Haze", value: 15 },
-    { name: "Storm", value: 5 },
-  ],
-  line: [
-    { month: "Week 1", events: 20 },
-    { month: "Week 2", events: 35 },
-    { month: "Week 3", events: 28 },
-    { month: "Week 4", events: 45 },
-  ],
-}
+export default function EventTrendChart({ 
+  data, 
+  title = "Event Trends", 
+  type = "area", // Default to area
+  color = "#3b82f6" 
+}: EventTrendChartProps) {
+  
+  const chartData = data?.map((item) => {
+    if (item.name && item.value !== undefined) return item;
+    
+    return {
+      name: item._id ? new Date(item._id.year, item._id.month - 1).toLocaleString('default', { 
+        month: 'short', 
+        year: '2-digit' 
+      }) : '',
+      value: item.total_events || 0,
+    };
+  }) || [];
 
-const COLORS = ["#3366cc", "#33cccc", "#cccc33", "#cc6633", "#cc3333"]
-
-export default function EventsChart({ title, type }: EventsChartProps) {
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">{title}</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        {type === "bar" && (
-          <BarChart data={data.bar}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis stroke="var(--muted-foreground)" />
-            <YAxis stroke="var(--muted-foreground)" />
-            <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }} />
-            <Bar dataKey="events" fill="var(--chart-1)" />
-          </BarChart>
-        )}
-        {type === "line" && (
-          <LineChart data={data.line}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis stroke="var(--muted-foreground)" />
-            <YAxis stroke="var(--muted-foreground)" />
-            <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }} />
-            <Line type="monotone" dataKey="events" stroke="var(--chart-2)" strokeWidth={2} />
-          </LineChart>
-        )}
-        {type === "pie" && (
-          <PieChart>
-            <Pie
-              data={data.pie}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, value }) => `${name}: ${value}`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {data.pie.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        )}
-      </ResponsiveContainer>
-    </div>
+    <Card className="w-full shadow-sm border-gray-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[350px] w-full"> {/* Increased height slightly for rotated labels */}
+          <ResponsiveContainer width="100%" height="100%">
+            {type === "bar" ? (
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 60 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted/50" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#9ca3af" }}
+                  interval={0}           // Forces every label (Kuala Lumpur, etc.) to show
+                  angle={-45}            // Rotates names to prevent overlapping
+                  textAnchor="end"       // Aligns rotated text to the end of the tick
+                />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                <Tooltip
+                  cursor={{ fill: 'transparent' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+                <Bar dataKey="value" fill={color} radius={[4, 4, 0, 0]} barSize={40} />
+              </BarChart>
+            ) : (
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted/50" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "#9ca3af" }}
+                  // Ensure we only show the month name
+                  tickFormatter={(value) => value.split(' ')[0]} 
+                  minTickGap={20}
+                />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke={color}
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorValue)"
+                  animationDuration={1200}
+                />
+              </AreaChart>
+            )}
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

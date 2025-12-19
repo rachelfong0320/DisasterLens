@@ -5,285 +5,249 @@ import Footer from "@/components/footer";
 import ChatbotWidget from "@/components/chatbot-widget";
 import MetricsCard from "@/components/metrics-card";
 import ExportModal from "@/components/export-modal";
-import { useState } from "react";
+import EventsChart from "@/components/events-chart"; 
+import TimeFilter from "@/components/time-filter";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { 
+  Waves, 
+  Mountain, 
+  Wind, 
+  CloudFog, 
+  Flame, 
+  CircleSlash, 
+  Activity, 
+  AlertTriangle,
+  LucideIcon 
+} from "lucide-react";
+import MetricListChart from "@/components/metrics-list-charts";
+import DisasterFilter from "@/components/disaster-stats-filter";
 
 export default function Dashboard() {
   const t = useTranslations("dashboard");
   const [exportOpen, setExportOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [stats, setStats] = useState<any>(null); 
+  const [loading, setLoading] = useState(true);
+  const [keywords, setKeywords] = useState<any[]>([]); 
+  const [disasterType, setDisasterType] = useState<string>("all");
 
-  return (
+  const [dateRange, setDateRange] = useState({ 
+    start: "2025-01-01", 
+    end: "2025-12-31" 
+  });
+
+  const currentViewYear = new Date(dateRange.start).getFullYear(); 
+
+    const disasterConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
+    flood: { label: "Flood", icon: Waves, color: "text-blue-500" },
+    landslide: { label: "Landslide", icon: Mountain, color: "text-amber-700" },
+    storm: { label: "Storm", icon: Wind, color: "text-purple-500" },
+    haze: { label: "Haze", icon: CloudFog, color: "text-orange-400" },
+    "forest fire": { label: "Forest Fire", icon: Flame, color: "text-red-500" },
+    sinkhole: { label: "Sinkhole", icon: CircleSlash, color: "text-emerald-800" },
+    earthquake: { label: "Earthquake", icon: Activity, color: "text-stone-600" },
+    tsunami: { label: "Tsunami", icon: AlertTriangle, color: "text-cyan-600" },
+  };
+
+  useEffect(() => {
+    async function getData() {
+      setLoading(true);
+      try {
+        // Build the query string dynamically
+        const typeParam = disasterType !== "all" ? `&disaster_type=${disasterType}` : "";
+        const baseUrl = `http://localhost:8000/api/v1/analytics`;
+
+        const [statsRes, keywordRes] = await Promise.all([
+          fetch(`${baseUrl}/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}${typeParam}`),
+          fetch(`${baseUrl}/keywords/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}&limit=5${typeParam}`)
+        ]);
+
+        const statsData = await statsRes.json();
+        const keywordData = await keywordRes.json();
+
+        setStats(statsData);
+        setKeywords(keywordData);
+      } catch (e) {
+        console.error("Fetch error", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    getData();
+  }, [dateRange, disasterType]); 
+
+// Transform data for Chart 1: Event Trends (Area)
+  const trendData = useMemo(() => {
+    const filterYear = new Date(dateRange.start).getFullYear();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // 1. Map 12 empty months
+    const fullYearData = months.map((month, index) => {
+      // 2. Find if the API has data for this specific month
+      const found = stats?.monthly_events?.find(
+        (item: any) => item._id.year === filterYear && item._id.month === index + 1
+      );
+
+      return {
+        name: month,
+        value: found ? found.total_events : 0 // Default to 0 for a continuous line
+      };
+    });
+
+    return fullYearData;
+  }, [stats, dateRange.start]);
+
+    // Transform data for Chart 2: Top Districts (Bar)
+  const districtData = useMemo(() => {    
+    // If no data, return placeholders with 0 values
+    if (!stats?.district_ranking || stats.district_ranking.length === 0) {
+    return ["Area 1", "Area 2", "Area 3", "Area 4", "Area 5"].map(name => ({ 
+      name, 
+      value: 0, 
+      state: "" 
+      }));
+    }
+
+    return [...stats.district_ranking]
+      .sort((a: any, b: any) => b.event_count - a.event_count)
+      .slice(0, 5)
+      .map((item: any) => ({
+        name: item.district.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
+        value: item.event_count,
+        state: item.state
+      }));
+  }, [stats]);
+
+const sentimentData = useMemo(() => {
+    // Define the required labels in the specific order you want
+    const categories = ["Urgent", "Warning", "Informational"];
+    
+    return categories.map(label => {
+      // Find the actual count from the API response
+      const found = stats?.sentiment_counts?.find((item: any) => item.label === label);
+      
+      return {
+        name: label,
+        value: found ? found.frequency : 0 // Default to 0 if not in API
+      };
+    });
+  }, [stats]);
+
+  const keywordChartData = useMemo(() => {
+  if (!keywords || keywords.length === 0) {
+    // Adding index (i) to the name so React sees unique keys
+    return Array(5).fill(null).map((_, i) => ({ 
+      name: `Slot ${i + 1}`, 
+      value: 0 
+    }));
+  }
+
+  return [...keywords]
+    .sort((a: any, b: any) => b.frequency - a.frequency)
+    .slice(0, 5) 
+    .map((item: any) => ({
+      name: item.keyword.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
+      value: item.frequency
+    }));
+  }, [keywords]);
+
+return (
     <main className="min-h-screen bg-background">
       <Header onFilterClick={() => {}} />
       <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
 
       <section className="w-full px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          {/* Header & Filters */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                {t("title")}
-              </h1>
+              <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
               <p className="text-muted-foreground mt-1">{t("desc")}</p>
             </div>
-            <button
-              onClick={() => setExportOpen(true)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition font-medium"
-            >
-              {t("btnExportData")}
-            </button>
+            <div className="flex items-center gap-3">
+              <DisasterFilter 
+                value={disasterType} 
+                onChange={setDisasterType} 
+                options={disasterConfig} 
+              />
+              <TimeFilter 
+                onRangeChange={(start, end) => setDateRange({ start, end })} 
+              />
+              <button 
+                onClick={() => setExportOpen(true)} 
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              >
+                Export Data
+              </button>
+            </div>
           </div>
 
-          {/* Key Metrics */}
+          {/* Grid for 8 Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <MetricsCard
-              label={t("totalEvent")}
-              value="250"
-              change="20%"
-              trend="up"
-              icon="📊"
-            />
-            <MetricsCard
-              label={t("activeAlerts")}
-              value="12"
-              change="5%"
-              trend="down"
-              icon="🚨"
-            />
-            <MetricsCard
-              label={t("affectedArea")}
-              value="47"
-              change="12%"
-              trend="up"
-              icon="📍"
-            />
-            <MetricsCard
-              label={t("responseTime")}
-              value="2.4h"
-              change="8%"
-              trend="down"
-              icon="⏱️"
-            />
+            {Object.entries(disasterConfig).map(([key, config]) => {
+              // 1. Define dataItem BEFORE the return
+              const dataItem = stats?.type_counts?.find((item: any) => item.type === key);
+              
+              // 2. Define active state
+              const isActive = disasterType === "all" || disasterType === key;
+              
+              return (
+                <div 
+                  key={key} 
+                  className={`transition-all duration-500 ${
+                    isActive 
+                      ? "opacity-100 scale-100 grayscale-0" 
+                      : "opacity-30 scale-95 grayscale pointer-events-none"
+                  }`}
+                >
+                  <MetricsCard
+                    label={config.label}
+                    // Now dataItem is defined and accessible here
+                    value={loading ? "..." : (dataItem ? dataItem.frequency.toString() : "0")}
+                    icon={config.icon}
+                    iconColor={config.color}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Bar Chart */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Events by Month
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { month: "Jan", count: 45 },
-                  { month: "Feb", count: 52 },
-                  { month: "Mar", count: 38 },
-                  { month: "Apr", count: 61 },
-                  { month: "May", count: 55 },
-                  { month: "Jun", count: 67 },
-                ].map((item) => (
-                  <div
-                    key={item.month}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="w-8 text-muted-foreground font-medium">
-                      {item.month}
-                    </span>
-                    <div className="flex-1 mx-4 bg-secondary rounded h-6 relative overflow-hidden">
-                      <div
-                        className="bg-chart-1 h-full rounded"
-                        style={{ width: `${(item.count / 67) * 100}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-foreground font-medium">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            
+            {/* Chart 1: Event Trends */}
+            <EventsChart 
+              title={`Event Trends (${currentViewYear})`} 
+              type="area" 
+              data={trendData} 
+              color="#3b82f6" 
+            />
 
-            {/* Type Distribution */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Events by Type
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { type: "Flood", count: 120, color: "bg-chart-1" },
-                  { type: "Landslide", count: 85, color: "bg-chart-2" },
-                  { type: "Fire", count: 25, color: "bg-chart-3" },
-                  { type: "Haze", count: 15, color: "bg-chart-4" },
-                  { type: "Storm", count: 5, color: "bg-accent" },
-                ].map((item) => (
-                  <div key={item.type}>
-                    <div className="flex items-center justify-between mb-1 text-sm">
-                      <span className="text-foreground">{item.type}</span>
-                      <span className="text-muted-foreground">
-                        {item.count}
-                      </span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className={`${item.color} h-2 rounded-full`}
-                        style={{ width: `${(item.count / 120) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Chart 2: Top Districts */}
+            <EventsChart 
+              title="Top Affected Districts" 
+              type="bar" 
+              data={districtData} 
+              color="#3b82f6" 
+            />
 
-            {/* Weekly Trend */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Events Over Time
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { week: "Week 1", count: 20 },
-                  { week: "Week 2", count: 35 },
-                  { week: "Week 3", count: 28 },
-                  { week: "Week 4", count: 45 },
-                ].map((item) => (
-                  <div key={item.week} className="flex items-center gap-3">
-                    <span className="w-12 text-sm text-muted-foreground">
-                      {item.week}
-                    </span>
-                    <div className="flex-1 bg-secondary rounded h-6 relative">
-                      <div
-                        className="bg-chart-2 h-full rounded"
-                        style={{ width: `${(item.count / 45) * 100}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-sm text-foreground">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+           {/* Chart 3: Sentiment Analysis */}
+          <MetricListChart 
+            title="Sentiment Analysis" 
+            data={sentimentData} 
+            color="#3b82f6"
+            unit="Post" 
+          />
 
-            {/* Top Districts */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Top Affected Districts
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { district: "Kuala Lumpur", count: 45 },
-                  { district: "Selangor", count: 38 },
-                  { district: "Johor Bahru", count: 32 },
-                  { district: "Penang", count: 28 },
-                  { district: "Klang", count: 22 },
-                ].map((item) => (
-                  <div
-                    key={item.district}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-sm text-foreground">
-                      {item.district}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-secondary rounded h-4">
-                        <div
-                          className="bg-chart-4 h-4 rounded"
-                          style={{ width: `${(item.count / 45) * 100}%` }}
-                        />
-                      </div>
-                      <span className="w-8 text-right text-xs text-muted-foreground">
-                        {item.count}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* Chart 4: Trending Keywords */}
+          <MetricListChart 
+            title="Trending Keywords" 
+            data={keywordChartData} 
+            color="#3b82f6"
+            unit="Hit"
+          />
 
-          {/* Trending Data */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Trending Hashtags
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { tag: "#DisasterRelief", count: 234 },
-                  { tag: "#FloodAlert", count: 189 },
-                  { tag: "#MalaysiaDisasters", count: 156 },
-                  { tag: "#SafetyFirst", count: 142 },
-                  { tag: "#EmergencyResponse", count: 128 },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-primary">
-                      {item.tag}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {item.count} mentions
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Sentiment Analysis
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Positive
-                    </span>
-                    <span className="text-sm font-semibold text-chart-1">
-                      42
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div
-                      className="bg-chart-1 h-2 rounded-full"
-                      style={{ width: "60%" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Neutral
-                    </span>
-                    <span className="text-sm font-semibold text-chart-2">
-                      28
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div
-                      className="bg-chart-2 h-2 rounded-full"
-                      style={{ width: "40%" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Negative
-                    </span>
-                    <span className="text-sm font-semibold text-chart-4">
-                      8
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div
-                      className="bg-chart-4 h-2 rounded-full"
-                      style={{ width: "12%" }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -294,3 +258,6 @@ export default function Dashboard() {
     </main>
   );
 }
+
+
+
