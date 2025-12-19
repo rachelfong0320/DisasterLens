@@ -23,6 +23,7 @@ import {
   LucideIcon 
 } from "lucide-react";
 import MetricListChart from "@/components/metrics-list-charts";
+import DisasterFilter from "@/components/disaster-stats-filter";
 
 export default function Dashboard() {
   const t = useTranslations("dashboard");
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const currentYear = new Date().getFullYear();
   const today = new Date().toISOString().split('T')[0];
   const [keywords, setKeywords] = useState<any[]>([]); // Replace 'any' with your keyword type
+  const [disasterType, setDisasterType] = useState<string>("all");
 
   // Start with 2025-01-01 by default
   const [dateRange, setDateRange] = useState({ 
@@ -55,26 +57,28 @@ export default function Dashboard() {
     async function getData() {
       setLoading(true);
       try {
-        // 1. Fetch Main Stats
-        const statsRes = await fetch(`http://localhost:8000/api/v1/analytics/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}`);
-        const statsData = await statsRes.json();
-        setStats(statsData);
+        // Build the query string dynamically
+        const typeParam = disasterType !== "all" ? `&disaster_type=${disasterType}` : "";
+        const baseUrl = `http://localhost:8000/api/v1/analytics`;
 
-        // 2. Fetch Keywords (Limited to 5 as you requested)
-        const keywordRes = await fetch(`http://localhost:8000/api/v1/analytics/keywords/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}&limit=5`);
+        const [statsRes, keywordRes] = await Promise.all([
+          fetch(`${baseUrl}/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}${typeParam}`),
+          fetch(`${baseUrl}/keywords/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}&limit=5${typeParam}`)
+        ]);
+
+        const statsData = await statsRes.json();
         const keywordData = await keywordRes.json();
+
+        setStats(statsData);
         setKeywords(keywordData);
-        console.log("Fetched stats:", statsData);
-        console.log("Fetched keywords:", keywordData);
       } catch (e) {
-        console.error("Data fetch failed", e);
+        console.error("Fetch error", e);
       } finally {
         setLoading(false);
       }
     }
     getData();
-  }, [dateRange]); // Both fetchers trigger when date changes
-
+  }, [dateRange, disasterType]); 
 
 // Transform data for Chart 1: Event Trends (Area)
   const trendData = useMemo(() => {
@@ -168,6 +172,11 @@ return (
               <p className="text-muted-foreground mt-1">{t("desc")}</p>
             </div>
             <div className="flex items-center gap-3">
+              <DisasterFilter 
+                value={disasterType} 
+                onChange={setDisasterType} 
+                options={disasterConfig} 
+              />
               <TimeFilter 
                 onRangeChange={(start, end) => setDateRange({ start, end })} 
               />
@@ -182,16 +191,30 @@ return (
 
           {/* Grid for 8 Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-             {Object.entries(disasterConfig).map(([key, config]) => {
+            {Object.entries(disasterConfig).map(([key, config]) => {
+              // 1. Define dataItem BEFORE the return
               const dataItem = stats?.type_counts?.find((item: any) => item.type === key);
+              
+              // 2. Define active state
+              const isActive = disasterType === "all" || disasterType === key;
+              
               return (
-                <MetricsCard
-                  key={key}
-                  label={config.label}
-                  value={loading ? "..." : (dataItem ? dataItem.frequency.toString() : "0")}
-                  icon={config.icon}
-                  iconColor={config.color}
-                />
+                <div 
+                  key={key} 
+                  className={`transition-all duration-500 ${
+                    isActive 
+                      ? "opacity-100 scale-100 grayscale-0" 
+                      : "opacity-30 scale-95 grayscale pointer-events-none"
+                  }`}
+                >
+                  <MetricsCard
+                    label={config.label}
+                    // Now dataItem is defined and accessible here
+                    value={loading ? "..." : (dataItem ? dataItem.frequency.toString() : "0")}
+                    icon={config.icon}
+                    iconColor={config.color}
+                  />
+                </div>
               );
             })}
           </div>
