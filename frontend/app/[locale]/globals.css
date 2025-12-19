@@ -124,3 +124,61 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  /* 1. Reset Body for Print */
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 2. Fix the "Empty First Page" 
+     Ensure the very first section doesn't force a break */
+  main > section:first-of-type {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    margin-top: 0 !important;
+  }
+
+  /* 3. THE FIX FOR CUT-OFF CHARTS 
+     Apply this to your Card or Chart containers */
+  .grid > div, 
+  .card, 
+  [class*="Card"] {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+    display: block !important; /* Forces height calculation */
+    margin-bottom: 2rem !important;
+  }
+
+  /* 4. Formatting Tables */
+  table { 
+    page-break-inside: auto; 
+    width: 100%;
+    border-collapse: collapse;
+  }
+  tr { 
+    page-break-inside: avoid; 
+    page-break-after: auto; 
+  }
+  thead { display: table-header-group; }
+
+  /* 5. Hide Interactive UI */
+  header, footer, .chatbot-widget, button, .time-filter-controls, nav {
+    display: none !important;
+  }
+
+  /* 6. Chart Text Visibility */
+  .recharts-text {
+    fill: #111827 !important; 
+    font-weight: 600;
+  }
+
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+}

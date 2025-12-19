@@ -4,10 +4,10 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ChatbotWidget from "@/components/chatbot-widget";
 import MetricsCard from "@/components/metrics-card";
-import ExportModal from "@/components/export-modal";
 import EventsChart from "@/components/events-chart"; 
 import TimeFilter from "@/components/time-filter";
 import { useState, useEffect, useMemo } from "react";
+import { useReportGenerator } from "@/hooks/use-report-generator";
 import { useTranslations } from "next-intl";
 import { 
   Waves, 
@@ -25,7 +25,8 @@ import DisasterFilter from "@/components/disaster-stats-filter";
 
 export default function Dashboard() {
   const t = useTranslations("dashboard");
-  const [exportOpen, setExportOpen] = useState(false);
+  const { generateReport, isGenerating } = useReportGenerator();
+  
   const [chatOpen, setChatOpen] = useState(false);
   const [stats, setStats] = useState<any>(null); 
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ export default function Dashboard() {
 
   const currentViewYear = new Date(dateRange.start).getFullYear(); 
 
-    const disasterConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
+  const disasterConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
     flood: { label: "Flood", icon: Waves, color: "text-blue-500" },
     landslide: { label: "Landslide", icon: Mountain, color: "text-amber-700" },
     storm: { label: "Storm", icon: Wind, color: "text-purple-500" },
@@ -54,7 +55,6 @@ export default function Dashboard() {
     async function getData() {
       setLoading(true);
       try {
-        // Build the query string dynamically
         const typeParam = disasterType !== "all" ? `&disaster_type=${disasterType}` : "";
         const baseUrl = `http://localhost:8000/api/v1/analytics`;
 
@@ -82,33 +82,18 @@ export default function Dashboard() {
     const filterYear = new Date(dateRange.start).getFullYear();
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    // 1. Map 12 empty months
-    const fullYearData = months.map((month, index) => {
-      // 2. Find if the API has data for this specific month
+    return months.map((month, index) => {
       const found = stats?.monthly_events?.find(
         (item: any) => item._id.year === filterYear && item._id.month === index + 1
       );
-
-      return {
-        name: month,
-        value: found ? found.total_events : 0 // Default to 0 for a continuous line
-      };
+      return { name: month, value: found ? found.total_events : 0 };
     });
-
-    return fullYearData;
   }, [stats, dateRange.start]);
 
-    // Transform data for Chart 2: Top Districts (Bar)
   const districtData = useMemo(() => {    
-    // If no data, return placeholders with 0 values
     if (!stats?.district_ranking || stats.district_ranking.length === 0) {
-    return ["Area 1", "Area 2", "Area 3", "Area 4", "Area 5"].map(name => ({ 
-      name, 
-      value: 0, 
-      state: "" 
-      }));
+      return ["Area 1", "Area 2", "Area 3", "Area 4", "Area 5"].map(name => ({ name, value: 0, state: "" }));
     }
-
     return [...stats.district_ranking]
       .sort((a: any, b: any) => b.event_count - a.event_count)
       .slice(0, 5)
@@ -119,91 +104,72 @@ export default function Dashboard() {
       }));
   }, [stats]);
 
-const sentimentData = useMemo(() => {
-    // Define the required labels in the specific order you want
+  const sentimentData = useMemo(() => {
     const categories = ["Urgent", "Warning", "Informational"];
-    
     return categories.map(label => {
-      // Find the actual count from the API response
       const found = stats?.sentiment_counts?.find((item: any) => item.label === label);
-      
-      return {
-        name: label,
-        value: found ? found.frequency : 0 // Default to 0 if not in API
-      };
+      return { name: label, value: found ? found.frequency : 0 };
     });
   }, [stats]);
 
   const keywordChartData = useMemo(() => {
-  if (!keywords || keywords.length === 0) {
-    // Adding index (i) to the name so React sees unique keys
-    return Array(5).fill(null).map((_, i) => ({ 
-      name: `Slot ${i + 1}`, 
-      value: 0 
-    }));
-  }
-
-  return [...keywords]
-    .sort((a: any, b: any) => b.frequency - a.frequency)
-    .slice(0, 5) 
-    .map((item: any) => ({
-      name: item.keyword.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
-      value: item.frequency
-    }));
+    if (!keywords || keywords.length === 0) {
+      return Array(5).fill(null).map((_, i) => ({ name: `Slot ${i + 1}`, value: 0 }));
+    }
+    return [...keywords]
+      .sort((a: any, b: any) => b.frequency - a.frequency)
+      .slice(0, 5) 
+      .map((item: any) => ({
+        name: item.keyword.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
+        value: item.frequency
+      }));
   }, [keywords]);
 
-return (
+  return (
     <main className="min-h-screen bg-background">
       <Header onFilterClick={() => {}} />
       <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
 
       <section className="w-full px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
+          <div className="hidden print:flex flex-col mb-10 border-b-2 border-primary pb-6">
+          <h1 className="text-4xl font-bold text-blue-900">DisasterLens Analysis Report</h1>
+          <div className="flex justify-between mt-4 text-sm text-gray-600">
+            <p>Filtered by: <span className="font-bold uppercase text-primary">{disasterType}</span></p>
+            <p>Period: {dateRange.start} — {dateRange.end}</p>
+            <p>Generated: {new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+
           {/* Header & Filters */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div>
+            <div className="print:block">
               <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
               <p className="text-muted-foreground mt-1">{t("desc")}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <DisasterFilter 
-                value={disasterType} 
-                onChange={setDisasterType} 
-                options={disasterConfig} 
-              />
-              <TimeFilter 
-                onRangeChange={(start, end) => setDateRange({ start, end })} 
-              />
+            
+            <div className="flex items-center gap-3 print:hidden">
+              <DisasterFilter value={disasterType} onChange={setDisasterType} options={disasterConfig} />
+              <TimeFilter onRangeChange={(start, end) => setDateRange({ start, end })} />
               <button 
-                onClick={() => setExportOpen(true)} 
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                onClick={generateReport}
+                disabled={isGenerating}
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 disabled:opacity-50 transition-all shadow-sm"
               >
-                Export Data
+                {isGenerating ? "Preparing..." : "Generate Report"}
               </button>
             </div>
           </div>
 
-          {/* Grid for 8 Cards */}
+          {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {Object.entries(disasterConfig).map(([key, config]) => {
-              // 1. Define dataItem BEFORE the return
               const dataItem = stats?.type_counts?.find((item: any) => item.type === key);
-              
-              // 2. Define active state
               const isActive = disasterType === "all" || disasterType === key;
-              
               return (
-                <div 
-                  key={key} 
-                  className={`transition-all duration-500 ${
-                    isActive 
-                      ? "opacity-100 scale-100 grayscale-0" 
-                      : "opacity-30 scale-95 grayscale pointer-events-none"
-                  }`}
-                >
+                <div key={key} className={`transition-all duration-500 ${isActive ? "opacity-100 scale-100" : "opacity-30 scale-95 grayscale print:hidden"}`}>
                   <MetricsCard
                     label={config.label}
-                    // Now dataItem is defined and accessible here
                     value={loading ? "..." : (dataItem ? dataItem.frequency.toString() : "0")}
                     icon={config.icon}
                     iconColor={config.color}
@@ -213,51 +179,35 @@ return (
             })}
           </div>
 
-          {/* Charts */}
+          {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            
-            {/* Chart 1: Event Trends */}
-            <EventsChart 
-              title={`Event Trends (${currentViewYear})`} 
-              type="area" 
-              data={trendData} 
-              color="#3b82f6" 
-            />
-
-            {/* Chart 2: Top Districts */}
-            <EventsChart 
-              title="Top Affected Districts" 
-              type="bar" 
-              data={districtData} 
-              color="#3b82f6" 
-            />
-
-           {/* Chart 3: Sentiment Analysis */}
-          <MetricListChart 
-            title="Sentiment Analysis" 
-            data={sentimentData} 
-            color="#3b82f6"
-            unit="Post" 
-          />
-
-          {/* Chart 4: Trending Keywords */}
-          <MetricListChart 
-            title="Trending Keywords" 
-            data={keywordChartData} 
-            color="#3b82f6"
-            unit="Hit"
-          />
-
+            <EventsChart title={`Event Trends (${currentViewYear})`} type="area" data={trendData} color="#3b82f6" />
+            <EventsChart title="Top Affected Districts" type="bar" data={districtData} color="#3b82f6" />
+            <MetricListChart title="Sentiment Analysis" data={sentimentData} color="#3b82f6" unit="Post" />
+            <MetricListChart title="Trending Keywords" data={keywordChartData} color="#3b82f6" unit="Hit" />
           </div>
+        </div>
+
+        <div className="hidden print:block pt-8 border-t border-gray-200">
+          <h2 className="text-xl font-bold mb-4">Monthly Event Summary ({currentViewYear})</h2>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border p-2 text-left">Month</th>
+                {trendData.map(d => <th key={d.name} className="border p-2 text-center text-xs">{d.name}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border p-2 font-semibold">Total Events</td>
+                {trendData.map(d => <td key={d.name} className="border p-2 text-center">{d.value}</td>)}
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
       <Footer />
-
-      <ExportModal isOpen={exportOpen} onClose={() => setExportOpen(false)} />
     </main>
   );
 }
-
-
-
