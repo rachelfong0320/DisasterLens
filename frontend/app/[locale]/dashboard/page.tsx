@@ -110,33 +110,30 @@ export default function Dashboard() {
 
     return [...stats.district_ranking]
       .sort((a: any, b: any) => {
-        // 1. Primary sort: Frequency (Descending)
-        if (b.event_count !== a.event_count) {
-          return b.event_count - a.event_count;
-        }
-        // 2. Tie-breaker: Alphabetical (A-Z)
+        if (b.event_count !== a.event_count) return b.event_count - a.event_count;
         return a.district.localeCompare(b.district);
       })
-      .slice(0, 5) // Keep only the top 5
+      .slice(0, 5)
       .map((item: any) => ({
         name: item.district.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
         value: item.event_count,
+        state: item.state // Add this line to pass state data to the chart
       }));
   }, [stats]);
-
-  const sentimentData = useMemo(() => {
-    if (!stats?.sentiment_counts) return [];
-
-    return [...stats.sentiment_counts]
-      .sort((a: any, b: any) => {
-        // Custom priority order: Urgent (1) -> Warning (2) -> Informational (3)
-        const priority: Record<string, number> = { "Urgent": 1, "Warning": 2, "Informational": 3 };
-        return priority[a.label] - priority[b.label];
-      })
-      .map((item: any) => ({
-        name: item.label,
-        value: item.frequency
-      }));
+  
+const sentimentData = useMemo(() => {
+    // Define the required labels in the specific order you want
+    const categories = ["Urgent", "Warning", "Informational"];
+    
+    return categories.map(label => {
+      // Find the actual count from the API response
+      const found = stats?.sentiment_counts?.find((item: any) => item.label === label);
+      
+      return {
+        name: label,
+        value: found ? found.frequency : 0 // Default to 0 if not in API
+      };
+    });
   }, [stats]);
 
   const keywordChartData = useMemo(() => {
@@ -243,7 +240,7 @@ return (
             title="Sentiment Analysis" 
             data={sentimentData} 
             color="#3b82f6"
-            unit="Posts" 
+            unit="Post" 
           />
 
           {/* Chart 4: Trending Keywords */}
@@ -251,7 +248,7 @@ return (
             title="Trending Keywords" 
             data={keywordChartData} 
             color="#3b82f6"
-            unit="Hits"
+            unit="Hit"
           />
 
           </div>

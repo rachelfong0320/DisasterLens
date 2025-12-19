@@ -7,17 +7,23 @@ interface MetricListChartProps {
   title: string;
   data: { name: string; value: number }[];
   color?: string;
-  unit?: string; // e.g., "Hits" or "Events"
+  unit?: string; // e.g., "Hit" or "Post"
 }
 
 export default function MetricListChart({ 
   title, 
   data, 
   color = "#3b82f6",
-  unit = "Hits"
+  unit = ""
 }: MetricListChartProps) {
-  // Finds the highest value to make the bars proportionally accurate
   const maxValue = data.length > 0 ? Math.max(...data.map(d => d.value)) : 0;
+
+  // Helper function for pluralization
+  const formatUnit = (count: number, baseUnit: string) => {
+    if (!baseUnit) return "";
+    // If count is 0 or 1, return singular (e.g., "1 Hit"), else plural (e.g., "0 Hits")
+    return count === 1 ? baseUnit : `${baseUnit}s`;
+  };
 
   return (
     <Card className="w-full shadow-sm border-gray-100">
@@ -26,16 +32,16 @@ export default function MetricListChart({
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <div className="space-y-6">
-          {data.map((item, index) => (
+          {data.map((item) => (
             <div key={item.name} className="group">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">
                   {item.name}
                 </span>
                 <span className="text-xs font-bold px-2 py-1 rounded bg-blue-50 text-blue-600">
-                  {item.value} {unit}
+                  {item.value} {formatUnit(item.value, unit)}
                 </span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
@@ -43,18 +49,12 @@ export default function MetricListChart({
                   className="h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ 
                     backgroundColor: color,
-                    // Calculates width relative to the largest item in this specific list
                     width: maxValue > 0 ? `${(item.value / maxValue) * 100}%` : '0%' 
                   }}
                 />
               </div>
             </div>
           ))}
-          {data.length === 0 && (
-            <div className="flex items-center justify-center h-32">
-              <p className="text-sm text-muted-foreground italic">No data available for this range</p>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
