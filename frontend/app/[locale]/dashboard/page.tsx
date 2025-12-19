@@ -1,11 +1,15 @@
 "use client";
 
+"use client";
+
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ChatbotWidget from "@/components/chatbot-widget";
 import MetricsCard from "@/components/metrics-card";
 import ExportModal from "@/components/export-modal";
-import { useState, useEffect } from "react";
+import EventsChart from "@/components/events-chart"; 
+import TimeFilter from "@/components/time-filter";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { 
   Waves, 
@@ -15,10 +19,10 @@ import {
   Flame, 
   CircleSlash, 
   Activity, 
-  AlertTriangle 
-} from "lucide-react"
-import { LucideIcon } from "lucide-react"
-import TimeFilter from "@/components/time-filter"
+  AlertTriangle,
+  LucideIcon 
+} from "lucide-react";
+import MetricListChart from "@/components/metrics-list-charts";
 
 export default function Dashboard() {
   const t = useTranslations("dashboard");
@@ -28,6 +32,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const currentYear = new Date().getFullYear();
   const today = new Date().toISOString().split('T')[0];
+  const [keywords, setKeywords] = useState<any[]>([]); // Replace 'any' with your keyword type
 
   // Start with 2025-01-01 by default
   const [dateRange, setDateRange] = useState({ 
@@ -47,56 +52,129 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-      async function getStats() {
-        try {
-          const response = await fetch('http://localhost:8000/api/v1/analytics/filtered?start_date=2023-01-01&end_date=2025-12-31');
-          const data = await response.json();
-          
-          // 1. Get the list from backend
-          let counts = [...(data.type_counts || [])];
+    async function getData() {
+      setLoading(true);
+      try {
+        // 1. Fetch Main Stats
+        const statsRes = await fetch(`http://localhost:8000/api/v1/analytics/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}`);
+        const statsData = await statsRes.json();
+        setStats(statsData);
 
-          // 2. Check if "tsunami" exists in the list
-          const hasTsunami = counts.some(item => item.type.toLowerCase() === "tsunami");
-
-          // 3. If missing, put 0 as default
-          if (!hasTsunami) {
-            counts.push({
-              type: "tsunami",
-              frequency: 0
-            });
-          }
-
-          setStats({ ...data, type_counts: counts });
-
-        } catch (e) {
-          console.error("Fetch failed", e);
-        } finally {
-          setLoading(false);
-        }
+        // 2. Fetch Keywords (Limited to 5 as you requested)
+        const keywordRes = await fetch(`http://localhost:8000/api/v1/analytics/keywords/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}&limit=5`);
+        const keywordData = await keywordRes.json();
+        setKeywords(keywordData);
+        console.log("Fetched stats:", statsData);
+        console.log("Fetched keywords:", keywordData);
+      } catch (e) {
+        console.error("Data fetch failed", e);
+      } finally {
+        setLoading(false);
       }
-      getStats();
-    }, []);  
+    }
+    getData();
+  }, [dateRange]); // Both fetchers trigger when date changes
 
-  return (
+
+// Transform data for Chart 1: Event Trends (Area)
+  const trendData = useMemo(() => {
+    if (!stats?.monthly_events) return [];
+
+    return stats.monthly_events
+      .filter((item: any) => {
+        // Create a comparable YYYY-MM string
+        const itemDate = `${item._id.year}-${String(item._id.month).padStart(2, '0')}-01`;
+        return itemDate >= dateRange.start && itemDate <= dateRange.end;
+      })
+      // 1. SORT: Ensure dates are in order so the line doesn't jump
+      .sort((a: any, b: any) => {
+        return (a._id.year - b._id.year) || (a._id.month - b._id.month);
+      })
+      // 2. MAP: Format for the chart
+      .map((item: any) => ({
+        name: new Date(item._id.year, item._id.month - 1).toLocaleString('default', { 
+          month: 'short', 
+          year: '2-digit' 
+        }),
+        value: item.total_events,
+      }));
+  }, [stats, dateRange]);
+
+    // Transform data for Chart 2: Top Districts (Bar)
+  const districtData = useMemo(() => {
+    if (!stats?.district_ranking) return [];
+
+    return [...stats.district_ranking]
+      .sort((a: any, b: any) => {
+        // 1. Primary sort: Frequency (Descending)
+        if (b.event_count !== a.event_count) {
+          return b.event_count - a.event_count;
+        }
+        // 2. Tie-breaker: Alphabetical (A-Z)
+        return a.district.localeCompare(b.district);
+      })
+      .slice(0, 5) // Keep only the top 5
+      .map((item: any) => ({
+        name: item.district.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
+        value: item.event_count,
+      }));
+  }, [stats]);
+
+  const sentimentData = useMemo(() => {
+    if (!stats?.sentiment_counts) return [];
+
+    return [...stats.sentiment_counts]
+      .sort((a: any, b: any) => {
+        // Custom priority order: Urgent (1) -> Warning (2) -> Informational (3)
+        const priority: Record<string, number> = { "Urgent": 1, "Warning": 2, "Informational": 3 };
+        return priority[a.label] - priority[b.label];
+      })
+      .map((item: any) => ({
+        name: item.label,
+        value: item.frequency
+      }));
+  }, [stats]);
+
+  const keywordChartData = useMemo(() => {
+    if (!keywords) return [];
+
+    return [...keywords]
+      .sort((a: any, b: any) => {
+        // 1. Primary Sort: Frequency (Highest first)
+        if (b.frequency !== a.frequency) {
+          return b.frequency - a.frequency;
+        }
+        // 2. Tie-breaker: Alphabetical Order
+        return a.keyword.localeCompare(b.keyword);
+      })
+      .slice(0, 5) 
+      .map((item: any) => ({
+        name: item.keyword.split(' ').map((s: string) => s.charAt(0).toUpperCase() + s.substring(1)).join(' '),
+        value: item.frequency
+      }));
+  }, [keywords]);
+
+return (
     <main className="min-h-screen bg-background">
       <Header onFilterClick={() => {}} />
       <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
 
       <section className="w-full px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          {/* Header & Filters */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                {t("title")}
-              </h1>
+              <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
               <p className="text-muted-foreground mt-1">{t("desc")}</p>
             </div>
             <div className="flex items-center gap-3">
               <TimeFilter 
                 onRangeChange={(start, end) => setDateRange({ start, end })} 
               />
-              <button onClick={() => setExportOpen(true)} className="...">
+              <button 
+                onClick={() => setExportOpen(true)} 
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              >
                 Export Data
               </button>
             </div>
@@ -110,230 +188,49 @@ export default function Dashboard() {
                 <MetricsCard
                   key={key}
                   label={config.label}
-                  value={dataItem ? dataItem.frequency.toString() : "0"}
+                  value={loading ? "..." : (dataItem ? dataItem.frequency.toString() : "0")}
                   icon={config.icon}
                   iconColor={config.color}
                 />
-                );
-              })}
+              );
+            })}
           </div>
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Bar Chart */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Events by Month
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { month: "Jan", count: 45 },
-                  { month: "Feb", count: 52 },
-                  { month: "Mar", count: 38 },
-                  { month: "Apr", count: 61 },
-                  { month: "May", count: 55 },
-                  { month: "Jun", count: 67 },
-                ].map((item) => (
-                  <div
-                    key={item.month}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="w-8 text-muted-foreground font-medium">
-                      {item.month}
-                    </span>
-                    <div className="flex-1 mx-4 bg-secondary rounded h-6 relative overflow-hidden">
-                      <div
-                        className="bg-chart-1 h-full rounded"
-                        style={{ width: `${(item.count / 67) * 100}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-foreground font-medium">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            
+            {/* Chart 1: Event Trends */}
+            <EventsChart 
+              title="Event Trends" 
+              type="area" 
+              data={trendData} 
+              color="#3b82f6" 
+            />
 
-            {/* Type Distribution */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Events by Type
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { type: "Flood", count: 120, color: "bg-chart-1" },
-                  { type: "Landslide", count: 85, color: "bg-chart-2" },
-                  { type: "Fire", count: 25, color: "bg-chart-3" },
-                  { type: "Haze", count: 15, color: "bg-chart-4" },
-                  { type: "Storm", count: 5, color: "bg-accent" },
-                ].map((item) => (
-                  <div key={item.type}>
-                    <div className="flex items-center justify-between mb-1 text-sm">
-                      <span className="text-foreground">{item.type}</span>
-                      <span className="text-muted-foreground">
-                        {item.count}
-                      </span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className={`${item.color} h-2 rounded-full`}
-                        style={{ width: `${(item.count / 120) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Chart 2: Top Districts */}
+            <EventsChart 
+              title="Top Affected Districts" 
+              type="bar" 
+              data={districtData} 
+              color="#3b82f6" 
+            />
 
-            {/* Weekly Trend */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Events Over Time
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { week: "Week 1", count: 20 },
-                  { week: "Week 2", count: 35 },
-                  { week: "Week 3", count: 28 },
-                  { week: "Week 4", count: 45 },
-                ].map((item) => (
-                  <div key={item.week} className="flex items-center gap-3">
-                    <span className="w-12 text-sm text-muted-foreground">
-                      {item.week}
-                    </span>
-                    <div className="flex-1 bg-secondary rounded h-6 relative">
-                      <div
-                        className="bg-chart-2 h-full rounded"
-                        style={{ width: `${(item.count / 45) * 100}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-sm text-foreground">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+           {/* Chart 3: Sentiment Analysis */}
+          <MetricListChart 
+            title="Sentiment Analysis" 
+            data={sentimentData} 
+            color="#3b82f6"
+            unit="Posts" 
+          />
 
-            {/* Top Districts */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Top Affected Districts
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { district: "Kuala Lumpur", count: 45 },
-                  { district: "Selangor", count: 38 },
-                  { district: "Johor Bahru", count: 32 },
-                  { district: "Penang", count: 28 },
-                  { district: "Klang", count: 22 },
-                ].map((item) => (
-                  <div
-                    key={item.district}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-sm text-foreground">
-                      {item.district}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-secondary rounded h-4">
-                        <div
-                          className="bg-chart-4 h-4 rounded"
-                          style={{ width: `${(item.count / 45) * 100}%` }}
-                        />
-                      </div>
-                      <span className="w-8 text-right text-xs text-muted-foreground">
-                        {item.count}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* Chart 4: Trending Keywords */}
+          <MetricListChart 
+            title="Trending Keywords" 
+            data={keywordChartData} 
+            color="#3b82f6"
+            unit="Hits"
+          />
 
-          {/* Trending Data */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Trending Hashtags
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { tag: "#DisasterRelief", count: 234 },
-                  { tag: "#FloodAlert", count: 189 },
-                  { tag: "#MalaysiaDisasters", count: 156 },
-                  { tag: "#SafetyFirst", count: 142 },
-                  { tag: "#EmergencyResponse", count: 128 },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-primary">
-                      {item.tag}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {item.count} mentions
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Sentiment Analysis
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Positive
-                    </span>
-                    <span className="text-sm font-semibold text-chart-1">
-                      42
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div
-                      className="bg-chart-1 h-2 rounded-full"
-                      style={{ width: "60%" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Neutral
-                    </span>
-                    <span className="text-sm font-semibold text-chart-2">
-                      28
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div
-                      className="bg-chart-2 h-2 rounded-full"
-                      style={{ width: "40%" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Negative
-                    </span>
-                    <span className="text-sm font-semibold text-chart-4">
-                      8
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div
-                      className="bg-chart-4 h-2 rounded-full"
-                      style={{ width: "12%" }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
