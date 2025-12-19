@@ -4,7 +4,7 @@ export const DEFAULT_END = "2025-12-31";
 
 export const getTimeRange = (range: string) => {
   const now = new Date();
-  const currentYear = 2024;
+  const currentYear = now.getFullYear();
   let start = new Date(DEFAULT_START); 
   let end = new Date(DEFAULT_END);  
 

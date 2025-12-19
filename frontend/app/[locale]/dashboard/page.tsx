@@ -29,18 +29,17 @@ export default function Dashboard() {
   const t = useTranslations("dashboard");
   const [exportOpen, setExportOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [stats, setStats] = useState<any>(null); // Replace 'any' with your stats type
+  const [stats, setStats] = useState<any>(null); 
   const [loading, setLoading] = useState(true);
-  const currentYear = new Date().getFullYear();
-  const today = new Date().toISOString().split('T')[0];
-  const [keywords, setKeywords] = useState<any[]>([]); // Replace 'any' with your keyword type
+  const [keywords, setKeywords] = useState<any[]>([]); 
   const [disasterType, setDisasterType] = useState<string>("all");
 
-  // Start with 2025-01-01 by default
   const [dateRange, setDateRange] = useState({ 
-    start: "2024-01-01", 
-    end: "2024-12-31" 
+    start: "2025-01-01", 
+    end: "2025-12-31" 
   });
+
+  const currentViewYear = new Date(dateRange.start).getFullYear(); 
 
     const disasterConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
     flood: { label: "Flood", icon: Waves, color: "text-blue-500" },
@@ -82,27 +81,24 @@ export default function Dashboard() {
 
 // Transform data for Chart 1: Event Trends (Area)
   const trendData = useMemo(() => {
-    if (!stats?.monthly_events) return [];
+    const filterYear = new Date(dateRange.start).getFullYear();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    return stats.monthly_events
-      .filter((item: any) => {
-        // Create a comparable YYYY-MM string
-        const itemDate = `${item._id.year}-${String(item._id.month).padStart(2, '0')}-01`;
-        return itemDate >= dateRange.start && itemDate <= dateRange.end;
-      })
-      // 1. SORT: Ensure dates are in order so the line doesn't jump
-      .sort((a: any, b: any) => {
-        return (a._id.year - b._id.year) || (a._id.month - b._id.month);
-      })
-      // 2. MAP: Format for the chart
-      .map((item: any) => ({
-        name: new Date(item._id.year, item._id.month - 1).toLocaleString('default', { 
-          month: 'short', 
-          year: '2-digit' 
-        }),
-        value: item.total_events,
-      }));
-  }, [stats, dateRange]);
+    // 1. Map 12 empty months
+    const fullYearData = months.map((month, index) => {
+      // 2. Find if the API has data for this specific month
+      const found = stats?.monthly_events?.find(
+        (item: any) => item._id.year === filterYear && item._id.month === index + 1
+      );
+
+      return {
+        name: month,
+        value: found ? found.total_events : 0 // Default to 0 for a continuous line
+      };
+    });
+
+    return fullYearData;
+  }, [stats, dateRange.start]);
 
     // Transform data for Chart 2: Top Districts (Bar)
   const districtData = useMemo(() => {
@@ -120,7 +116,7 @@ export default function Dashboard() {
         state: item.state // Add this line to pass state data to the chart
       }));
   }, [stats]);
-  
+
 const sentimentData = useMemo(() => {
     // Define the required labels in the specific order you want
     const categories = ["Urgent", "Warning", "Informational"];
@@ -221,7 +217,7 @@ return (
             
             {/* Chart 1: Event Trends */}
             <EventsChart 
-              title="Event Trends" 
+              title={`Event Trends (${currentViewYear})`} 
               type="area" 
               data={trendData} 
               color="#3b82f6" 

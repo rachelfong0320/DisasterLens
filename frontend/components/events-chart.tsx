@@ -88,7 +88,9 @@ export default function EventTrendChart({
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: "#9ca3af" }}
-                  minTickGap={40}
+                  // Ensure we only show the month name
+                  tickFormatter={(value) => value.split(' ')[0]} 
+                  minTickGap={20}
                 />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#9ca3af" }} />
                 <Tooltip
