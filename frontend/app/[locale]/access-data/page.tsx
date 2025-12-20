@@ -37,32 +37,51 @@ export default function AccessDataPage() {
 
   const handleExport = async (e?: React.FormEvent) => {
     if (e && typeof e.preventDefault === "function") e.preventDefault();
+
     try {
       setIsExporting(true);
-
-      // Use env variable or fallback
       const baseUrl =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
       const params = new URLSearchParams();
+
+      // Required param
       params.append("format", format);
 
-      if (amount) params.append("limit", amount);
-      if (startDate)
-        params.append("start_date", new Date(startDate).toISOString());
-      if (endDate) params.append("end_date", new Date(endDate).toISOString());
+      // Optional params - ensure keys match Backend exactly
+      if (amount) params.append("limit", amount.toString());
 
-      if (locationsSelected.length > 0)
+      // Format Dates to YYYY-MM-DD (Backend expects 'date' type, not ISO string)
+      if (startDate) {
+        const sDate = new Date(startDate).toISOString().split("T")[0];
+        params.append("start_date", sDate);
+      }
+      if (endDate) {
+        const eDate = new Date(endDate).toISOString().split("T")[0];
+        params.append("end_date", eDate);
+      }
+
+      // Location: Join array into comma-separated string
+      if (locationsSelected && locationsSelected.length > 0) {
         params.append("location", locationsSelected.join(","));
-      if (category && category !== "all")
-        params.append("disaster_type", category);
-      if (keyword) params.append("keyword", keyword);
+      }
+
+      // Category: MUST match backend key "category"
+      if (category && category !== "all") {
+        params.append("category", category);
+      }
+
+      // Severity: Match backend key
+      if (severity && severity !== "all") {
+        params.append("severity", severity);
+      }
+
+      if (keyword) {
+        params.append("keyword", keyword);
+      }
 
       const response = await fetch(
         `${baseUrl}/api/v1/events/export?${params.toString()}`,
-        {
-          method: "GET",
-        }
+        { method: "GET" }
       );
 
       if (!response.ok) {
@@ -70,6 +89,7 @@ export default function AccessDataPage() {
         throw new Error(errorData.detail || "Export failed");
       }
 
+      // Handle File Download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -78,19 +98,17 @@ export default function AccessDataPage() {
       const extension =
         format === "excel" ? "xlsx" : format === "raw" ? "json" : format;
       const dateStr = new Date().toISOString().split("T")[0];
-      a.download = `disaster_data_${dateStr}.${extension}`;
+      a.download = `disaster_export_${dateStr}.${extension}`;
 
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success(`Successfully exported data as ${format.toUpperCase()}`);
+      toast.success(`Exported ${format.toUpperCase()} successfully`);
     } catch (error) {
       console.error("Export error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to download data"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to export");
     } finally {
       setIsExporting(false);
     }

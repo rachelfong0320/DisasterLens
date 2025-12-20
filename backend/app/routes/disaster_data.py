@@ -2,6 +2,7 @@
 import csv
 import io
 import json
+import keyword
 import pandas as pd
 from fastapi.responses import StreamingResponse
 from datetime import datetime, date, timezone
@@ -354,48 +355,46 @@ async def export_disaster_events(
     keyword: Optional[str] = Query(None, description="Search keyword in title or description"),
 ):
     # 1. Build the MongoDB Query
-    query = {}
+    filter_list = []
 
     # Filter by Date Range
     if start_date or end_date:
-        date_query = {}  
-    if start_date:
-        date_query["$gte"] = datetime.combine(start_date, datetime.min.time())
-    if end_date:
-        date_query["$lte"] = datetime.combine(end_date, datetime.max.time())
-    query["start_time"] = date_query
+        date_query = {}
+        if start_date:
+            date_query["$gte"] = datetime.combine(start_date, datetime.min.time())
+        if end_date:
+            date_query["$lte"] = datetime.combine(end_date, datetime.max.time())
+        filter_list.append({"start_time": date_query})
 
-
-
-    # Filter by Location
+    # Filter by Location (State or District)
     if location:
-        query["$or"] = [
+        filter_list.append({
+        "$or": [
             {"location.state": {"$regex": location, "$options": "i"}},
             {"location.district": {"$regex": location, "$options": "i"}}
         ]
+    })
 
-    # Filter by Category
+    # Filter by Category (Exact or Regex)
     if category and category.lower() != "all":
-        query["disaster_type"] = {"$regex": category, "$options": "i"}
+    # Use ^ and $ for exact match if you don't want partial matches
+        filter_list.append({"disaster_type": {"$regex": f"^{category}$", "$options": "i"}})
 
     # Filter by Severity
     if severity and severity.lower() != "all":
-        query["sentiment.label"] = {"$regex": severity, "$options": "i"}
+        filter_list.append({"sentiment.label": {"$regex": severity, "$options": "i"}})
 
-    # Filter by Keyword
+    # Filter by Keyword (Search in text or keywords array)
     if keyword:
-        keyword_filter = [
+        filter_list.append({
+        "$or": [
             {"post_text": {"$regex": keyword, "$options": "i"}},
             {"keywords": {"$regex": keyword, "$options": "i"}}
         ]
-        
-        if "$or" in query:
-            query["$and"] = [
-                {"$or": query.pop("$or")},
-                {"$or": keyword_filter}
-            ]
-        else:
-            query["$or"] = keyword_filter
+    })
+
+    # Final Query Construction
+    query = {"$and": filter_list} if filter_list else {}
 
     # 2. Fetch Data (Synchronous)
     try:
