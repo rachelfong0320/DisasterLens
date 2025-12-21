@@ -84,8 +84,7 @@ export default function ChatbotWidget({
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        message:
-          "Sorry, I'm having trouble connecting to the disaster database. Please try again later.",
+        message: t("err"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);

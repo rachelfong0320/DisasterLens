@@ -32,7 +32,8 @@
     "chat": "Halo! Bagaimana saya boleh membantu anda mencari maklumat bencana hari ini?",
     "chatdesc": "Pertanyaan Kecemasan",
     "desc": "Tanya tentang bencana semasa atau sejarah mengikut lokasi, masa atau jenis",
-    "placeholder": "Taip soalan anda di sini..."
+    "placeholder": "Taip soalan anda di sini...",
+    "err": "Maaf, saya menghadapi masalah untuk menyambung ke pangkalan data bencana. Sila cuba lagi kemudian."
   },
   "dashboard": {
     "desc": "Data dan tren acara bencana",
@@ -103,5 +104,12 @@
     "informational": "Informasi",
     "urgent": "Segera",
     "warning": "Amaran"
+  },
+  "toast": {
+    "exportSuccess": "Eksport Selesai",
+    "exportedFormat": "Eksport {format} berjaya",
+    "subscriptionSuccess": "Dah Langgan!",
+    "staySafeAlert": "Jaga Keselamatan, Jaga Kewaspadaan.",
+    "subscriptionFailed": "Langganan gagal."
   }
 }

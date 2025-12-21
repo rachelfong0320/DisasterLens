@@ -6,7 +6,6 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ChatbotWidget from "@/components/chatbot-widget";
 import Link from "next/link";
-import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import {
   Select,
@@ -18,10 +17,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar, Hash, Search, MapPin, FileDown, X } from "lucide-react";
+import { useDisasterToast } from "@/hooks/use-toast";
+import {
+  DisasterToast,
+  DisasterToastContainer,
+} from "@/components/disaster-toast";
 
 export default function AccessDataPage() {
   const t = useTranslations("access_data");
-
+  const to = useTranslations("toast");
+  const toast = useDisasterToast();
   const [isExporting, setIsExporting] = useState(false);
 
   // Filter States
@@ -105,10 +110,13 @@ export default function AccessDataPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success(`Exported ${format.toUpperCase()} successfully`);
+      toast.success(
+        to("exportSuccess"),
+        to("exportedFormat", { format: format.toUpperCase() }),
+        4000
+      );
     } catch (error) {
-      console.error("Export error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to export");
+      toast.error(error instanceof Error ? error.message : to("exportFailed"));
     } finally {
       setIsExporting(false);
     }
@@ -461,6 +469,20 @@ export default function AccessDataPage() {
           </div>
         </section>
       </div>
+
+      {/* Toast Container */}
+      <DisasterToastContainer>
+        {toast.toasts.map((t) => (
+          <DisasterToast
+            key={t.id}
+            variant={t.variant}
+            title={t.title}
+            description={t.description}
+            duration={t.duration}
+            onClose={() => toast.removeToast(t.id)}
+          />
+        ))}
+      </DisasterToastContainer>
 
       <Footer />
     </main>
