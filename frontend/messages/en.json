@@ -40,7 +40,9 @@
     "reportBtn": "Generate Report",
     "preparing": "Preparing...",
     "eventTrend": "Event Trend",
-    "affected": "Top Affected Districts"
+    "affected": "Top Affected Districts",
+    "sentiment": "Sentiment Analysis",
+    "keyword": "Trending Keywords"
   },
   "header": {
     "access_data": "Access Data",
@@ -95,5 +97,10 @@
     "lastWeek": "Last Week",
     "last30Days": "Last 30 Days",
     "custom": "Custom Range"
+  },
+  "sentiment": {
+    "informational": "Informational",
+    "urgent": "Urgent",
+    "warning": "Warning"
   }
 }

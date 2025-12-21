@@ -38,6 +38,7 @@ export default function Dashboard() {
   const locale = useLocale();
   const t = useTranslations("dashboard");
   const d = useTranslations("disasterType");
+  const s = useTranslations("sentiment");
   const { generateReport, isGenerating } = useReportGenerator();
 
   const [chatOpen, setChatOpen] = useState(false);
@@ -158,15 +159,27 @@ export default function Dashboard() {
       }));
   }, [stats]);
 
+  const sentimentLabelMap: Record<
+    string,
+    "urgent" | "warning" | "informational"
+  > = {
+    Urgent: "urgent",
+    Warning: "warning",
+    Informational: "informational",
+  };
+  const categories = ["urgent", "warning", "informational"] as const;
   const sentimentData = useMemo(() => {
-    const categories = ["Urgent", "Warning", "Informational"];
-    return categories.map((label) => {
+    return categories.map((key) => {
       const found = stats?.sentiment_counts?.find(
-        (item: any) => item.label === label
+        (item: any) => sentimentLabelMap[item.label] === key
       );
-      return { name: label, value: found ? found.frequency : 0 };
+
+      return {
+        name: s(key), // Translated label
+        value: found ? found.frequency : 0, // Backend count
+      };
     });
-  }, [stats]);
+  }, [stats, s]);
 
   const keywordChartData = useMemo(() => {
     if (!keywords || keywords.length === 0) {
@@ -289,13 +302,13 @@ export default function Dashboard() {
               color="#3b82f6"
             />
             <MetricListChart
-              title="Sentiment Analysis"
+              title={t("sentiment")}
               data={sentimentData}
               color="#3b82f6"
               unit="Post"
             />
             <MetricListChart
-              title="Trending Keywords"
+              title={t("keyword")}
               data={keywordChartData}
               color="#3b82f6"
               unit="Hit"

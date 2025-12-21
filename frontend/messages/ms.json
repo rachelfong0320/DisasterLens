@@ -41,7 +41,9 @@
     "reportBtn": "Jana Laporan",
     "preparing": "Sedang Menyediakan...",
     "eventTrend": "Trend Acara",
-    "affected": "Daerah Paling Terjejas"
+    "affected": "Daerah Paling Terjejas",
+    "sentiment": "Analisis Sentimen",
+    "keyword": "Kata Kunci Trending"
   },
   "header": {
     "access_data": "Akses Data",
@@ -96,5 +98,10 @@
     "lastWeek": "Minggu Lepas",
     "last30Days": "30 Hari Lepas",
     "custom": "Julat Tersuai"
+  },
+  "sentiment": {
+    "informational": "Informasi",
+    "urgent": "Segera",
+    "warning": "Amaran"
   }
 }
