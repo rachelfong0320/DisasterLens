@@ -88,5 +88,13 @@
     "reported": "reported",
     "view": "Current View: ",
     "in": "in"
+  },
+  "timeFilter": {
+    "year": "This Year",
+    "month": "This Month",
+    "week": "This Week",
+    "lastWeek": "Last Week",
+    "last30Days": "Last 30 Days",
+    "custom": "Custom Range"
   }
 }

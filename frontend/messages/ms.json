@@ -88,5 +88,13 @@
     "reported": "dilaporkan",
     "view": "Paparan Semasa: ",
     "in": "di"
+  },
+  "timeFilter": {
+    "year": "Tahun Ini",
+    "month": "Bulan Ini",
+    "week": "Minggu Ini",
+    "lastWeek": "Minggu Lepas",
+    "last30Days": "30 Hari Lepas",
+    "custom": "Julat Tersuai"
   }
 }
