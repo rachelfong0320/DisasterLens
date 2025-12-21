@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { AlertTriangle, Zap, Send, X, Bot } from "lucide-react";
 import { useTranslations } from "next-intl";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ChatMessage {
   id: string;
@@ -163,7 +165,29 @@ export default function ChatbotWidget({
                         : "bg-secondary/80 text-foreground border border-border/50 rounded-tl-sm"
                     }`}
                   >
-                    <p className="leading-relaxed">{msg.message}</p>
+                    <div className="leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          // This ensures your list items look correct
+                          ul: ({ node, ...props }) => (
+                            <ul className="list-disc pl-4 mb-2" {...props} />
+                          ),
+                          ol: ({ node, ...props }) => (
+                            <ol className="list-decimal pl-4 mb-2" {...props} />
+                          ),
+                          li: ({ node, ...props }) => (
+                            <li className="mb-1" {...props} />
+                          ),
+                          // This ensures paragraphs have spacing
+                          p: ({ node, ...props }) => (
+                            <p className="mb-2 last:mb-0" {...props} />
+                          ),
+                        }}
+                      >
+                        {msg.message}
+                      </ReactMarkdown>
+                    </div>
                     <span className="text-[10px] opacity-60 mt-1 block">
                       {msg.timestamp.toLocaleTimeString([], {
                         hour: "2-digit",
