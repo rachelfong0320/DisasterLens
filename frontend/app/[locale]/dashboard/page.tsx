@@ -8,7 +8,7 @@ import EventsChart from "@/components/events-chart";
 import TimeFilter from "@/components/time-filter";
 import { useState, useEffect, useMemo } from "react";
 import { useReportGenerator } from "@/hooks/use-report-generator";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Waves,
   Mountain,
@@ -35,6 +35,7 @@ interface DisasterFilterProps {
 }
 
 export default function Dashboard() {
+  const locale = useLocale();
   const t = useTranslations("dashboard");
   const d = useTranslations("disasterType");
   const { generateReport, isGenerating } = useReportGenerator();
@@ -121,20 +122,11 @@ export default function Dashboard() {
   // Transform data for Chart 1: Event Trends (Area)
   const trendData = useMemo(() => {
     const filterYear = new Date(dateRange.start).getFullYear();
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+    const months = Array.from({ length: 12 }, (_, i) =>
+      new Intl.DateTimeFormat(locale, { month: "short" }).format(
+        new Date(2000, i)
+      )
+    );
 
     return months.map((month, index) => {
       const found = stats?.monthly_events?.find(
@@ -143,7 +135,7 @@ export default function Dashboard() {
       );
       return { name: month, value: found ? found.total_events : 0 };
     });
-  }, [stats, dateRange.start]);
+  }, [stats, dateRange.start, locale]);
 
   const districtData = useMemo(() => {
     if (!stats?.district_ranking || stats.district_ranking.length === 0) {
@@ -285,13 +277,13 @@ export default function Dashboard() {
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <EventsChart
-              title={`Event Trends (${currentViewYear})`}
+              title={`${t("eventTrend")} (${currentViewYear})`}
               type="area"
               data={trendData}
               color="#3b82f6"
             />
             <EventsChart
-              title="Top Affected Districts"
+              title={t("affected")}
               type="bar"
               data={districtData}
               color="#3b82f6"

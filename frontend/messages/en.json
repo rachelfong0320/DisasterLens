@@ -38,7 +38,9 @@
     "desc": "Disaster event data and trends",
     "title": "Statistics & Analytics",
     "reportBtn": "Generate Report",
-    "preparing": "Preparing..."
+    "preparing": "Preparing...",
+    "eventTrend": "Event Trend",
+    "affected": "Top Affected Districts"
   },
   "header": {
     "access_data": "Access Data",

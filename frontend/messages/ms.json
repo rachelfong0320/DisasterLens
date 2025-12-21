@@ -39,7 +39,9 @@
     "title": "Statistik & Analitik",
     "responseTime": "Masa Respons",
     "reportBtn": "Jana Laporan",
-    "preparing": "Sedang Menyediakan..."
+    "preparing": "Sedang Menyediakan...",
+    "eventTrend": "Trend Acara",
+    "affected": "Daerah Paling Terjejas"
   },
   "header": {
     "access_data": "Akses Data",
