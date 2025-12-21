@@ -1,13 +1,18 @@
 "use client";
 
 import React from "react";
-import { Filter, ChevronDown } from "lucide-react";
+import { Filter, ChevronDown, LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+
+export interface DisasterOptionConfig {
+  icon: LucideIcon;
+  color: string;
+}
 
 interface DisasterFilterProps {
   value: string;
   onChange: (value: string) => void;
-  options: Record<string, { label: string }>;
+  options: Record<string, DisasterOptionConfig>;
 }
 
 export default function DisasterFilter({

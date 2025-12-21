@@ -35,13 +35,10 @@
     "placeholder": "Type your question here..."
   },
   "dashboard": {
-    "activeAlerts": "Active Alerts",
-    "affectedArea": "Affected Areas",
-    "btnExportData": "Export Data",
     "desc": "Disaster event data and trends",
-    "responseTime": "Response Time",
     "title": "Statistics & Analytics",
-    "totalEvent": "Total Events"
+    "reportBtn": "Generate Report",
+    "preparing": "Preparing..."
   },
   "header": {
     "access_data": "Access Data",

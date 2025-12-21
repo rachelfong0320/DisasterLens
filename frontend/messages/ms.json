@@ -35,13 +35,11 @@
     "placeholder": "Taip soalan anda di sini..."
   },
   "dashboard": {
-    "activeAlerts": "Amaran Aktif",
-    "affectedArea": "Kawasan Terjejas",
-    "btnExportData": "Eksport Data",
     "desc": "Data dan tren acara bencana",
-    "responseTime": "Masa Respons",
     "title": "Statistik & Analitik",
-    "totalEvent": "Jumlah Acara"
+    "responseTime": "Masa Respons",
+    "reportBtn": "Jana Laporan",
+    "preparing": "Sedang Menyediakan..."
   },
   "header": {
     "access_data": "Akses Data",
