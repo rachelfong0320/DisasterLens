@@ -32,7 +32,8 @@
     "chat": "Hello! How can I help you find disaster information today?",
     "chatdesc": "Emergency Query",
     "desc": "Ask about current or historical disasters by location, time or type",
-    "placeholder": "Type your question here..."
+    "placeholder": "Type your question here...",
+    "err": "Sorry, I'm having trouble connecting to the disaster database. Please try again later."
   },
   "dashboard": {
     "desc": "Disaster event data and trends",
@@ -102,5 +103,12 @@
     "informational": "Informational",
     "urgent": "Urgent",
     "warning": "Warning"
+  },
+  "toast": {
+    "exportSuccess": "Export Complete",
+    "exportedFormat": "Exported {format} successfully",
+    "subscriptionSuccess": "Subscribed!",
+    "staySafeAlert": "Stay Safe, Stay Alert.",
+    "subscriptionFailed": "Subscription failed."
   }
 }
