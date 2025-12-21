@@ -221,7 +221,7 @@ export default function ChatbotWidget({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Type disaster event (e.g., flood, earthquake)..."
+                placeholder={t("placeholder")}
                 className="flex-1 px-4 py-3 border-2 border-primary/20 rounded-xl bg-background/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-muted-foreground/60"
               />
               <button

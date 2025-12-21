@@ -10,10 +10,10 @@
     "endDate": "Tarikh Akhir",
     "expFormat": "Format Eksport",
     "form": "Pilih Tempoh Masa",
-    "info1": "• Fail CSV termasuk: event_id, event_type, lokasi, tahap, tarikh, penerangan",
-    "info2": "• Fail JSON mengandungi data terstruktur dengan metadata bersarang dan koordinat",
-    "info3": "• Data mentah termasuk rekod acara lengkap dengan semua medan yang tersedia",
-    "info4": "• Data dikemas kini setiap hari dan mencerminkan peristiwa dari 5 tahun yang lalu",
+    "info1": "Fail CSV termasuk: event_id, event_type, lokasi, tahap, tarikh, penerangan",
+    "info2": "Fail JSON mengandungi data terstruktur dengan metadata bersarang dan koordinat",
+    "info3": "Data mentah termasuk rekod acara lengkap dengan semua medan yang tersedia",
+    "info4": "Data dikemas kini setiap hari dan mencerminkan peristiwa dari 5 tahun yang lalu",
     "infoFormat": "Maklumat Format Data",
     "jsonDesc": "Data JSON yang terstruktur untuk akses programatik dan integrasi API",
     "jsonFormat": "Format JSON",
@@ -31,22 +31,33 @@
   "ChatbotWidget": {
     "chat": "Halo! Bagaimana saya boleh membantu anda mencari maklumat bencana hari ini?",
     "chatdesc": "Pertanyaan Kecemasan",
-    "desc": "Tanya tentang bencana semasa atau sejarah mengikut lokasi, masa atau jenis"
+    "desc": "Tanya tentang bencana semasa atau sejarah mengikut lokasi, masa atau jenis",
+    "placeholder": "Taip soalan anda di sini..."
   },
   "dashboard": {
-    "activeAlerts": "Amaran Aktif",
-    "affectedArea": "Kawasan Terjejas",
-    "btnExportData": "Eksport Data",
     "desc": "Data dan tren acara bencana",
-    "responseTime": "Masa Respons",
     "title": "Statistik & Analitik",
-    "totalEvent": "Jumlah Acara"
+    "responseTime": "Masa Respons",
+    "reportBtn": "Jana Laporan",
+    "preparing": "Sedang Menyediakan...",
+    "eventTrend": "Trend Acara",
+    "affected": "Daerah Paling Terjejas",
+    "sentiment": "Analisis Sentimen",
+    "keyword": "Kata Kunci Trending"
   },
   "header": {
     "access_data": "Akses Data",
     "home": "Halaman Utama",
     "statistics": "Statistik",
     "subscription": "Langganan"
+  },
+  "home": {
+    "map": "Peta Bencana",
+    "state": "Negeri",
+    "selectState": "Pilih Negeri",
+    "allStates": "Semua Negeri",
+    "filterOptions": "Pilihan Penapis",
+    "filter": "Pilih"
   },
   "newsletterSection": {
     "desc": "Dapatkan amaran bencana terkini dan pandangan data dihantar ke peti masuk anda",
@@ -59,5 +70,38 @@
   "preferredLocations": {
     "decs": "Pilih kawasan untuk menerima amaran dan kemas kini",
     "title": "Tetapkan Lokasi Pilihan"
+  },
+  "disasterType": {
+    "earthquake": "Gempa Bumi",
+    "flood": "Banjir",
+    "landslide": "Tanah Runtuh",
+    "storm": "Ribut",
+    "forestFire": "Kebakaran Hutan",
+    "haze": "Jerebu",
+    "tsunami": "Tsunami",
+    "sinkhole": "Lubang Benam",
+    "allTypes": "Semua Jenis"
+  },
+  "map": {
+    "update": "Mengemas kini peta...",
+    "report": "Laporan di lokasi ini:",
+    "number": "Nombor mewakili",
+    "incidents": "Jumlah Insiden",
+    "reported": "dilaporkan",
+    "view": "Paparan Semasa: ",
+    "in": "di"
+  },
+  "timeFilter": {
+    "year": "Tahun Ini",
+    "month": "Bulan Ini",
+    "week": "Minggu Ini",
+    "lastWeek": "Minggu Lepas",
+    "last30Days": "30 Hari Lepas",
+    "custom": "Julat Tersuai"
+  },
+  "sentiment": {
+    "informational": "Informasi",
+    "urgent": "Segera",
+    "warning": "Amaran"
   }
 }

@@ -10,10 +10,10 @@
     "endDate": "End Date",
     "expFormat": "Export Format",
     "form": "Select Time Frame",
-    "info1": "• CSV files include: event_id, event_type, location, severity, date, description",
-    "info2": "• JSON files contain structured data with nested metadata and coordinates",
-    "info3": "• Raw data includes complete event records with all available fields",
-    "info4": "• Data is updated daily and reflects events from the past 5 years",
+    "info1": "CSV files include: event_id, event_type, location, severity, date, description",
+    "info2": "JSON files contain structured data with nested metadata and coordinates",
+    "info3": "Raw data includes complete event records with all available fields",
+    "info4": "Data is updated daily and reflects events from the past 5 years",
     "infoFormat": "Data Format Information",
     "jsonDesc": "Structured JSON data for programmatic access and API integration",
     "jsonFormat": "JSON Format",
@@ -31,22 +31,32 @@
   "ChatbotWidget": {
     "chat": "Hello! How can I help you find disaster information today?",
     "chatdesc": "Emergency Query",
-    "desc": "Ask about current or historical disasters by location, time or type"
+    "desc": "Ask about current or historical disasters by location, time or type",
+    "placeholder": "Type your question here..."
   },
   "dashboard": {
-    "activeAlerts": "Active Alerts",
-    "affectedArea": "Affected Areas",
-    "btnExportData": "Export Data",
     "desc": "Disaster event data and trends",
-    "responseTime": "Response Time",
     "title": "Statistics & Analytics",
-    "totalEvent": "Total Events"
+    "reportBtn": "Generate Report",
+    "preparing": "Preparing...",
+    "eventTrend": "Event Trend",
+    "affected": "Top Affected Districts",
+    "sentiment": "Sentiment Analysis",
+    "keyword": "Trending Keywords"
   },
   "header": {
     "access_data": "Access Data",
     "home": "Home",
     "statistics": "Statistics",
     "subscription": "Subscription"
+  },
+  "home": {
+    "map": "Disaster Map",
+    "state": "State",
+    "selectState": "Select State",
+    "allStates": "All States",
+    "filterOptions": "Filter Options",
+    "filter": "Filter"
   },
   "newsletterSection": {
     "desc": "Get the latest disaster alerts and data insights delivered to your inbox",
@@ -59,5 +69,38 @@
   "preferredLocations": {
     "decs": "Choose areas to receive alerts and updates",
     "title": "Set Preferred Locations"
+  },
+  "disasterType": {
+    "earthquake": "Earthquake",
+    "flood": "Flood",
+    "landslide": "Landslide",
+    "storm": "Storm",
+    "forestFire": "Forest Fire",
+    "haze": "Haze",
+    "tsunami": "Tsunami",
+    "sinkhole": "Sinkhole",
+    "allTypes": "All Types"
+  },
+  "map": {
+    "update": "Updating map...",
+    "report": "Reports at this location:",
+    "number": "Numbers represent the",
+    "incidents": "Total Incidents",
+    "reported": "reported",
+    "view": "Current View: ",
+    "in": "in"
+  },
+  "timeFilter": {
+    "year": "This Year",
+    "month": "This Month",
+    "week": "This Week",
+    "lastWeek": "Last Week",
+    "last30Days": "Last 30 Days",
+    "custom": "Custom Range"
+  },
+  "sentiment": {
+    "informational": "Informational",
+    "urgent": "Urgent",
+    "warning": "Warning"
   }
 }
