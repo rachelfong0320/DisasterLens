@@ -31,7 +31,8 @@
   "ChatbotWidget": {
     "chat": "Hello! How can I help you find disaster information today?",
     "chatdesc": "Emergency Query",
-    "desc": "Ask about current or historical disasters by location, time or type"
+    "desc": "Ask about current or historical disasters by location, time or type",
+    "placeholder": "Type your question here..."
   },
   "dashboard": {
     "activeAlerts": "Active Alerts",

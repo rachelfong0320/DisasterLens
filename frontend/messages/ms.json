@@ -31,7 +31,8 @@
   "ChatbotWidget": {
     "chat": "Halo! Bagaimana saya boleh membantu anda mencari maklumat bencana hari ini?",
     "chatdesc": "Pertanyaan Kecemasan",
-    "desc": "Tanya tentang bencana semasa atau sejarah mengikut lokasi, masa atau jenis"
+    "desc": "Tanya tentang bencana semasa atau sejarah mengikut lokasi, masa atau jenis",
+    "placeholder": "Taip soalan anda di sini..."
   },
   "dashboard": {
     "activeAlerts": "Amaran Aktif",
