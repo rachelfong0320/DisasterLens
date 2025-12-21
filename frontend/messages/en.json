@@ -52,6 +52,7 @@
     "map": "Disaster Map",
     "state": "State",
     "selectState": "Select State",
+    "allStates": "All States",
     "filterOptions": "Filter Options",
     "filter": "Filter"
   },
@@ -83,6 +84,8 @@
     "report": "Reports at this location:",
     "number": "Numbers represent the",
     "incidents": "Total Incidents",
-    "reported": "reported"
+    "reported": "reported",
+    "view": "Current View: ",
+    "in": "in"
   }
 }

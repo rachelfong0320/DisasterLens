@@ -52,6 +52,7 @@
     "map": "Peta Bencana",
     "state": "Negeri",
     "selectState": "Pilih Negeri",
+    "allStates": "Semua Negeri",
     "filterOptions": "Pilihan Penapis",
     "filter": "Pilih"
   },
@@ -83,6 +84,8 @@
     "report": "Laporan di lokasi ini:",
     "number": "Nombor mewakili",
     "incidents": "Jumlah Insiden",
-    "reported": "dilaporkan"
+    "reported": "dilaporkan",
+    "view": "Paparan Semasa: ",
+    "in": "di"
   }
 }
