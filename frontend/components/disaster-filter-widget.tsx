@@ -9,8 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export type DisasterType =
@@ -73,7 +72,6 @@ export default function DisasterFilterWidget({
   const t = useTranslations("home");
   const r = useTranslations("access_data");
   const d = useTranslations("disasterType");
-  const [isOpen, setIsOpen] = useState(true);
   const [filters, setFilters] = useState<FilterOptions>({
     disasterType: "",
     state: "",
@@ -105,12 +103,6 @@ export default function DisasterFilterWidget({
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const updated = { ...filters, endDate: e.target.value };
-    setFilters(updated);
-    onFilterChange(updated);
-  };
-
-  const clearField = (fieldName: keyof FilterOptions) => {
-    const updated = { ...filters, [fieldName]: "" };
     setFilters(updated);
     onFilterChange(updated);
   };

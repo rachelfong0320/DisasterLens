@@ -23,15 +23,24 @@ import {
 import MetricListChart from "@/components/metrics-list-charts";
 import DisasterFilter from "@/components/disaster-stats-filter";
 
-export interface DisasterOptionConfig {
+interface DisasterOptionConfig {
   icon: LucideIcon;
   color: string;
 }
 
-interface DisasterFilterProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: Record<string, DisasterOptionConfig>;
+interface StatsType {
+  monthly_events?: {
+    _id: { year: number; month: number };
+    total_events: number;
+  }[];
+  district_ranking?: { district: string; state: string; event_count: number }[];
+  type_counts?: { type: string; frequency: number }[];
+  sentiment_counts?: { label: string; frequency: number }[];
+}
+
+interface KeywordType {
+  keyword: string;
+  frequency: number;
 }
 
 export default function Dashboard() {
@@ -42,9 +51,9 @@ export default function Dashboard() {
   const { generateReport, isGenerating } = useReportGenerator();
 
   const [chatOpen, setChatOpen] = useState(false);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<StatsType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [keywords, setKeywords] = useState<any[]>([]);
+  const [keywords, setKeywords] = useState<KeywordType[]>([]);
   const [disasterType, setDisasterType] = useState<string>("all");
 
   const [dateRange, setDateRange] = useState({
@@ -131,8 +140,7 @@ export default function Dashboard() {
 
     return months.map((month, index) => {
       const found = stats?.monthly_events?.find(
-        (item: any) =>
-          item._id.year === filterYear && item._id.month === index + 1
+        (item) => item._id.year === filterYear && item._id.month === index + 1
       );
       return { name: month, value: found ? found.total_events : 0 };
     });
@@ -147,9 +155,9 @@ export default function Dashboard() {
       }));
     }
     return [...stats.district_ranking]
-      .sort((a: any, b: any) => b.event_count - a.event_count)
+      .sort((a, b) => b.event_count - a.event_count)
       .slice(0, 5)
-      .map((item: any) => ({
+      .map((item) => ({
         name: item.district
           .split(" ")
           .map((s: string) => s.charAt(0).toUpperCase() + s.substring(1))
@@ -171,7 +179,7 @@ export default function Dashboard() {
   const sentimentData = useMemo(() => {
     return categories.map((key) => {
       const found = stats?.sentiment_counts?.find(
-        (item: any) => sentimentLabelMap[item.label] === key
+        (item) => sentimentLabelMap[item.label] === key
       );
 
       return {
@@ -188,9 +196,9 @@ export default function Dashboard() {
         .map((_, i) => ({ name: `Slot ${i + 1}`, value: 0 }));
     }
     return [...keywords]
-      .sort((a: any, b: any) => b.frequency - a.frequency)
+      .sort((a: KeywordType, b: KeywordType) => b.frequency - a.frequency)
       .slice(0, 5)
-      .map((item: any) => ({
+      .map((item: KeywordType) => ({
         name: item.keyword
           .split(" ")
           .map((s: string) => s.charAt(0).toUpperCase() + s.substring(1))
@@ -201,7 +209,7 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-background">
-      <Header onFilterClick={() => {}} />
+      <Header />
       <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
 
       <section className="w-full px-4 sm:px-6 lg:px-8 py-12">
@@ -256,7 +264,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {Object.entries(disasterConfig).map(([key, config]) => {
               const dataItem = stats?.type_counts?.find(
-                (item: any) => item.type === key
+                (item) => item.type === key
               );
 
               const isActive = disasterType === "all" || disasterType === key;

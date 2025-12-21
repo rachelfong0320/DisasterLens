@@ -5,11 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import LocaleSwitcher from "./locale-switcher";
 
-interface HeaderProps {
-  onFilterClick: () => void;
-}
-
-export default function Header({ onFilterClick }: HeaderProps) {
+export default function Header() {
   const t = useTranslations("header");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, ChevronDown, ArrowRight, Clock } from "lucide-react";
+import { CalendarDays, ChevronDown, ArrowRight } from "lucide-react";
 import { getTimeRange } from "@/lib/date-utils";
 import { useTranslations } from "next-intl";
 

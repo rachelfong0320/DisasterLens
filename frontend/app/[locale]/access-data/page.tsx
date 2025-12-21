@@ -135,7 +135,7 @@ export default function AccessDataPage() {
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      <Header onFilterClick={() => {}} />
+      <Header />
       <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
 
       <div className="flex-1">
