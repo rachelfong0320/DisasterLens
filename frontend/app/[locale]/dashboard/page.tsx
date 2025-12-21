@@ -18,15 +18,9 @@ import {
   CircleSlash,
   Activity,
   AlertTriangle,
-  LucideIcon,
 } from "lucide-react";
 import MetricListChart from "@/components/metrics-list-charts";
 import DisasterFilter from "@/components/disaster-stats-filter";
-
-interface DisasterOptionConfig {
-  icon: LucideIcon;
-  color: string;
-}
 
 interface StatsType {
   monthly_events?: {
