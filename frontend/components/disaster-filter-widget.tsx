@@ -16,20 +16,19 @@ import { useTranslations } from "next-intl";
 export type DisasterType =
   | "flood"
   | "landslide"
-  | "forest_fire"
+  | "forestFire"
   | "storm"
   | "haze"
   | "sinkhole"
   | "earthquake"
   | "tsunami"
-  | ""
-  | "All Types";
+  | "";
 
 export const DISASTER_TYPES: DisasterType[] = [
-  "All Types",
+  "",
   "flood",
   "landslide",
-  "forest_fire",
+  "forestFire",
   "storm",
   "haze",
   "sinkhole",
@@ -73,6 +72,7 @@ export default function DisasterFilterWidget({
 }: DisasterFilterWidgetProps) {
   const t = useTranslations("home");
   const r = useTranslations("access_data");
+  const d = useTranslations("disasterType");
   const [isOpen, setIsOpen] = useState(true);
   const [filters, setFilters] = useState<FilterOptions>({
     disasterType: "",
@@ -136,7 +136,7 @@ export default function DisasterFilterWidget({
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between pb-2 border-b border-border">
         <h3 className="font-semibold text-sm text-foreground">
-          Filter Options
+          {t("filterOptions")}
         </h3>
         {hasActiveFilters && (
           <button
@@ -164,18 +164,8 @@ export default function DisasterFilterWidget({
             </SelectTrigger>
             <SelectContent className="z-2000">
               {DISASTER_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {
-                    type === "" || type === "All Types"
-                      ? "All Types"
-                      : type
-                          .split("_") // 1. Split 'forest_fire' into ['forest', 'fire']
-                          .map(
-                            (word) =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                          ) // 2. Capitalize each: ['Forest', 'Fire']
-                          .join(" ") // 3. Join back with space: 'Forest Fire'
-                  }
+                <SelectItem key={type || "all"} value={type || "All Types"}>
+                  {type === "" ? d("allTypes") : d(type)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -185,19 +175,19 @@ export default function DisasterFilterWidget({
         {/* State */}
         <div className="space-y-1">
           <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
-            State
+            {t("state")}
           </label>
           <Select
             value={filters.state || "All States"}
             onValueChange={handleStateChange}
           >
             <SelectTrigger className="h-9">
-              <SelectValue placeholder="Select state" />
+              <SelectValue placeholder={t("selectState")} />
             </SelectTrigger>
             <SelectContent className="z-2000">
               {MALAYSIAN_STATES.map((state) => (
                 <SelectItem key={state} value={state}>
-                  {state}
+                  {state === "All States" ? t("selectState") : state}
                 </SelectItem>
               ))}
             </SelectContent>

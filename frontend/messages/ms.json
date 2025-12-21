@@ -49,7 +49,11 @@
     "subscription": "Langganan"
   },
   "home": {
-    "map": "Peta Bencana"
+    "map": "Peta Bencana",
+    "state": "Negeri",
+    "selectState": "Pilih Negeri",
+    "filterOptions": "Pilihan Penapis",
+    "filter": "Pilih"
   },
   "newsletterSection": {
     "desc": "Dapatkan amaran bencana terkini dan pandangan data dihantar ke peti masuk anda",
@@ -62,5 +66,16 @@
   "preferredLocations": {
     "decs": "Pilih kawasan untuk menerima amaran dan kemas kini",
     "title": "Tetapkan Lokasi Pilihan"
+  },
+  "disasterType": {
+    "earthquake": "Gempa Bumi",
+    "flood": "Banjir",
+    "landslide": "Tanah Runtuh",
+    "storm": "Ribut",
+    "forestFire": "Kebakaran Hutan",
+    "haze": "Jerebu",
+    "tsunami": "Tsunami",
+    "sinkhole": "Lubang Benam",
+    "allTypes": "Semua Jenis"
   }
 }

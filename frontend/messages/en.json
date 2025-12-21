@@ -49,7 +49,11 @@
     "subscription": "Subscription"
   },
   "home": {
-    "map": "Disaster Map"
+    "map": "Disaster Map",
+    "state": "State",
+    "selectState": "Select State",
+    "filterOptions": "Filter Options",
+    "filter": "Filter"
   },
   "newsletterSection": {
     "desc": "Get the latest disaster alerts and data insights delivered to your inbox",
@@ -62,5 +66,16 @@
   "preferredLocations": {
     "decs": "Choose areas to receive alerts and updates",
     "title": "Set Preferred Locations"
+  },
+  "disasterType": {
+    "earthquake": "Earthquake",
+    "flood": "Flood",
+    "landslide": "Landslide",
+    "storm": "Storm",
+    "forestFire": "Forest Fire",
+    "haze": "Haze",
+    "tsunami": "Tsunami",
+    "sinkhole": "Sinkhole",
+    "allTypes": "All Types"
   }
 }
