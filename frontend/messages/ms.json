@@ -10,10 +10,10 @@
     "endDate": "Tarikh Akhir",
     "expFormat": "Format Eksport",
     "form": "Pilih Tempoh Masa",
-    "info1": "• Fail CSV termasuk: event_id, event_type, lokasi, tahap, tarikh, penerangan",
-    "info2": "• Fail JSON mengandungi data terstruktur dengan metadata bersarang dan koordinat",
-    "info3": "• Data mentah termasuk rekod acara lengkap dengan semua medan yang tersedia",
-    "info4": "• Data dikemas kini setiap hari dan mencerminkan peristiwa dari 5 tahun yang lalu",
+    "info1": "Fail CSV termasuk: event_id, event_type, lokasi, tahap, tarikh, penerangan",
+    "info2": "Fail JSON mengandungi data terstruktur dengan metadata bersarang dan koordinat",
+    "info3": "Data mentah termasuk rekod acara lengkap dengan semua medan yang tersedia",
+    "info4": "Data dikemas kini setiap hari dan mencerminkan peristiwa dari 5 tahun yang lalu",
     "infoFormat": "Maklumat Format Data",
     "jsonDesc": "Data JSON yang terstruktur untuk akses programatik dan integrasi API",
     "jsonFormat": "Format JSON",
@@ -47,6 +47,9 @@
     "home": "Halaman Utama",
     "statistics": "Statistik",
     "subscription": "Langganan"
+  },
+  "home": {
+    "map": "Peta Bencana"
   },
   "newsletterSection": {
     "desc": "Dapatkan amaran bencana terkini dan pandangan data dihantar ke peti masuk anda",
