@@ -77,7 +77,7 @@ export default function ChatbotWidget({
       };
 
       setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
+    } catch {
       // Handle connection errors gracefully
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),

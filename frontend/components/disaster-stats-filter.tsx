@@ -18,7 +18,6 @@ interface DisasterFilterProps {
 export default function DisasterFilter({
   value,
   onChange,
-  options,
 }: DisasterFilterProps) {
   const d = useTranslations("disasterType");
   const disasterOptions = {
