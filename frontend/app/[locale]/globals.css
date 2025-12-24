@@ -145,8 +145,8 @@
 
   /* 3. THE FIX FOR CUT-OFF CHARTS 
      Apply this to your Card or Chart containers */
-  .grid > div, 
-  .card, 
+  .grid > div,
+  .card,
   [class*="Card"] {
     break-inside: avoid-page !important;
     page-break-inside: avoid !important;
@@ -155,30 +155,49 @@
   }
 
   /* 4. Formatting Tables */
-  table { 
-    page-break-inside: auto; 
+  table {
+    page-break-inside: auto;
     width: 100%;
     border-collapse: collapse;
   }
-  tr { 
-    page-break-inside: avoid; 
-    page-break-after: auto; 
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
   }
-  thead { display: table-header-group; }
+  thead {
+    display: table-header-group;
+  }
 
   /* 5. Hide Interactive UI */
-  header, footer, .chatbot-widget, button, .time-filter-controls, nav {
+  header,
+  footer,
+  .chatbot-widget,
+  button,
+  .time-filter-controls,
+  nav {
     display: none !important;
   }
 
   /* 6. Chart Text Visibility */
   .recharts-text {
-    fill: #111827 !important; 
+    fill: #111827 !important;
     font-weight: 600;
   }
 
   @page {
     margin: 1.5cm;
     size: A4 portrait;
+  }
+
+  @keyframes bounce {
+    0%,
+    100% {
+      transform: translateY(-5%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+    50% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
   }
 }

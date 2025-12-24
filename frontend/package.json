@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "build": "i18nexus pull && next build",
-    "dev": "concurrently --raw \"i18nexus listen\" \"next dev --turbo\"",
+    "dev": "next dev --turbo",
+    "dev:i18n": "concurrently --raw \"i18nexus listen\" \"next dev --turbo\"",
+    "i18n:sync": "i18nexus push",
     "lint": "eslint .",
     "start": "i18nexus pull && next start"
   },
