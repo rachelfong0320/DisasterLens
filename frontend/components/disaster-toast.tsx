@@ -15,25 +15,28 @@ interface DisasterToastProps {
 
 const variantStyles = {
   info: {
-    bg: "#1e3a8a",
-    border: "#3b82f6",
-    text: "#dbeafe",
+    bg: "var(--color-primary)",
+    border: "var(--color-primary)",
+    text: "var(--color-primary-foreground)",
     icon: AlertCircle,
-    stripe: "#60a5fa",
+    stripe: "var(--color-accent)",
+    opacity: 0.9,
   },
   success: {
-    bg: "#287245ff",
-    border: "#22c55e",
-    text: "#dcfce7",
+    bg: "var(--color-success, var(--color-accent))", // full color
+    border: "var(--color-success, var(--color-accent))",
+    text: "var(--color-success-foreground, var(--color-accent-foreground))",
     icon: CheckCircle2,
-    stripe: "#4ade80",
+    stripe: "var(--color-accent)",
+    opacity: 0.9,
   },
   error: {
-    bg: "#991b1b",
-    border: "#ef4444",
-    text: "#fee2e2",
+    bg: "var(--color-destructive)",
+    border: "var(--color-destructive)",
+    text: "var(--color-destructive-foreground)",
     icon: AlertTriangle,
-    stripe: "#f87171",
+    stripe: "var(--color-accent)",
+    opacity: 0.9,
   },
 };
 
@@ -60,9 +63,10 @@ export function DisasterToast({
     <div
       className="relative w-full max-w-md overflow-hidden rounded-lg border-2 p-4 animate-in slide-in-from-top-full duration-300"
       style={{
-        backgroundColor: styles.bg,
-        borderColor: styles.border,
-        color: styles.text,
+        backgroundColor: `${styles.bg}`,
+        borderColor: `${styles.border}`,
+        color: `${styles.text}`,
+        opacity: styles.opacity || 1,
         boxShadow: `0 10px 15px -3px ${styles.border}33`,
       }}
       role="alert"

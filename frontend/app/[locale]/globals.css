@@ -201,3 +201,137 @@
     }
   }
 }
+
+@keyframes wave-flow {
+  0%,
+  100% {
+    transform: translateX(0%) translateY(0%) scale(1);
+  }
+  33% {
+    transform: translateX(-25%) translateY(-10%) scale(1.1);
+  }
+  66% {
+    transform: translateX(25%) translateY(10%) scale(0.9);
+  }
+}
+@keyframes wave-flow {
+  0%,
+  100% {
+    transform: translateX(0%) translateY(0%) scale(1);
+  }
+  33% {
+    transform: translateX(-25%) translateY(-10%) scale(1.1);
+  }
+  66% {
+    transform: translateX(25%) translateY(10%) scale(0.9);
+  }
+}
+
+@keyframes wave-flow-fast {
+  0%,
+  100% {
+    transform: translateX(0%) translateY(0%) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-20%) scale(1.2) rotate(5deg);
+  }
+}
+
+@keyframes progress-fill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradient-sweep {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes check-draw {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes bounce-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slide-in-out {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+.animate-slide-text {
+  animation: slide-in-out 1.6s ease-in-out forwards;
+}
+
+.animate-wave-flow {
+  animation: wave-flow 8s ease-in-out infinite;
+}
+
+.animate-wave-flow-fast {
+  animation: wave-flow-fast 2s ease-in-out infinite;
+}
+
+.animate-progress-fill {
+  animation: progress-fill 1s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-gradient-sweep {
+  animation: gradient-sweep 1.5s ease-in-out infinite;
+}
+
+.animate-check-draw {
+  animation: check-draw 0.5s ease-out forwards;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
