@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
+import DatePicker from "react-datepicker";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ChatbotWidget from "@/components/chatbot-widget";
@@ -16,7 +17,17 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Hash, Search, MapPin, FileDown, X } from "lucide-react";
+import {
+  Calendar,
+  Hash,
+  Search,
+  MapPin,
+  FileDown,
+  X,
+  FileSpreadsheet,
+  Waves,
+  ShieldAlert,
+} from "lucide-react";
 import { useDisasterToast } from "@/hooks/use-toast";
 import {
   DisasterToast,
@@ -31,8 +42,8 @@ export default function AccessDataPage() {
 
   // Filter States
   const [format, setFormat] = useState("csv");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [locationsSelected, setLocationsSelected] = useState<string[]>([]);
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [severity, setSeverity] = useState<string | undefined>(undefined);
@@ -182,35 +193,38 @@ export default function AccessDataPage() {
             <form onSubmit={handleExport} className="space-y-6">
               {/* Date Range Section */}
               <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-6">
+                <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-5 h-5 text-primary" />
                   <h2 className="text-xl font-semibold text-foreground">
                     {t("form")}
                   </h2>
                 </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {t("dateRange")}
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="startDate" className="text-sm font-medium">
                       {t("startDate")}
                     </Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="h-11"
+                    <DatePicker
+                      selected={startDate}
+                      onChange={setStartDate}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="DD/MM/YYYY"
+                      customInput={<Input className="h-11" />}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endDate" className="text-sm font-medium">
                       {t("endDate")}
                     </Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="h-11"
+                    <DatePicker
+                      selected={endDate}
+                      onChange={setEndDate}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="DD/MM/YYYY"
+                      customInput={<Input className="h-11" />}
                     />
                   </div>
                 </div>
@@ -218,10 +232,15 @@ export default function AccessDataPage() {
 
               {/* Filter Section */}
               <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-foreground mb-6">
-                  {t("choose")}
-                </h2>
-
+                <div className="flex items-center gap-2 mb-2">
+                  <FileSpreadsheet className="w-5 h-5 text-primary" />
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {t("choose")}
+                  </h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {t("filterDesc")}
+                </p>
                 <div className="space-y-6">
                   {/* Amount */}
                   <div className="space-y-2">
@@ -267,6 +286,7 @@ export default function AccessDataPage() {
                       htmlFor="disaster-type"
                       className="text-sm font-medium"
                     >
+                      <Waves className="w-4 h-4 text-muted-foreground" />
                       {t("type")}
                     </Label>
                     <Select value={category} onValueChange={setCategory}>
@@ -286,6 +306,7 @@ export default function AccessDataPage() {
                   {/* Severity */}
                   <div className="space-y-2">
                     <Label htmlFor="severity" className="text-sm font-medium">
+                      <ShieldAlert className="w-4 h-4 text-muted-foreground" />
                       {t("severity")}
                     </Label>
                     <Select value={severity} onValueChange={setSeverity}>

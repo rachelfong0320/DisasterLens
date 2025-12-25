@@ -2,9 +2,14 @@ import type React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 import { getMessages, setRequestLocale } from "next-intl/server";
+import { Geist, Geist_Mono } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
+
+// Load Geist fonts
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "DisasterLens - Disaster Event Tracking & Analysis",
