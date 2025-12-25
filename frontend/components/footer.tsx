@@ -1,53 +1,66 @@
 export default function Footer() {
   return (
-    <footer className="w-full px-4 sm:px-6 lg:px-8 py-12 border-t border-border bg-card">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* Brand */}
-          <div>
-            <h3 className="font-bold text-lg text-primary mb-3">DisasterLens</h3>
-            <p className="text-sm text-muted-foreground">Real-time disaster tracking and analysis for Malaysia</p>
-          </div>
+    <footer className="w-full border-t border-border bg-card px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8 mb-10">
+        {/* Left: Brand */}
+        <div className="md:w-1/3">
+          <h3 className="font-bold text-2xl text-primary mb-3">DisasterLens</h3>
+          <p className="text-sm text-muted-foreground">
+            Real-time disaster tracking and analysis for Malaysia.
+          </p>
+        </div>
 
-          {/* Links */}
+        {/* Right: Links */}
+        <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-3 gap-8">
+          {/* Transparency */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Product</h4>
+            <h4 className="font-semibold mb-4">Transparency</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Features
+                <a
+                  href="/methodology"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  How Our Data Works
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Pricing
+                <a
+                  href="/data-sources"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Data Sources
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  API
+                <a
+                  href="/limitations"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Limitations
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Project */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+            <h4 className="font-semibold mb-4">Project</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Blog
+                <a
+                  href="https://github.com/rachelfong0320/DisasterLens"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  GitHub
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Documentation
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Support
+                <a
+                  href="/team"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Developers
                 </a>
               </li>
             </ul>
@@ -55,42 +68,43 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+            <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Privacy
+                <a
+                  href="/privacy"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Terms
+                <a
+                  href="/term"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Terms of Use
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition">
-                  Contact
+                <a
+                  href="/disclaimer"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Disclaimer
                 </a>
               </li>
             </ul>
           </div>
         </div>
+      </div>
 
-        <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between">
-          <p className="text-sm text-muted-foreground">© 2025 DisasterLens. All rights reserved.</p>
-          <div className="flex gap-4 mt-4 md:mt-0">
-            <a href="#" className="text-muted-foreground hover:text-foreground transition">
-              Twitter
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition">
-              LinkedIn
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition">
-              GitHub
-            </a>
-          </div>
-        </div>
+      {/* Bottom bar */}
+      <div className="border-t border-border pt-6 max-w-7xl mx-auto">
+        <p className="text-sm text-muted-foreground text-center md:text-left">
+          © 2025 DisasterLens. All rights reserved.
+        </p>
       </div>
     </footer>
-  )
+  );
 }

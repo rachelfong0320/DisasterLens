@@ -2,6 +2,8 @@
 
 import type React from "react";
 import { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ChatbotWidget from "@/components/chatbot-widget";
@@ -16,23 +18,36 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Hash, Search, MapPin, FileDown, X } from "lucide-react";
+import {
+  Calendar,
+  Hash,
+  Search,
+  MapPin,
+  FileDown,
+  X,
+  FileSpreadsheet,
+  Waves,
+  ShieldAlert,
+} from "lucide-react";
 import { useDisasterToast } from "@/hooks/use-toast";
 import {
   DisasterToast,
   DisasterToastContainer,
 } from "@/components/disaster-toast";
 
+type ExportStage = "idle" | "preparing" | "exporting" | "complete";
+
 export default function AccessDataPage() {
   const t = useTranslations("access_data");
   const to = useTranslations("toast");
   const toast = useDisasterToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [exportStage, setExportStage] = useState<ExportStage>("idle");
 
   // Filter States
   const [format, setFormat] = useState("csv");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [locationsSelected, setLocationsSelected] = useState<string[]>([]);
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [severity, setSeverity] = useState<string | undefined>(undefined);
@@ -45,8 +60,16 @@ export default function AccessDataPage() {
 
     try {
       setIsExporting(true);
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      setExportStage("preparing");
+
+      // Stage 1: Preparing (1.5s)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setExportStage("exporting");
+
+      // Stage 2: Exporting - Perform actual export (1.5s)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const baseUrl = "http://localhost:8000";
       const params = new URLSearchParams();
 
       // Required param
@@ -94,6 +117,10 @@ export default function AccessDataPage() {
         throw new Error(errorData.detail || "Export failed");
       }
 
+      // Stage 3: Complete (1s)
+      setExportStage("complete");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Handle File Download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -110,6 +137,10 @@ export default function AccessDataPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
+      // Reset after short delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setExportStage("idle");
+
       toast.success(
         to("exportSuccess"),
         to("exportedFormat", { format: format.toUpperCase() }),
@@ -117,6 +148,7 @@ export default function AccessDataPage() {
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : to("exportFailed"));
+      setExportStage("idle");
     } finally {
       setIsExporting(false);
     }
@@ -175,6 +207,37 @@ export default function AccessDataPage() {
             </p>
           </div>
         </section>
+        {exportStage !== "idle" && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
+            {/* Simplified Speeding disaster waves background */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-1/4 -left-1/4 w-[40rem] h-[40rem] bg-destructive/20 rounded-full blur-3xl animate-wave-flow-fast" />
+              <div
+                className="absolute top-1/3 -right-1/4 w-[50rem] h-[50rem] bg-accent/15 rounded-full blur-3xl animate-wave-flow-fast"
+                style={{ animationDelay: "0.3s" }}
+              />
+              <div
+                className="absolute -bottom-1/4 left-1/4 w-[45rem] h-[45rem] bg-destructive/15 rounded-full blur-3xl animate-wave-flow-fast"
+                style={{ animationDelay: "0.6s" }}
+              />
+            </div>
+
+            {/* Simplified Animation content */}
+            <div className="relative z-10 text-center px-4">
+              <h2
+                key={exportStage}
+                className="text-6xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-destructive via-accent to-destructive bg-clip-text text-transparent animate-slide-text"
+                style={{
+                  backgroundSize: "200% 100%",
+                }}
+              >
+                {exportStage === "preparing" && t("preparing")}
+                {exportStage === "exporting" && t("exporting")}
+                {exportStage === "complete" && t("exported")}
+              </h2>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <section className="py-12 md:py-16">
@@ -182,35 +245,38 @@ export default function AccessDataPage() {
             <form onSubmit={handleExport} className="space-y-6">
               {/* Date Range Section */}
               <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-6">
+                <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-5 h-5 text-primary" />
                   <h2 className="text-xl font-semibold text-foreground">
                     {t("form")}
                   </h2>
                 </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {t("dateRange")}
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="startDate" className="text-sm font-medium">
                       {t("startDate")}
                     </Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="h-11"
+                    <DatePicker
+                      selected={startDate}
+                      onChange={setStartDate}
+                      customInput={<Input className="h-11" />}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="DD/MM/YYYY"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endDate" className="text-sm font-medium">
                       {t("endDate")}
                     </Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="h-11"
+                    <DatePicker
+                      selected={endDate}
+                      onChange={setEndDate}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="DD/MM/YYYY"
+                      customInput={<Input className="h-11" />}
                     />
                   </div>
                 </div>
@@ -218,10 +284,15 @@ export default function AccessDataPage() {
 
               {/* Filter Section */}
               <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-foreground mb-6">
-                  {t("choose")}
-                </h2>
-
+                <div className="flex items-center gap-2 mb-2">
+                  <FileSpreadsheet className="w-5 h-5 text-primary" />
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {t("choose")}
+                  </h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {t("filterDesc")}
+                </p>
                 <div className="space-y-6">
                   {/* Amount */}
                   <div className="space-y-2">
@@ -267,6 +338,7 @@ export default function AccessDataPage() {
                       htmlFor="disaster-type"
                       className="text-sm font-medium"
                     >
+                      <Waves className="w-4 h-4 text-muted-foreground" />
                       {t("type")}
                     </Label>
                     <Select value={category} onValueChange={setCategory}>
@@ -286,6 +358,7 @@ export default function AccessDataPage() {
                   {/* Severity */}
                   <div className="space-y-2">
                     <Label htmlFor="severity" className="text-sm font-medium">
+                      <ShieldAlert className="w-4 h-4 text-muted-foreground" />
                       {t("severity")}
                     </Label>
                     <Select value={severity} onValueChange={setSeverity}>
