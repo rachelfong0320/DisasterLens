@@ -4,53 +4,99 @@ import DataPipeline from "@/components/DataPipeline";
 export default function MethodologyPage() {
   return (
     <PageContainer title="How Our Data Works">
-      <p>
-        DisasterLens aggregates and analyzes disaster-related information from
-        publicly available third-party sources to provide situational awareness
-        for Malaysia.
-      </p>
+      <div className="space-y-10">
+        <section>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            DisasterLens aggregates and analyzes disaster-related information
+            from publicly available third-party sources to provide situational
+            awareness for Malaysia.
+          </p>
+        </section>
 
-      <h2>Data Collection</h2>
-      <p>
-        We retrieve disaster-related data through third-party APIs, including
-        services accessed via RapidAPI, as well as publicly available sources.
-        All incoming data is treated as raw and unverified.
-      </p>
+        <section className="space-y-6">
+          <h2 className="text-2xl font-semibold text-primary">
+            Data Collection
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            We retrieve disaster-related data through third-party APIs,
+            including services accessed via RapidAPI, as well as publicly
+            available sources. All incoming data is treated as raw and
+            unverified.
+          </p>
+        </section>
 
-      <h2>Processing Pipeline</h2>
-      <DataPipeline />
+        <section className="space-y-6">
+          <h2 className="text-2xl font-semibold text-primary">
+            Processing Pipeline
+          </h2>
+          <DataPipeline />
 
-      <h3>1. Ingestion</h3>
-      <p>Raw data is fetched at scheduled intervals.</p>
+          <div className="space-y-4 mt-4">
+            <div className="flex items-start gap-4">
+              <span className="text-primary font-bold text-lg">1.</span>
+              <div>
+                <h3 className="font-semibold text-primary">Ingestion</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Raw data is fetched at scheduled intervals.
+                </p>
+              </div>
+            </div>
 
-      <h3>2. Validation</h3>
-      <p>
-        We check for missing fields, invalid timestamps, and malformed
-        locations.
-      </p>
+            <div className="flex items-start gap-4">
+              <span className="text-primary font-bold text-lg">2.</span>
+              <div>
+                <h3 className="font-semibold text-primary">Validation</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  We check for missing fields, invalid timestamps, and malformed
+                  locations.
+                </p>
+              </div>
+            </div>
 
-      <h3>3. Cleaning</h3>
-      <p>
-        Duplicate entries and obvious inconsistencies are removed or corrected.
-      </p>
+            <div className="flex items-start gap-4">
+              <span className="text-primary font-bold text-lg">3.</span>
+              <div>
+                <h3 className="font-semibold text-primary">Cleaning</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Duplicate entries and obvious inconsistencies are removed or
+                  corrected.
+                </p>
+              </div>
+            </div>
 
-      <h3>4. Normalization</h3>
-      <p>
-        Data is standardized into consistent formats for time, location, and
-        disaster categories.
-      </p>
+            <div className="flex items-start gap-4">
+              <span className="text-primary font-bold text-lg">4.</span>
+              <div>
+                <h3 className="font-semibold text-primary">Normalization</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Data is standardized into consistent formats for time,
+                  location, and disaster categories.
+                </p>
+              </div>
+            </div>
 
-      <h3>5. Storage</h3>
-      <p>
-        Cleaned data is securely stored in our database for analysis,
-        visualization, and alerts.
-      </p>
+            <div className="flex items-start gap-4">
+              <span className="text-primary font-bold text-lg">5.</span>
+              <div>
+                <h3 className="font-semibold text-primary">Storage</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Cleaned data is securely stored in our database for analysis,
+                  visualization, and alerts.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <h2>Privacy</h2>
-      <p>
-        DisasterLens does not intentionally collect personal data from sources.
-        Public content is handled in aggregated form where possible.
-      </p>
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-primary">Privacy</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            DisasterLens does not intentionally collect personal data from
+            sources. Public content is handled in aggregated form where
+            possible.
+          </p>
+        </section>
+      </div>
     </PageContainer>
   );
 }

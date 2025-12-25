@@ -1,18 +1,17 @@
 export default function Footer() {
   return (
     <footer className="w-full border-t border-border bg-card px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-10">
-          {/* Brand */}
-          <div>
-            <h3 className="font-bold text-lg text-primary mb-3">
-              DisasterLens
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Real-time disaster tracking and analysis for Malaysia.
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8 mb-10">
+        {/* Left: Brand */}
+        <div className="md:w-1/3">
+          <h3 className="font-bold text-2xl text-primary mb-3">DisasterLens</h3>
+          <p className="text-sm text-muted-foreground">
+            Real-time disaster tracking and analysis for Malaysia.
+          </p>
+        </div>
 
+        {/* Right: Links */}
+        <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-3 gap-8">
           {/* Transparency */}
           <div>
             <h4 className="font-semibold mb-4">Transparency</h4>
@@ -98,13 +97,13 @@ export default function Footer() {
             </ul>
           </div>
         </div>
+      </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            © 2025 DisasterLens. All rights reserved.
-          </p>
-        </div>
+      {/* Bottom bar */}
+      <div className="border-t border-border pt-6 max-w-7xl mx-auto">
+        <p className="text-sm text-muted-foreground text-center md:text-left">
+          © 2025 DisasterLens. All rights reserved.
+        </p>
       </div>
     </footer>
   );

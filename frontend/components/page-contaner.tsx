@@ -1,4 +1,5 @@
 import type React from "react";
+import Header from "./header";
 export default function PageContainer({
   title,
   children,
@@ -8,6 +9,7 @@ export default function PageContainer({
 }) {
   return (
     <main className="min-h-screen bg-background">
+      <Header />
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/20 pointer-events-none" />
 
