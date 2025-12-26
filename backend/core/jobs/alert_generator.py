@@ -41,8 +41,9 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
     event_type = event_data.get('classification_type', 'Disaster')
     location = event_data.get('location_district', 'Unknown Location')
     event_id = event_data.get('event_id', 'N/A')
-    
-    post_link = f"LINK_TO_POST_ID/{event_data.get('related_post_ids', ['N/A'])[0]}"
+
+    post_link = f"http://localhost:3000/dashboard"  # Link to the system dashboard or event details
+    unsubscribe_url = f"http://localhost:8000/api/v1/unsubscribe?email={subscriber_email}"
 
     # 1. Build the email content
     subject = f"ALERT: {event_type.upper()} Detected in {location}"
@@ -57,11 +58,15 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
           <li><strong>Location Coordinates:</strong> {event_data.get('geometry', {}).get('coordinates')}</li>
         </ul>
         <p>For more details, please check the system dashboard.</p>
-        <p><a href="{post_link}">View Original Post (Placeholder)</a></p>
+        <p><a href="{post_link}">System Dashboard</a></p>
         <p style="font-size: 0.8em; color: #777;">
             You are receiving this alert because you subscribed to notifications for {location}. 
             To change your preferences, please visit your subscription page.
         </p>
+        <p style="font-size: 10px;">
+      If you wish to stop receiving these alerts, 
+      <a href="{unsubscribe_url}">unsubscribe here</a>.
+    </p>
       </body>
     </html>
     """
@@ -122,15 +127,29 @@ def process_event_for_alerts(event_id: ObjectId) -> int:
         return 0
 
     # 2. Spam Prevention Check (CoOLDOWN LOGIC)
-    last_alert_sent: datetime = event.get("last_alert_sent", datetime.min.replace(tzinfo=timezone.utc)) #
-    cooldown_mins: int = event.get("alert_cooldown_mins", DEFAULT_COOLDOWN_MINUTES)
+    raw_last_alert_sent = event.get("last_alert_sent")
+
+    if raw_last_alert_sent is None:
+        last_alert_sent = datetime.min.replace(tzinfo=timezone.utc)
+    elif raw_last_alert_sent.tzinfo is None:
+        # MongoDB naive datetime → assume UTC
+        last_alert_sent = raw_last_alert_sent.replace(tzinfo=timezone.utc)
+    else:
+        last_alert_sent = raw_last_alert_sent
+
+    cooldown_mins: int = event.get(
+        "alert_cooldown_mins",
+        DEFAULT_COOLDOWN_MINUTES
+    )
+
     cooldown_expiry = last_alert_sent + timedelta(minutes=cooldown_mins)
     current_time = datetime.now(timezone.utc)
-
     if current_time < cooldown_expiry:
-        logger.info(f"Event {event['event_id']} on cooldown. Skipping alert.")
+        logger.info(
+            f"Event {event['event_id']} on cooldown until {cooldown_expiry}."
+        )
         return 0
-
+    
     # 3. Find matching subscribers
     subscribers = subscribers_collection.find({
         "locations": event_location
