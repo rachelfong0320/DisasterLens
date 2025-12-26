@@ -115,5 +115,19 @@
     "subscriptionSuccess": "Subscribed!",
     "staySafeAlert": "Stay Safe, Stay Alert.",
     "subscriptionFailed": "Subscription failed."
+  },
+  "footer": {
+    "desc": "Real-time disaster tracking and analysis for Malaysia.",
+    "transparency": "Transparency",
+    "data-work": "How Our Data Works",
+    "data-sources": "Data Sources",
+    "limitations": "Limitations",
+    "project": "Project",
+    "developers": "Developers",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "disclamer": "Disclaimer",
+    "rights": "© 2025 DisasterLens. All rights reserved."
   }
 }

@@ -116,5 +116,19 @@
     "subscriptionSuccess": "Dah Langgan!",
     "staySafeAlert": "Jaga Keselamatan, Jaga Kewaspadaan.",
     "subscriptionFailed": "Langganan gagal."
+  },
+  "footer": {
+    "desc": "Penjejakan dan analisis bencana masa nyata untuk Malaysia.",
+    "transparency": "Ketelusan",
+    "data-work": "Bagaimana Data Kami Berfungsi",
+    "data-sources": "Sumber Data",
+    "limitations": "Had",
+    "project": "Projek",
+    "developers": "Pembangun",
+    "legal": "Undang-Undang",
+    "privacy": "Dasar Privasi",
+    "terms": "Syarat Penggunaan",
+    "disclamer": "Penafian",
+    "rights": "© 2025 DisasterLens. Hak Cipta Terpelihara."
   }
 }
