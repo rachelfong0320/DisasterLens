@@ -72,7 +72,7 @@ export default function NewsletterSection({
   };
 
   return (
-    <section className="w-full px-4 sm:px-6 lg:px-8 py-12 bg-primary">
+    <section className="w-full px-4 sm:px-6 lg:px-8 py-12 bg-gradient-to-br from-primary via-primary/90 rounded-lg shadow-lg">
       <div className="max-w-2xl mx-auto text-center">
         <h2 className="text-3xl font-bold text-primary-foreground mb-2">
           {t("title")}
@@ -94,7 +94,7 @@ export default function NewsletterSection({
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-3 bg-accent text-accent-foreground rounded-lg font-medium hover:opacity-90 transition whitespace-nowrap disabled:opacity-50"
+            className="px-6 py-3 bg-primary text-accent-foreground rounded-lg font-medium hover:opacity-90 transition whitespace-nowrap disabled:opacity-50"
           >
             {loading ? "..." : subscribed ? t("Subscribed") : t("Subscribe")}
           </button>

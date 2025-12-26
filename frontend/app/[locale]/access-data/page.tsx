@@ -211,13 +211,13 @@ export default function AccessDataPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
             {/* Simplified Speeding disaster waves background */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-1/4 -left-1/4 w-[40rem] h-[40rem] bg-destructive/20 rounded-full blur-3xl animate-wave-flow-fast" />
+              <div className="absolute -top-1/4 -left-1/4 w-[40rem] h-[40rem] bg-primary/20 rounded-full blur-3xl animate-wave-flow-fast" />
               <div
-                className="absolute top-1/3 -right-1/4 w-[50rem] h-[50rem] bg-accent/15 rounded-full blur-3xl animate-wave-flow-fast"
+                className="absolute top-1/3 -right-1/4 w-[50rem] h-[50rem] bg-primary/15 rounded-full blur-3xl animate-wave-flow-fast"
                 style={{ animationDelay: "0.3s" }}
               />
               <div
-                className="absolute -bottom-1/4 left-1/4 w-[45rem] h-[45rem] bg-destructive/15 rounded-full blur-3xl animate-wave-flow-fast"
+                className="absolute -bottom-1/4 left-1/4 w-[45rem] h-[45rem] bg-primary/15 rounded-full blur-3xl animate-wave-flow-fast"
                 style={{ animationDelay: "0.6s" }}
               />
             </div>
@@ -226,7 +226,7 @@ export default function AccessDataPage() {
             <div className="relative z-10 text-center px-4">
               <h2
                 key={exportStage}
-                className="text-6xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-destructive via-accent to-destructive bg-clip-text text-transparent animate-slide-text"
+                className="text-6xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-slide-text"
                 style={{
                   backgroundSize: "200% 100%",
                 }}

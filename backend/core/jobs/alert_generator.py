@@ -41,29 +41,69 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
     event_type = event_data.get('classification_type', 'Disaster')
     location = event_data.get('location_district', 'Unknown Location')
     event_id = event_data.get('event_id', 'N/A')
-    
-    post_link = f"LINK_TO_POST_ID/{event_data.get('related_post_ids', ['N/A'])[0]}"
+
+    post_link = f"http://localhost:3000"  # Link to the system dashboard or event details
+    unsubscribe_url = f"http://localhost:8000/api/v1/unsubscribe?email={subscriber_email}"
 
     # 1. Build the email content
     subject = f"ALERT: {event_type.upper()} Detected in {location}"
     html_content = f"""\
     <html>
-      <body>
-        <h2>Disaster Alert: New {event_type.title()} Event</h2>
-        <p>A significant {event_type} event has been detected in <strong>{location}</strong>.</p>
-        <ul>
-          <li><strong>Event ID:</strong> {event_id}</li>
-          <li><strong>First Reported:</strong> {event_data.get('start_time').strftime('%Y-%m-%d %H:%M:%S UTC')}</li>
-          <li><strong>Location Coordinates:</strong> {event_data.get('geometry', {}).get('coordinates')}</li>
-        </ul>
-        <p>For more details, please check the system dashboard.</p>
-        <p><a href="{post_link}">View Original Post (Placeholder)</a></p>
-        <p style="font-size: 0.8em; color: #777;">
-            You are receiving this alert because you subscribed to notifications for {location}. 
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+      <!-- Header -->
+      <tr>
+        <td style="background: linear-gradient(135deg, #1c50a7 70%, #ffffff 100%); color: #ffffff; padding: 20px; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px;">DisasterLens</h1>
+          <p style="margin: 5px 0 0; font-size: 16px;">New {event_type.title()} Event Detected</p>
+        </td>
+      </tr>
+
+      <!-- Body -->
+      <tr>
+        <td style="padding: 20px; color: #333333; line-height: 1.5;">
+          <p>A significant <strong>{event_type}</strong> event has been detected in <strong>{location}</strong>.</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 10px; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Event ID:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_id}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>First Reported:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('start_time').strftime('%Y-%m-%d %H:%M:%S UTC')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Location Coordinates:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('geometry', {}).get('coordinates')}</td>
+            </tr>
+          </table>
+
+          <p style="margin-top: 15px;">For more details, please check the system dashboard:</p>
+          <p style="text-align: center;">
+            <a href="{post_link}" style="display: inline-block; background-color:#1c50a7; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-weight: bold;">View Dashboard</a>
+          </p>
+
+          <p style="font-size: 12px; color: #777777; margin-top: 20px;">
+            You are receiving this alert because you subscribed to notifications for {location}.  
             To change your preferences, please visit your subscription page.
-        </p>
-      </body>
-    </html>
+          </p>
+
+          <p style="font-size: 12px; color: #777777;">
+            If you wish to stop receiving these alerts, <a href="{unsubscribe_url}" style="color: #ff4d4f; text-decoration: none;">unsubscribe here</a>.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="background-color: #f0f0f0; text-align: center; padding: 15px; font-size: 12px; color: #999999;">
+          &copy; 2025 DisasterLens. All rights reserved.
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
     """
 
     message = MIMEMultipart("alternative")
@@ -122,15 +162,29 @@ def process_event_for_alerts(event_id: ObjectId) -> int:
         return 0
 
     # 2. Spam Prevention Check (CoOLDOWN LOGIC)
-    last_alert_sent: datetime = event.get("last_alert_sent", datetime.min.replace(tzinfo=timezone.utc)) #
-    cooldown_mins: int = event.get("alert_cooldown_mins", DEFAULT_COOLDOWN_MINUTES)
+    raw_last_alert_sent = event.get("last_alert_sent")
+
+    if raw_last_alert_sent is None:
+        last_alert_sent = datetime.min.replace(tzinfo=timezone.utc)
+    elif raw_last_alert_sent.tzinfo is None:
+        # MongoDB naive datetime → assume UTC
+        last_alert_sent = raw_last_alert_sent.replace(tzinfo=timezone.utc)
+    else:
+        last_alert_sent = raw_last_alert_sent
+
+    cooldown_mins: int = event.get(
+        "alert_cooldown_mins",
+        DEFAULT_COOLDOWN_MINUTES
+    )
+
     cooldown_expiry = last_alert_sent + timedelta(minutes=cooldown_mins)
     current_time = datetime.now(timezone.utc)
-
     if current_time < cooldown_expiry:
-        logger.info(f"Event {event['event_id']} on cooldown. Skipping alert.")
+        logger.info(
+            f"Event {event['event_id']} on cooldown until {cooldown_expiry}."
+        )
         return 0
-
+    
     # 3. Find matching subscribers
     subscribers = subscribers_collection.find({
         "locations": event_location
