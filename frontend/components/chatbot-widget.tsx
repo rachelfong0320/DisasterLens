@@ -98,7 +98,7 @@ export default function ChatbotWidget({
       {/* Floating Button */}
       <button
         onClick={() => onToggle(!isOpen)}
-        className="fixed bottom-6 right-6 bg-accent text-primary-foreground rounded-full p-4 shadow-lg hover:opacity-90 transition z-40 text-2xl"
+        className="fixed bottom-6 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:opacity-90 transition z-40 text-2xl"
         aria-label="Toggle chatbot"
       >
         <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
@@ -108,7 +108,7 @@ export default function ChatbotWidget({
           ) : (
             <>
               <Bot className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse" />
             </>
           )}
         </div>

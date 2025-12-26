@@ -32,7 +32,7 @@ export default function LeafletMap() {
     <section className="w-full px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-foreground">{h("map")}</h2>
+          <h2 className="text-2xl font-bold text-foreground">{h("map")}</h2>
 
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -40,8 +40,8 @@ export default function LeafletMap() {
               flex items-center gap-2 px-4 py-2 rounded-lg shadow-md border transition-all duration-300 ease-in-out
               ${
                 isFilterOpen
-                  ? "bg-blue-600 border-blue-600 text-white" // State when OPEN
-                  : "bg-white border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600" // State when CLOSED
+                  ? "bg-primary text-white" // State when OPEN
+                  : "flex w-fit items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all outline-none hover:bg-zinc-50 focus:ring-2 focus:ring-zinc-950/10 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:bg-zinc-900" // State when CLOSED
               }
             `}
           >

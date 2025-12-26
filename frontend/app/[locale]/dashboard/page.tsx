@@ -229,7 +229,7 @@ export default function Dashboard() {
           {/* Header & Filters */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div className="print:block">
-              <h1 className="text-3xl font-bold text-foreground">
+              <h1 className="text-2xl font-bold text-foreground">
                 {t("title")}
               </h1>
               <p className="text-muted-foreground mt-1">{t("desc")}</p>
