@@ -42,33 +42,68 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
     location = event_data.get('location_district', 'Unknown Location')
     event_id = event_data.get('event_id', 'N/A')
 
-    post_link = f"http://localhost:3000/dashboard"  # Link to the system dashboard or event details
+    post_link = f"http://localhost:3000"  # Link to the system dashboard or event details
     unsubscribe_url = f"http://localhost:8000/api/v1/unsubscribe?email={subscriber_email}"
 
     # 1. Build the email content
     subject = f"ALERT: {event_type.upper()} Detected in {location}"
     html_content = f"""\
     <html>
-      <body>
-        <h2>Disaster Alert: New {event_type.title()} Event</h2>
-        <p>A significant {event_type} event has been detected in <strong>{location}</strong>.</p>
-        <ul>
-          <li><strong>Event ID:</strong> {event_id}</li>
-          <li><strong>First Reported:</strong> {event_data.get('start_time').strftime('%Y-%m-%d %H:%M:%S UTC')}</li>
-          <li><strong>Location Coordinates:</strong> {event_data.get('geometry', {}).get('coordinates')}</li>
-        </ul>
-        <p>For more details, please check the system dashboard.</p>
-        <p><a href="{post_link}">System Dashboard</a></p>
-        <p style="font-size: 0.8em; color: #777;">
-            You are receiving this alert because you subscribed to notifications for {location}. 
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+      <!-- Header -->
+      <tr>
+        <td style="background: linear-gradient(135deg, #1c50a7 70%, #ffffff 100%); color: #ffffff; padding: 20px; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px;">DisasterLens</h1>
+          <p style="margin: 5px 0 0; font-size: 16px;">New {event_type.title()} Event Detected</p>
+        </td>
+      </tr>
+
+      <!-- Body -->
+      <tr>
+        <td style="padding: 20px; color: #333333; line-height: 1.5;">
+          <p>A significant <strong>{event_type}</strong> event has been detected in <strong>{location}</strong>.</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 10px; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Event ID:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_id}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>First Reported:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('start_time').strftime('%Y-%m-%d %H:%M:%S UTC')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Location Coordinates:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('geometry', {}).get('coordinates')}</td>
+            </tr>
+          </table>
+
+          <p style="margin-top: 15px;">For more details, please check the system dashboard:</p>
+          <p style="text-align: center;">
+            <a href="{post_link}" style="display: inline-block; background-color:#1c50a7; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-weight: bold;">View Dashboard</a>
+          </p>
+
+          <p style="font-size: 12px; color: #777777; margin-top: 20px;">
+            You are receiving this alert because you subscribed to notifications for {location}.  
             To change your preferences, please visit your subscription page.
-        </p>
-        <p style="font-size: 10px;">
-      If you wish to stop receiving these alerts, 
-      <a href="{unsubscribe_url}">unsubscribe here</a>.
-    </p>
-      </body>
-    </html>
+          </p>
+
+          <p style="font-size: 12px; color: #777777;">
+            If you wish to stop receiving these alerts, <a href="{unsubscribe_url}" style="color: #ff4d4f; text-decoration: none;">unsubscribe here</a>.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="background-color: #f0f0f0; text-align: center; padding: 15px; font-size: 12px; color: #999999;">
+          &copy; 2025 DisasterLens. All rights reserved.
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
     """
 
     message = MIMEMultipart("alternative")

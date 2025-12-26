@@ -11,7 +11,7 @@ from core.jobs.alert_generator import process_event_for_alerts
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
-    EVENT_ID = ObjectId("69415fdf9b49acef0c093a87")
+    EVENT_ID = ObjectId("69415fdf9b49acef0c093a93")
 
     sent = process_event_for_alerts(EVENT_ID)
 
