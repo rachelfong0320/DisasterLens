@@ -137,6 +137,15 @@ disasterlens/
 ## 👥 Team
 
 Developed by Rachel Fong and Ng Yong Jing.
+
+  <a href="https://github.com/rachelfong0320">
+    <img src="https://avatars.githubusercontent.com/u/152014797?s=96&v=4" width="60px" />
+  </a>
+   <a href="https://github.com/yongjing479">
+    <img src="https://avatars.githubusercontent.com/u/122367568?v=4" width="60px" />
+  </a>
+
+---
 > ⚠️ Disclaimer: 
 > This project is intended for educational and research purposes.
 > Ensure compliance with the Terms of Service of any social media platforms used for data scraping.
