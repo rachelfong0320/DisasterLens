@@ -1,9 +1,17 @@
 import time
 import logging
-from core.config import session_twitter, HEADERS_TWITTER , RAPID_API_URL_TWITTER
-from .preprocess import clean_text, translate_to_english, tokenize_and_clean
-from .helpers import is_location_in_malaysia, malaysia_keywords
-from .dbConnection import insert_tweet
+import json
+from kafka import KafkaProducer
+from core.config import (
+    session_twitter, 
+    HEADERS_TWITTER, 
+    RAPID_API_URL_TWITTER, 
+    KAFKA_BOOTSTRAP_SERVERS, 
+    KAFKA_SSL_CONFIG
+)
+from core.scrapers.TweetDataScraper.preprocess import clean_text, translate_to_english, tokenize_and_clean
+from core.scrapers.TweetDataScraper.helpers import is_location_in_malaysia, malaysia_keywords
+from core.scrapers.TweetDataScraper.dbConnection import insert_tweet
 from concurrent.futures import ThreadPoolExecutor
 
 """
@@ -39,6 +47,15 @@ Run this script as a standalone process. It will start multiple threads to concu
 Note:
 Make sure your `.env` file is properly configured with valid RAPIDAPI credentials and MongoDB URI before running this script.
 """
+# Initialize Kafka Producer
+producer = KafkaProducer(
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+    security_protocol="SSL",
+    ssl_cafile=KAFKA_SSL_CONFIG['ssl_cafile'],
+    ssl_certfile=KAFKA_SSL_CONFIG['ssl_certfile'],
+    ssl_keyfile=KAFKA_SSL_CONFIG['ssl_keyfile'],
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
 
 def run_once(combined_query):
     seen_ids=set()
@@ -120,10 +137,12 @@ def run_once(combined_query):
                             'verified': is_verified,
                             'verification_type': verification_type,
                             'user_followers_count': followers_count,
-                            'professional_type': professional_type
+                            'professional_type': professional_type,
+                            'platform': 'twitter'
                         }
 
                         insert_tweet(tweet_info)
+                        producer.send('raw_social_data', value=tweet_info)
 
                         if item.get('entryId', '').startswith('cursor-bottom'):
                             next_cursor = content.get('value')
@@ -132,6 +151,7 @@ def run_once(combined_query):
                 logging.info(f"No more cursor. Exiting job for {combined_query}.")
                 break
 
+            producer.flush()
             time.sleep(3)
 
     except Exception as e:

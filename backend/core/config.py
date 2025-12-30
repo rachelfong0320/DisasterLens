@@ -22,6 +22,21 @@ MONGO_USERNAME = os.getenv("MONGO_USERNAME").strip()
 MONGO_PASSWORD = os.getenv("MONGO_PASSWORD").strip()
 MONGO_URI = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@disasterlens.cnayord.mongodb.net/?retryWrites=true&w=majority&appName=DisasterLens"
 
+# Kafka Settings
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVER")
+
+# This handles the pathing: inside Docker, it looks in /app/certs. 
+# Locally, it looks in your local backend/certs folder.
+IS_DOCKER = os.getenv("IS_DOCKER", "false").lower() == "true"
+CERT_BASE = "/app/certs" if IS_DOCKER else "./certs"
+
+KAFKA_SSL_CONFIG = {
+    'security_protocol': 'SSL',
+    'ssl_cafile': os.path.join(CERT_BASE, "ca.pem"),
+    'ssl_certfile': os.path.join(CERT_BASE, "service.cert"),
+    'ssl_keyfile': os.path.join(CERT_BASE, "service.key"),
+}
+
 # =================================================================
 # 2. DATABASE NAMES AND COLLECTIONS
 # =================================================================

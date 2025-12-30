@@ -9,13 +9,95 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./backend/certs:/app/certs
     depends_on:
       - elasticsearch
 
     working_dir: /app
     environment:
       - PYTHONPATH=/app
+      - IS_DOCKER=true
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# --- NEW KAFKA SERVICES ---
+  twitter-scraper:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python core/scrapers/TweetDataScraper/main_scraperTweet.py
+    restart: always
+
+  instagram-scraper:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python core/scrapers/InstagramDataScraper/main_scraperIg.py
+    restart: always
+
+  misinfo-worker:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    # This runs the routing logic we created
+    command: python core/consumers/misinfo_worker.py
+    restart: always
+
+  analytics-worker:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python core/consumers/analytics_worker.py
+    restart: always  
+
+  incident-worker:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python core/consumers/incident_worker.py
+    restart: always
+
+  alert-worker:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python core/consumers/alert_worker.py
+    restart: always
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1

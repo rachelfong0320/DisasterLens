@@ -93,4 +93,5 @@ class DatabaseConnection:
             "gen_ai_detection_method": row["gen_ai_detection_method"],
             "high_risk_genai_flag": bool(row["high_risk_genai_flag"]),
             "integrity_review_decision": row["integrity_review_decision"],
+            'platform': 'instagram'
         }
