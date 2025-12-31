@@ -141,8 +141,14 @@ def run_once(combined_query):
                             'platform': 'twitter'
                         }
 
-                        insert_tweet(tweet_info)
-                        producer.send('raw_social_data', value=tweet_info)
+                        mongo_doc = tweet_info.copy()
+                        insert_tweet(mongo_doc)
+
+                        producer.send(
+                            'raw_social_data',
+                            key=tweet_info['tweet_id'].encode('utf-8'),
+                            value=tweet_info
+                        )
 
                         if item.get('entryId', '').startswith('cursor-bottom'):
                             next_cursor = content.get('value')
