@@ -56,14 +56,38 @@ DisasterLens is a comprehensive situational awareness tool designed to scrape, a
 
 ```mermaid
 graph TD
-    A[Social Media Sources] -->|Scrapers| B(Backend Service / FastAPI)
-    B -->|Store Raw Data| C[(MongoDB)]
-    B -->|Index Data| D[(Elasticsearch)]
-    B -->|AI Processing| E[OpenAI API]
-    E -->|Enriched Data| B
-    F[Frontend / Next.js] -->|REST API| B
-    F -->|User Queries| G[Chatbot]
-    G -->|Search| D
+    %% 1. Ingestion Layer
+    Sources[Social Media Sources] -->|Scrapers| T1(Topic: raw_social_data)
+
+    %% 2. Stream Processing Pipeline (The AI Workers)
+    T1 -->|Consume| P1[Data Processor]
+    P1 -->|Produce| T2(Topic: processed_dataClassic)
+
+    T2 -->|Consume| P2[Authenticity Worker]
+    P2 -.->|Detect Misinfo| AI2[OpenAI GPT-4]
+    AI2 -.->|Verified Post| P2
+    P2 -->|Produce| T3(Topic: authentic_postsClassic)
+
+    T3 -->|Consume| P3[Incident Classifier]
+    P3 -.->|Classify Type & Sentiment| AI3[OpenAI GPT-4]
+    AI3 -.->|Enriched Event| P3
+    P3 -->|Produce| T4(Topic: incidentsClassic)
+
+    T4 -->|Consume| P4[Alert Generator]
+    P4 -->|Produce| T5(Topic: alertsClassic)
+
+    %% 3. Persistence Layer (Workers Write Here)
+    T2 & T3 & T4  -->|Persist| DB[(MongoDB)]
+    T4  -->|Index| ES[(Elasticsearch)]
+
+    %% 4. Access Layer (FastAPI) - THIS IS THE NEW PART
+    DB -.->|Read Data| API[FastAPI Backend]
+    ES -.->|Search Context| API
+    
+    %% 5. Frontend & Chatbot
+    API <==>|REST API / WebSocket| FE[Frontend / Next.js]
+    FE <-->|User Query| Chat[AI Chatbot Logic]
+    Chat <-->|RAG Retrieval| API
 ```
 ---
 ## ⚡ Getting Started
