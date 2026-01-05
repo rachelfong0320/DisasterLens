@@ -52,7 +52,9 @@ async def run():
         **KAFKA_SSL_CONFIG,
         value_deserializer=lambda m: json.loads(m.decode('utf-8')),
         group_id='analytics-worker-group',
-        request_timeout_ms=30000
+        request_timeout_ms=30000,
+        max_poll_interval_ms=600000,  # 10 minutes (adjust as needed)
+        max_poll_records=1             # optional: process 1 message at a time
     )
     producer = KafkaProducer(
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,

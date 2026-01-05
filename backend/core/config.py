@@ -32,6 +32,7 @@ CERT_BASE = "/app/certs" if IS_DOCKER else "./certs"
 
 KAFKA_SSL_CONFIG = {
     'security_protocol': 'SSL',
+    'ssl_context': None,
     'ssl_cafile': os.path.join(CERT_BASE, "ca.pem"),
     'ssl_certfile': os.path.join(CERT_BASE, "service.cert"),
     'ssl_keyfile': os.path.join(CERT_BASE, "service.key"),
