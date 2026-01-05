@@ -68,6 +68,7 @@ def transform_post_to_event(post_id: str, db) -> Union[Dict, None]:
         # Post Details (for linking/context)
         "post_text": post.get("postText"),
         "keywords": post.get("keywords"),
+        "hashtags": post.get("hashtag"),
         
         # Sentiment Data
         "sentiment": {
