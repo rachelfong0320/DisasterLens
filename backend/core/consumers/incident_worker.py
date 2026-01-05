@@ -20,25 +20,29 @@ logger = logging.getLogger("IncidentWorker")
 sem = asyncio.Semaphore(20)
 
 async def process_final_stage(data, producer):
+    # 1. Ensure data is a dict
     if isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except Exception as e:
-            logger.error(f"Failed to parse data string: {e}")
-            return
-        
+        data = json.loads(data)
+
     post_id = data.get("postId")
     
-    # FIX: Access the internal PyMongo database object from your custom class
-    # In your Database class, 'self.combined_db' is the actual PyMongo Database
+    # 2. CRITICAL FIX: Extract the actual string from the keywords dictionary
+    # Your log shows: 'keywords': {'topic': 'banjir di malaysia', ...}
+    raw_keywords = data.get('keywords')
+    if isinstance(raw_keywords, dict):
+        # Extract the 'topic' string from the dict
+        keyword_text = raw_keywords.get('topic', '')
+    else:
+        # Fallback if it's already a string or None
+        keyword_text = str(raw_keywords or '')
+
     db = db_connection.combined_db 
-    
     loop = asyncio.get_event_loop()
 
     try:
         logger.info(f"Finalizing Incident & Geo for Post: {post_id}")
 
-        # 1. GEO REFINEMENT
+        # 3. Use 'keyword_text' (the string) instead of 'raw_keywords' (the dict)
         geo_res = await loop.run_in_executor(
             None, 
             reverse_geocode_coordinates,
@@ -46,31 +50,36 @@ async def process_final_stage(data, producer):
             data.get('longitude'),
             data.get('postText', ''),
             data.get('location', ''),
-            data.get('keywords') 
+            keyword_text  # <--- Use the extracted string here
         )
         data['geo_data'] = geo_res
         data['geo_processed'] = True
 
-        # 2. INCIDENT CLASSIFICATION
+        # 4. Incident Classification
         incident_res = await classify_incident_async(data, sem)
+
+        logger.info(
+    "INCIDENT RAW RESULT | type=%s | value=%r",
+    type(incident_res),
+    incident_res
+)
+
         data['incident'] = incident_res
 
-        # 3. SAVE TO post_data
-        # We use the 'db' PyMongo object we got above
+        # 5. Save to MongoDB (Using POSTS_COLLECTION from config)
         db[POSTS_COLLECTION].update_one(
             {"postId": post_id}, 
             {"$set": data}, 
             upsert=True
         )
 
-        # 4. CONSOLIDATION
-        # Pass the actual PyMongo database object to the consolidator
+        # 6. Consolidate (Ensure the function name ends in 'n' not 'r')
         event_id = await loop.run_in_executor(None, run_event_consolidation, db, data)
 
         if event_id:
            await producer.send_and_wait('incidents', {"event_id": str(event_id), "postId": post_id})
         
-        logger.info(f"Post {post_id} successfully integrated.")
+        logger.info(f"Post {post_id} fully integrated into Event {event_id}")
 
     except Exception as e:
         logger.error(f"Final stage failed for {post_id}: {e}")
