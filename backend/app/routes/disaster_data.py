@@ -340,6 +340,70 @@ async def get_top_keywords_filtered(
     return results
 
 @router.get(
+    "/analytics/trending/filtered",
+    summary="Retrieve top trending keywords or hashtags (Live Calc)."
+)
+async def get_trending_filtered(
+    db: Database = Depends(get_db),
+    start_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
+    end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
+    disaster_type: Optional[str] = Query(None),
+    trend_type: str = Query("keyword", description="Switch between 'keyword' or 'hashtag'"),
+    limit: int = 10
+):
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="start_date cannot be after end_date.")
+    
+    # Referencing the combined data collection
+    post_collection = db[DISASTER_POSTS_COLLECTION] 
+    start_dt = _get_time_aware_datetime(start_date, is_end=False)
+    end_dt = _get_time_aware_datetime(end_date, is_end=True)
+    
+    # 1. Dynamically select field based on user toggle
+    target_field = "keywords" if trend_type == "keyword" else "hashtags"
+    
+    match_query = {
+        "start_time": { "$gte": start_dt, "$lte": end_dt },
+        target_field: { "$exists": True, "$ne": None, "$nin": ["null", "", "none"] } 
+    }
+    
+    if disaster_type and disaster_type != "all":
+        match_query["disaster_type"] = disaster_type.lower()
+    
+    pipeline = [
+        {"$match": match_query},
+        
+        # 2. Split logic: Convert comma-separated string into an array called 'tokens'
+        {"$project": {
+            "tokens": { "$split": [f"${target_field}", ","] }
+        }},
+        
+        # 3. Flatten the array so each word/hashtag becomes a separate document
+        {"$unwind": "$tokens"},
+        
+        # 4. Group and Count: Clean, lowercase, and sum
+        {
+            "$group": {
+                "_id": { "$trim": { "input": { "$toLower": "$tokens" } } },
+                "count": {"$sum": 1}
+            }
+        },
+        
+        # 5. Filter out empty IDs (from trailing commas or empty fields)
+        {"$match": { "_id": { "$ne": "" } }}, 
+        
+        # 6. Final Sort and Limit
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+        
+        # 7. Reshape for Frontend charts
+        {"$project": {"_id": 0, "keyword": "$_id", "frequency": "$count"}}
+    ]
+    
+    results = list(post_collection.aggregate(pipeline))
+    return results
+
+@router.get(
     "/events/export",
     response_model=None,
 )
