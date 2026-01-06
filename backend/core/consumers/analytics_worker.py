@@ -1,71 +1,78 @@
-#take authentic posts to run sentiment & keywords (authentic_posts -> processed_data)
-
 import asyncio
 import json
 import logging
-from kafka import KafkaConsumer, KafkaProducer
+import ssl
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from core.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_SSL_CONFIG
-
-# --- Import Shared AI Jobs ---
 from core.jobs.main_sentimentAnalysis import analyze_sentiment_async
 from core.jobs.main_keywordTracking import generate_main_topic_async
+import pprint
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("AnalyticsWorker")
 
-# Global semaphore to control OpenAI rate limits
 sem = asyncio.Semaphore(20)
+AI_TIMEOUT = 45  # max seconds per AI call
 
-async def process_analytics(combined_data, producer):
-    post_id = combined_data.get("postId")
+async def process_analytics(data, producer):
+    post_id = data.get("postId")
+    logger.info(">>> CONSUMED MESSAGE <<<\n%s", pprint.pformat(data))
+
     try:
-        logger.info(f"Running AI Enrichment for Post: {post_id}")
+        sentiment_task = asyncio.wait_for(analyze_sentiment_async(data, sem), timeout=AI_TIMEOUT)
+        keyword_task = asyncio.wait_for(generate_main_topic_async(data), timeout=AI_TIMEOUT)
 
-        # 1. RUN AI JOBS IN PARALLEL
-        # We use the unified 'postText' created in Step 2
-        sentiment_task = analyze_sentiment_async(combined_data, sem)
-        keyword_task = generate_main_topic_async(combined_data)
-
-        # Execute both tasks at the same time to save time/cost
         sentiment_res, keyword_res = await asyncio.gather(sentiment_task, keyword_task)
 
-        # 2. ATTACH RESULTS
-        # keyword_res contains the 'topic' used by your later geo logic
-        combined_data['sentiment'] = sentiment_res
-        combined_data['keywords'] = keyword_res  
-        combined_data['analytics_status'] = "enriched"
+        data['sentiment'] = sentiment_res
+        data['keywords'] = keyword_res
+        data['analytics_status'] = "enriched"
+        data['processedAt'] = asyncio.get_event_loop().time()
 
-        # 3. PRODUCE TO TOPIC: processed_data
-        # This data is now enriched with AI results, ready for Incident Classification
-        producer.send('processed_data', value=combined_data)
-        producer.flush()
-        
-        logger.info(f"AI Enrichment complete for {post_id}. Forwarding...")
+        # Produce to Kafka
+        await producer.send_and_wait('processed_data', value=data)
+        logger.info(">>> PRODUCED MESSAGE <<<\n%s", pprint.pformat(data))
+        logger.info(f"AI Enrichment complete for post {post_id}")
 
+    except asyncio.TimeoutError:
+        logger.warning(f"AI enrichment timed out for post {post_id}")
     except Exception as e:
-        logger.error(f"Analytics enrichment failed for {post_id}: {e}")
+        logger.exception(f"Analytics enrichment failed for post {post_id}: {e}")
 
 async def run():
-    consumer = KafkaConsumer(
+    ssl_context = ssl.create_default_context(cafile=KAFKA_SSL_CONFIG['ssl_cafile'])
+    ssl_context.load_cert_chain(KAFKA_SSL_CONFIG['ssl_certfile'], KAFKA_SSL_CONFIG['ssl_keyfile'])
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_REQUIRED
+
+    consumer = AIOKafkaConsumer(
         'authentic_posts',
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-        **KAFKA_SSL_CONFIG,
-        value_deserializer=lambda m: json.loads(m.decode('utf-8')),
         group_id='analytics-worker-group',
-        request_timeout_ms=30000,
-        max_poll_interval_ms=600000,  # 10 minutes (adjust as needed)
-        max_poll_records=1             # optional: process 1 message at a time
-    )
-    producer = KafkaProducer(
-        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-        **KAFKA_SSL_CONFIG,
-        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-        request_timeout_ms=30000
+        security_protocol='SSL',
+        ssl_context=ssl_context,
+        value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+        max_poll_interval_ms=600_000,
+        auto_offset_reset='earliest'
     )
 
+    producer = AIOKafkaProducer(
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+        security_protocol='SSL',
+        ssl_context=ssl_context,
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    )
+
+    await consumer.start()
+    await producer.start()
     logger.info("Analytics Worker active. Listening for authentic posts...")
-    for message in consumer:
-        await process_analytics(message.value, producer)
+
+    try:
+        async for message in consumer:
+            await process_analytics(message.value, producer)
+    finally:
+        await consumer.stop()
+        await producer.stop()
 
 if __name__ == "__main__":
     asyncio.run(run())

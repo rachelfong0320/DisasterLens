@@ -45,7 +45,7 @@ async def generate_main_topic_async(post: dict) -> Union[str, None]:
         topic = response.choices[0].message.content.strip().lower().strip(".").strip()
         
         # Returns the topic for the batch runner to save in bulk
-        return {"post_id": post_id, "topic": topic}
+        return topic
         
     except Exception as e:
         logging.error(f"Error generating AI topic for {post_id}: {e}")

@@ -6,7 +6,6 @@ import ssl
 from typing import Dict, Any
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-
 from core.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_SSL_CONFIG
 
 # --- AI Classifiers ---
@@ -44,10 +43,10 @@ async def process_message(data: Dict[str, Any], producer: AIOKafkaProducer):
     platform = data.get("platform")
     logger.info(f"Processing message from platform={platform}")
 
+    # --------------------------
+    # 1. MISINFO CLASSIFICATION
+    # --------------------------
     try:
-        # -------------------------------------------------
-        # 1. MISINFO GATEKEEPER (with timeout protection)
-        # -------------------------------------------------
         try:
             if platform == "twitter":
                 result = await asyncio.wait_for(
@@ -68,9 +67,9 @@ async def process_message(data: Dict[str, Any], producer: AIOKafkaProducer):
             logger.info("MISINFO filtered out")
             return
 
-        # -------------------------------------------------
+        # --------------------------
         # 2. GEO FIX
-        # -------------------------------------------------
+        # --------------------------
         lat = data.get("latitude")
         lng = data.get("longitude")
         location_str = data.get("location") or data.get("location_name") or ""
@@ -85,9 +84,9 @@ async def process_message(data: Dict[str, Any], producer: AIOKafkaProducer):
             except Exception as geo_err:
                 logger.warning(f"Geo resolution failed: {geo_err}")
 
-        # -------------------------------------------------
+        # --------------------------
         # 3. UNIFIED SCHEMA
-        # -------------------------------------------------
+        # --------------------------
         unified_payload = {
             "postId": data.get("tweet_id") or data.get("ig_post_id"),
             "postText": (
@@ -114,17 +113,17 @@ async def process_message(data: Dict[str, Any], producer: AIOKafkaProducer):
             "source": platform.capitalize() if platform else "Unknown"
         }
 
-        # -------------------------------------------------
+        # --------------------------
         # 4. PRODUCE
-        # -------------------------------------------------
+        # --------------------------
         await producer.send_and_wait(
             topic="authentic_posts",
             value=unified_payload
         )
 
-        logger.info(
-            f"AUTHENTIC post published | id={unified_payload['postId']}"
-        )
+        # Log produced message for debugging
+        logger.info(">>> PRODUCED MESSAGE <<<\n%s", json.dumps(unified_payload, indent=2))
+        logger.info(f"AUTHENTIC post published | id={unified_payload['postId']}")
 
     except Exception as e:
         logger.exception(f"Message processing failed: {e}")
@@ -136,9 +135,9 @@ async def process_message(data: Dict[str, Any], producer: AIOKafkaProducer):
 async def run():
     logger.info("MISINFO COMBINE WORKER BOOTING")
 
-    # -------------------------------------------------
+    # --------------------------
     # SSL CONTEXT
-    # -------------------------------------------------
+    # --------------------------
     logger.info("Initializing SSL context")
     ssl_context = ssl.create_default_context(
         cafile=KAFKA_SSL_CONFIG["ssl_cafile"]
@@ -150,9 +149,9 @@ async def run():
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_REQUIRED
 
-    # -------------------------------------------------
+    # --------------------------
     # CONSUMER
-    # -------------------------------------------------
+    # --------------------------
     consumer = AIOKafkaConsumer(
         "raw_social_data",
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
@@ -164,9 +163,9 @@ async def run():
         max_poll_interval_ms=600_000,
     )
 
-    # -------------------------------------------------
+    # --------------------------
     # PRODUCER
-    # -------------------------------------------------
+    # --------------------------
     producer = AIOKafkaProducer(
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         security_protocol="SSL",
@@ -174,9 +173,9 @@ async def run():
         value_serializer=lambda v: json.dumps(v).encode("utf-8"),
     )
 
-    # -------------------------------------------------
+    # --------------------------
     # START
-    # -------------------------------------------------
+    # --------------------------
     logger.info("Starting Kafka consumer...")
     await consumer.start()
     logger.info("Kafka consumer started")
@@ -189,7 +188,8 @@ async def run():
         logger.info("Listening for messages on topic: raw_social_data")
 
         async for message in consumer:
-            logger.info("Kafka message received")
+            # Log consumed message
+            logger.info(">>> CONSUMED MESSAGE <<<\n%s", json.dumps(message.value, indent=2))
             await process_message(message.value, producer)
 
     except Exception as e:
@@ -205,5 +205,4 @@ async def run():
 # ENTRYPOINT
 # =========================
 if __name__ == "__main__":
-    print("🔥 MISINFO WORKER MAIN STARTED 🔥", flush=True)
     asyncio.run(run())
