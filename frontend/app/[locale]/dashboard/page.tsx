@@ -46,9 +46,11 @@ export default function Dashboard() {
 
   const [chatOpen, setChatOpen] = useState(false);
   const [stats, setStats] = useState<StatsType | null>(null);
-  const [loading, setLoading] = useState(true);
   const [keywords, setKeywords] = useState<KeywordType[]>([]);
   const [disasterType, setDisasterType] = useState<string>("all");
+  const [trendType, setTrendType] = useState<"keyword" | "hashtag">("keyword");
+  const [globalLoading, setGlobalLoading] = useState(true);
+  const [wordsLoading, setWordsLoading] = useState(false);
 
   const [dateRange, setDateRange] = useState({
     start: "2025-01-01",
@@ -92,36 +94,49 @@ export default function Dashboard() {
     },
   } as const;
 
-  useEffect(() => {
-    async function getData() {
-      setLoading(true);
-      try {
-        const typeParam =
-          disasterType !== "all" ? `&disaster_type=${disasterType}` : "";
-        const baseUrl = `http://localhost:8000/api/v1/analytics`;
+ useEffect(() => {
+  async function getGlobalStats() {
+    setGlobalLoading(true);
+    try {
+      const typeParam = disasterType !== "all" ? `&disaster_type=${disasterType}` : "";
+      const baseUrl = `http://localhost:8000/api/v1/analytics`;
 
-        const [statsRes, keywordRes] = await Promise.all([
-          fetch(
-            `${baseUrl}/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}${typeParam}`
-          ),
-          fetch(
-            `${baseUrl}/keywords/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}&limit=5${typeParam}`
-          ),
-        ]);
-
-        const statsData = await statsRes.json();
-        const keywordData = await keywordRes.json();
-
-        setStats(statsData);
-        setKeywords(keywordData);
-      } catch (e) {
-        console.error("Fetch error", e);
-      } finally {
-        setLoading(false);
-      }
+      const res = await fetch(
+        `${baseUrl}/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}${typeParam}`
+      );
+      const statsData = await res.json();
+      setStats(statsData);
+    } catch (e) {
+      console.error("Stats Fetch error", e);
+    } finally {
+      setGlobalLoading(false);
     }
-    getData();
-  }, [dateRange, disasterType]);
+  }
+  getGlobalStats();
+}, [dateRange, disasterType]); // Removed trendType from here
+
+// Trending Words (Keywords/Hashtags)
+// Re-runs when Date, Disaster Type, OR Trend Type changes
+useEffect(() => {
+  async function getTrendingWords() {
+    setWordsLoading(true);
+    try {
+      const typeParam = disasterType !== "all" ? `&disaster_type=${disasterType}` : "";
+      const baseUrl = `http://localhost:8000/api/v1/analytics`;
+
+      const res = await fetch(
+        `${baseUrl}/trending/filtered?start_date=${dateRange.start}&end_date=${dateRange.end}&limit=5&trend_type=${trendType}${typeParam}`
+      );
+      const keywordData = await res.json();
+      setKeywords(keywordData);
+    } catch (e) {
+      console.error("Keyword Fetch error", e);
+    } finally {
+      setWordsLoading(false);
+    }
+  }
+  getTrendingWords();
+}, [dateRange, disasterType, trendType]);
 
   // Transform data for Chart 1: Event Trends (Area)
   const trendData = useMemo(() => {
@@ -183,23 +198,33 @@ export default function Dashboard() {
     });
   }, [stats, s]);
 
-  const keywordChartData = useMemo(() => {
-    if (!keywords || keywords.length === 0) {
+const keywordChartData = useMemo(() => {
+  if (!keywords || keywords.length === 0) {
       return Array(5)
         .fill(null)
         .map((_, i) => ({ name: `Slot ${i + 1}`, value: 0 }));
-    }
-    return [...keywords]
-      .sort((a: KeywordType, b: KeywordType) => b.frequency - a.frequency)
-      .slice(0, 5)
-      .map((item: KeywordType) => ({
-        name: item.keyword
+  }
+  return [...keywords]
+    .sort((a: KeywordType, b: KeywordType) => b.frequency - a.frequency)
+    .slice(0, 5)
+    .map((item: KeywordType) => {
+      if (trendType === "hashtag") {
+        return {
+          name: `#${item.keyword.replace(/\s+/g, "").toLowerCase()}`,
+          value: item.frequency,
+        };
+      } else {
+        const formattedKeyword = item.keyword
           .split(" ")
-          .map((s: string) => s.charAt(0).toUpperCase() + s.substring(1))
-          .join(" "),
-        value: item.frequency,
-      }));
-  }, [keywords]);
+          .map((word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase())
+          .join(" ");
+        return {
+          name: formattedKeyword,
+          value: item.frequency,
+        };
+      }
+    });
+}, [keywords, trendType]);
 
   return (
     <main className="min-h-screen bg-background">
@@ -275,7 +300,7 @@ export default function Dashboard() {
                   <MetricsCard
                     label={d(key)}
                     value={
-                      loading
+                      globalLoading
                         ? "..."
                         : dataItem
                         ? dataItem.frequency.toString()
@@ -309,12 +334,41 @@ export default function Dashboard() {
               color="#3b82f6"
               unit="Post"
             />
-            <MetricListChart
-              title={t("keyword")}
-              data={keywordChartData}
-              color="#3b82f6"
-              unit="Hit"
-            />
+            {/* THE KEYWORD CHART WITH LOCAL TOGGLE */}
+            <div className={`relative transition-opacity duration-300 ${wordsLoading ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
+              <div className="absolute top-4 right-4 z-10 flex bg-gray-100 p-1 rounded-lg border border-gray-200 shadow-inner w-[180px]">
+                {/* The Sliding Background Pill */}
+                <div 
+                  className={`absolute top-1 bottom-1 left-1 w-[86px] bg-white rounded-md shadow-sm transition-transform duration-300 ease-in-out ${
+                    trendType === "hashtag" ? "translate-x-[88px]" : "translate-x-0"
+                  }`}
+                />
+                
+                <button
+                  onClick={() => setTrendType("keyword")}
+                  className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${
+                    trendType === "keyword" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Keywords
+                </button>
+                <button
+                  onClick={() => setTrendType("hashtag")}
+                  className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${
+                    trendType === "hashtag" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Hashtags
+                </button>
+              </div>
+
+              <MetricListChart
+                title={trendType === "keyword" ? t("keyword") : "Trending Hashtags"}
+                data={keywordChartData}
+                color="#3b82f6"
+                unit="Hit"
+              />
+            </div>
           </div>
         </div>
 
