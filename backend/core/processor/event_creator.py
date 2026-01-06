@@ -24,6 +24,22 @@ def transform_post_to_event(post_id: str, db) -> Union[Dict, None]:
         logger.warning(f"Missing core data for Post ID {post_id} (Post:{'Yes' if post else 'No'}, Class:{'Yes' if classification else 'No'}, Sent:{'Yes' if sentiment else 'No'}, Geo:{'Yes' if geo else 'No'}). Skipping event creation.")
         return None
 
+    # Standardize Keywords 
+    raw_keywords = post.get("keywords")
+    if isinstance(raw_keywords, dict):
+        clean_keywords = raw_keywords.get("topic", "")
+    elif isinstance(raw_keywords, str):
+        clean_keywords = raw_keywords
+    else:
+        clean_keywords = ""
+
+    # Standardize Hashtags 
+    raw_hashtags = post.get("hashtag")
+    if raw_hashtags is None or str(raw_hashtags).lower() == "null":
+        clean_hashtags = ""
+    else:
+        clean_hashtags = str(raw_hashtags)
+
     # 2. TRANSFORM: Map fields to the FINAL DisasterEvent schema
     start_time_value = post.get("createdAt")
     start_time = datetime.now(timezone.utc)
@@ -67,7 +83,8 @@ def transform_post_to_event(post_id: str, db) -> Union[Dict, None]:
         
         # Post Details (for linking/context)
         "post_text": post.get("postText"),
-        "keywords": post.get("keywords"),
+        "keywords": clean_keywords,
+        "hashtags": clean_hashtags,
         
         # Sentiment Data
         "sentiment": {
