@@ -77,7 +77,7 @@ graph TD
     P4 -->|Produce| T5(Topic: alertsClassic)
 
     %% 3. Persistence Layer (Workers Write Here)
-    T2 & T3 & T4  -->|Persist| DB[(MongoDB)]
+    T1 & T4  -->|Persist| DB[(MongoDB)]
     T4  -->|Index| ES[(Elasticsearch)]
 
     %% 4. Access Layer (FastAPI) - THIS IS THE NEW PART
