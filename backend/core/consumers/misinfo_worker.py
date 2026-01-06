@@ -1,104 +1,209 @@
-#use scrapped data to filter misinfo and combine data into unified schema (raw_social_data -> authentic_posts)
-
 import asyncio
 import json
 import logging
 import time
-from kafka import KafkaConsumer, KafkaProducer
+import ssl
+from typing import Dict, Any
+
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
+
 from core.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_SSL_CONFIG
 
-# --- AI Classifier Imports ---
+# --- AI Classifiers ---
 from core.scrapers.TweetDataScraper.main_misinfoClassifier import classify_tweet_async
 from core.scrapers.InstagramDataScraper.main_misinfoClassifier import classify_instagram_post
 
-# --- Import your existing Nominatim logic ---
-# This pulls the thread-safe, cached function from your twitter dataCombine file
+# --- Geo Resolver ---
 from core.scrapers.TweetDataScraper.main_dataCombine import get_geo_data_safe
 
-logging.basicConfig(level=logging.INFO)
+
+# =========================
+# LOGGING (Docker-safe)
+# =========================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler()],
+    force=True
+)
 logger = logging.getLogger("MisinfoCombineWorker")
-sem = asyncio.Semaphore(20)
 
-async def process_message(data, producer):
-    platform = data.get('platform')
-    
+
+# =========================
+# GLOBALS
+# =========================
+CLASSIFY_TIMEOUT = 45  # seconds
+MAX_CONCURRENT_CLASSIFIERS = 20
+sem = asyncio.Semaphore(MAX_CONCURRENT_CLASSIFIERS)
+
+
+# =========================
+# MESSAGE PROCESSOR
+# =========================
+async def process_message(data: Dict[str, Any], producer: AIOKafkaProducer):
+    platform = data.get("platform")
+    logger.info(f"Processing message from platform={platform}")
+
     try:
-        # 1. GATEKEEPER: MISINFO CLASSIFICATION
-        if platform == 'twitter':
-            res = await classify_tweet_async(data, sem)
-            is_auth = res.get('check_label') == "AUTHENTIC" if res else False
-        else:
-            res = await classify_instagram_post(data, sem)
-            is_auth = res.get('check_label') == "AUTHENTIC" if res else False
-
-        if not is_auth:
-            logger.info(f"Filtering out MISINFO from {platform}")
+        # -------------------------------------------------
+        # 1. MISINFO GATEKEEPER (with timeout protection)
+        # -------------------------------------------------
+        try:
+            if platform == "twitter":
+                result = await asyncio.wait_for(
+                    classify_tweet_async(data, sem),
+                    timeout=CLASSIFY_TIMEOUT
+                )
+            else:
+                result = await asyncio.wait_for(
+                    classify_instagram_post(data, sem),
+                    timeout=CLASSIFY_TIMEOUT
+                )
+        except asyncio.TimeoutError:
+            logger.warning("Classifier timeout — dropping message")
             return
 
-        # 2. DATACOMBINE: GEO-FIX & SCHEMA UNIFICATION
-        # Extract variables
-        lat = data.get('latitude')
-        lng = data.get('longitude')
-        loc_string = data.get('location') or data.get('location_name', '')
-        address, city = None, None
+        is_authentic = result and result.get("check_label") == "AUTHENTIC"
+        if not is_authentic:
+            logger.info("MISINFO filtered out")
+            return
 
-        # If it's a Tweet (or any post missing coords), use your high-quality fixer
-        if lat is None:
-            logger.info(f"Fixing Geo for {platform} using get_geo_data_safe: {loc_string}")
-            # get_geo_data_safe returns (address, city, lat, lng)
-            address, city, lat, lng = get_geo_data_safe(loc_string)
+        # -------------------------------------------------
+        # 2. GEO FIX
+        # -------------------------------------------------
+        lat = data.get("latitude")
+        lng = data.get("longitude")
+        location_str = data.get("location") or data.get("location_name") or ""
 
-        # 3. CONSTRUCT MASTER SCHEMA (Unifying author_id, author_name, and text)
-        combined_payload = {
+        address = data.get("address")
+        city = data.get("city")
+
+        if lat is None or lng is None:
+            logger.info(f"Resolving geo for location='{location_str}'")
+            try:
+                address, city, lat, lng = get_geo_data_safe(location_str)
+            except Exception as geo_err:
+                logger.warning(f"Geo resolution failed: {geo_err}")
+
+        # -------------------------------------------------
+        # 3. UNIFIED SCHEMA
+        # -------------------------------------------------
+        unified_payload = {
             "postId": data.get("tweet_id") or data.get("ig_post_id"),
             "postText": (
-                data.get('translated_text') or 
-                data.get('cleaned_text') or 
-                data.get('cleaned_description') or 
-                data.get('description') or 
-                data.get('raw_text')
+                data.get("translated_text")
+                or data.get("cleaned_text")
+                or data.get("cleaned_description")
+                or data.get("description")
+                or data.get("raw_text")
             ),
-            "createdAt": data.get('tweet_created_at') or data.get('created_at'),
-            "hashtag": data.get('tweet_hashtags') or data.get('hashtags') or "null",
-            "location": loc_string,
-            "address": address or data.get('address'),
-            "city": city or data.get('city'),
+            "createdAt": data.get("tweet_created_at") or data.get("created_at"),
+            "hashtags": data.get("tweet_hashtags") or data.get("hashtags") or [],
+            "location": location_str,
+            "address": address,
+            "city": city,
             "latitude": lat,
             "longitude": lng,
-            "author_id": data.get('user_id') or data.get('author_id'),
-            "author_name": data.get('user_name') or data.get('author_username') or "",
+            "author_id": data.get("user_id") or data.get("author_id"),
+            "author_name": (
+                data.get("user_name")
+                or data.get("author_username")
+                or ""
+            ),
             "processedAt": time.time(),
-            "source": platform.capitalize()
+            "source": platform.capitalize() if platform else "Unknown"
         }
 
-        # 4. PRODUCE TO TOPIC 2: authentic_posts
-        producer.send('authentic_posts', value=combined_payload)
-        logger.info(f"{platform} verified, geo-fixed, and unified: {combined_payload['postId']}")
+        # -------------------------------------------------
+        # 4. PRODUCE
+        # -------------------------------------------------
+        await producer.send_and_wait(
+            topic="authentic_posts",
+            value=unified_payload
+        )
+
+        logger.info(
+            f"AUTHENTIC post published | id={unified_payload['postId']}"
+        )
 
     except Exception as e:
-        logger.error(f"Error in Misinfo Worker: {e}")
+        logger.exception(f"Message processing failed: {e}")
 
+
+# =========================
+# MAIN RUNNER
+# =========================
 async def run():
-    consumer = KafkaConsumer(
-        'raw_social_data',
-        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-        **KAFKA_SSL_CONFIG,
-        value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-        group_id='misinfo-gatekeeper-group',
-        request_timeout_ms=30000,
-        max_poll_interval_ms=600000,  # 10 minutes (adjust as needed)
-        max_poll_records=1             # optional: process 1 message at a time
+    logger.info("MISINFO COMBINE WORKER BOOTING")
+
+    # -------------------------------------------------
+    # SSL CONTEXT
+    # -------------------------------------------------
+    logger.info("Initializing SSL context")
+    ssl_context = ssl.create_default_context(
+        cafile=KAFKA_SSL_CONFIG["ssl_cafile"]
     )
-    producer = KafkaProducer(
+    ssl_context.load_cert_chain(
+        certfile=KAFKA_SSL_CONFIG["ssl_certfile"],
+        keyfile=KAFKA_SSL_CONFIG["ssl_keyfile"],
+    )
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_REQUIRED
+
+    # -------------------------------------------------
+    # CONSUMER
+    # -------------------------------------------------
+    consumer = AIOKafkaConsumer(
+        "raw_social_data",
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-        **KAFKA_SSL_CONFIG,
-        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-        request_timeout_ms=30000
+        group_id="misinfo-gatekeeper-group-debug",
+        security_protocol="SSL",
+        ssl_context=ssl_context,
+        value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+        auto_offset_reset="earliest",
+        max_poll_interval_ms=600_000,
     )
 
-    logger.info("Misinfo & DataCombine Worker active and listening...")
-    for message in consumer:
-        await process_message(message.value, producer)
+    # -------------------------------------------------
+    # PRODUCER
+    # -------------------------------------------------
+    producer = AIOKafkaProducer(
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+        security_protocol="SSL",
+        ssl_context=ssl_context,
+        value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+    )
 
+    # -------------------------------------------------
+    # START
+    # -------------------------------------------------
+    logger.info("Starting Kafka consumer...")
+    await consumer.start()
+    logger.info("Kafka consumer started")
+
+    logger.info("Starting Kafka producer...")
+    await producer.start()
+    logger.info("Kafka producer started")
+
+    try:
+        logger.info("Listening for messages on topic: raw_social_data")
+
+        async for message in consumer:
+            logger.info("Kafka message received")
+            await process_message(message.value, producer)
+
+    except Exception as e:
+        logger.exception(f"Fatal consumer loop error: {e}")
+
+    finally:
+        logger.info("Shutting down Kafka clients")
+        await consumer.stop()
+        await producer.stop()
+
+
+# =========================
+# ENTRYPOINT
+# =========================
 if __name__ == "__main__":
+    print("🔥 MISINFO WORKER MAIN STARTED 🔥", flush=True)
     asyncio.run(run())
