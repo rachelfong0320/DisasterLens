@@ -1,259 +1,250 @@
 import logging
-from typing import Dict, Any, List
+import re
+import json
+import time
+from typing import Dict, Any, List, Optional
+from pathlib import Path
+from core.jobs.schemas import LocationExtraction
+from openai import OpenAI
+from shapely.geometry import shape, Point
+from core.jobs.prompts import LOCATION_AUDITOR_PROMPT
 from pymongo import UpdateOne
+from core.config import (
+    OPEN_CAGE_KEY, 
+    OPENAI_API_KEY,
+    MALAYSIA_BOUNDING_BOX, 
+    MALAYSIA_STATES_WHITELIST, 
+    STATE_DISPLAY_NAME_MAP,
+    MALAYSIA_STATE_DISTRICT_MAP
+)
 
-# Assuming config.py and opencage are available
-try:
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Initialize OpenCage Geocoder
+try: 
     from opencage.geocoder import OpenCageGeocode 
-    from core.config import OPEN_CAGE_KEY 
-    # Initialize OpenCage client globally
     geocoder = OpenCageGeocode(OPEN_CAGE_KEY)
 except Exception:
-    # If OpenCage is unavailable in the test environment, create a lightweight stub
     class _StubGeocoder:
-        def reverse_geocode(self, *args, **kwargs):
-            return None
-        def geocode(self, *args, **kwargs):
-            return None
+        def reverse_geocode(self, *args, **kwargs): return None
+        def geocode(self, *args, **kwargs): return None
     geocoder = _StubGeocoder()
 
+# Flatten the map for instant keyword matching
+LOCATION_LOOKUP = {}
+for state, districts in MALAYSIA_STATE_DISTRICT_MAP.items():
+    LOCATION_LOOKUP[state.lower()] = (state, "Unknown District")
+    for d in districts:
+        LOCATION_LOOKUP[d.lower()] = (state, d)
 
-def _validate_and_swap_if_necessary(latitude, longitude, out):
-    """Ensure latitude and longitude are in valid ranges; if not, attempt a swap."""
+# Compile a single regex pattern for all Malaysian locations
+LOCATION_PATTERN = re.compile(r'\b(' + '|'.join(map(re.escape, LOCATION_LOOKUP.keys())) + r')\b', re.IGNORECASE)
+
+# --- SPATIAL DATA PRE-LOADING ---
+# 1. Absolute path inside Docker (Because /backend is mapped to /app)
+GADM_PATH = Path("/app/data/gadm41_MYS_2.json")
+
+# 2. Local Fallback (If running outside Docker)
+if not GADM_PATH.exists():
+    GADM_PATH = Path(__file__).resolve().parents[2] / "data" / "gadm41_MYS_2.json"
+
+logging.info(f"GEOPROCESSOR: Searching for GADM at {GADM_PATH}")
+
+try:
+    with open(GADM_PATH, encoding='utf-8') as f:
+        MALAYSIA_GADM = json.load(f)
+        logging.info(f"✅ SUCCESS: GADM file loaded. Total shapes: {len(MALAYSIA_GADM.get('features', []))}")
+except FileNotFoundError:
+    logging.error(f"FATAL: GADM file not found at {GADM_PATH}. Layer 1 (GPS) will fail.")
+    MALAYSIA_GADM = {"features": []}
+except Exception as e:
+    logging.error(f"ERROR: Could not parse GADM JSON: {e}")
+    MALAYSIA_GADM = {"features": []}
+
+# --- PILLAR 1: THE AI AUDITOR ---
+def pillar1_openai_auditor(text: str, keywords: Any) -> Optional[LocationExtraction]:
+    """Uses Structured Outputs to extract clean location intent."""
     try:
-        lat_f = float(latitude)
-        lon_f = float(longitude)
-    except Exception:
-        return latitude, longitude
-
-    # If lat is outside [-90,90] but lon is within, swap them
-    if (lat_f < -90 or lat_f > 90) and (-90 <= lon_f <= 90):
-        out['swap_coords'] = True
-        out['override_reason'] = 'coords_swapped'
-        return lon_f, lat_f
-    return lat_f, lon_f
-
-
-def _haversine(lat1, lon1, lat2, lon2):
-    from math import radians, sin, cos, sqrt, atan2
-    R = 6371.0 # Earth radius in km
-    dlat = radians(lat2 - lat1)
-    dlon = radians(lon2 - lon1)
-    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    return R * c
-
-
-def _reverse_geocode(lat, lon):
-    # If lat or lon are not usable, skip reverse geocode
-    try:
-        if lat is None or lon is None:
-            return None
-        results = geocoder.reverse_geocode(lat, lon, limit=1, language='en')
-        if results and results[0]:
-            comp = results[0]['components']
-            return {
-                'state': comp.get('state') or comp.get('state_district') or 'Unknown State',
-                'district': comp.get('county') or comp.get('city') or comp.get('town') or comp.get('village') or 'Unknown District',
-                'lat': results[0]['geometry']['lat'],
-                'lon': results[0]['geometry']['lng']
-            }
+        completion = client.beta.chat.completions.parse(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": LOCATION_AUDITOR_PROMPT},
+                {"role": "user", "content": f"Text: {text}\nKeywords: {keywords}"}
+            ],
+            response_format=LocationExtraction,
+        )
+        logging.info(f"OpenAI Auditor Result: {completion.choices[0].message.parsed}")
+        return completion.choices[0].message.parsed
     except Exception as e:
-        logging.debug(f"Reverse geocode error: {e}")
-    return None
-
-
-def _keyword_geocode(keyword: str):
-    if not keyword or not keyword.strip():
+        logging.error(f"OpenAI Error: {e}")
         return None
+    
+# --- PILLAR 2: THE OPENCAGE BRIDGE ---
+def pillar2_opencage_bridge(search_str: str) -> Optional[Dict]:
+    """Forward geocoding: Keywords -> Coordinates."""
+    if not search_str or len(search_str) < 3: return None
+    time.sleep(1.1) # OpenCage Free Tier rate limit
     try:
-        query = keyword.strip() + ", Malaysia"
-        results = geocoder.geocode(query, limit=1, language='en')
-        if results and results[0]:
-            comp = results[0].get('components', {})
-            return {
-                'state': comp.get('state') or comp.get('state_district'),
-                'district': comp.get('county') or comp.get('city') or comp.get('town') or comp.get('village'),
-                'lat': results[0]['geometry']['lat'],
-                'lon': results[0]['geometry']['lng']
-            }
+        res = geocoder.geocode(search_str, limit=1, countrycode='my')
+        if res:
+            return {'lat': res[0]['geometry']['lat'], 'lon': res[0]['geometry']['lng']}
     except Exception as e:
-        logging.debug(f"Keyword geocode failed: {e}")
+        logging.error(f"OpenCage Error: {e}")
     return None
 
+# --- PILLAR 3: THE GADM JUDGE ---
+def pillar3_gadm_judge(lat: float, lon: float) -> Optional[Dict]:
+    """Spatial verification using local GeoJSON polygons."""
+    point = Point(lon, lat) # GeoJSON is [Longitude, Latitude]
+    for feature in MALAYSIA_GADM.get('features', []):
+        polygon = shape(feature['geometry'])
+        if polygon.contains(point):
+            logging.info(f"GADM Match: {feature['properties'].get('NAME_1')}, {feature['properties'].get('NAME_2')}")
+            return {
+                'state': feature['properties'].get('NAME_1'),
+                'district': feature['properties'].get('NAME_2'),
+            }
+    return None
 
-def reverse_geocode_coordinates(lat: float, lon: float, post_text: str, raw_location_str: str, keywords: str = None) -> Dict[str, Any]:
-    """Uses OpenCage to find state and district from coordinates, with text and keyword fallback.
-    Returns dict with keys: state,district,lat,lon, override_reason, swap_coords, previous
+def is_in_malaysia(lat: Optional[float], lon: Optional[float]) -> bool:
+    """LAYER 0: Spatial Integrity Check."""
+    if lat is None or lon is None: return False
+    try:
+        lat_f, lon_f = float(lat), float(lon)
+        min_lat, max_lat = MALAYSIA_BOUNDING_BOX["lat"]
+        min_lon, max_lon = MALAYSIA_BOUNDING_BOX["lon"]
+        return (min_lat <= lat_f <= max_lat) and (min_lon <= lon_f <= max_lon)
+    except (ValueError, TypeError):
+        return False
+    
+def _format_keywords_to_string(keywords_data: Any) -> str:
+    """Standardizes keywords/topics into a clean string for OpenCage."""
+    if not keywords_data: 
+        return ""
+    if isinstance(keywords_data, str): 
+        return keywords_data.strip()
+    if isinstance(keywords_data, dict):
+        topic = keywords_data.get('topic')
+        if topic:
+            return ", ".join(topic) if isinstance(topic, list) else str(topic).strip()
+        return ", ".join([str(v) for v in keywords_data.values() if v])
+    if isinstance(keywords_data, list): 
+        return ", ".join([str(k) for k in keywords_data if k])
+    return str(keywords_data)    
+    
+# --- THE ORCHESTRATOR ---
+def reverse_geocode_coordinates(lat: Any, lon: Any, post_text: str, keywords: Any) -> Dict[str, Any]:
     """
-
-    # Initialize the structured location object
-    structured_location = {
-        'state': 'Unknown State',
-        'district': 'Unknown District',
-        'lat': lat,
-        'lon': lon,
-        'override_reason': None,
-        'swap_coords': False,
-        'previous': None
+    Implements Path A (GPS Validation) and Path B (AI Rescue).
+    Keeps the exact geo_data structure required for dashboard.
+    """
+    res = {
+        'state': 'Unknown State', 'district': 'Unknown District', 
+        'lat': lat, 'lon': lon, 'is_malaysia': False,
+        'confidence_score': 0, 'inference': 'none'
     }
 
-    # Sanitize/Swap Coordinates (lat/lon may be None)
     try:
-        lat, lon = _validate_and_swap_if_necessary(lat, lon, structured_location)
-    except Exception:
-        pass
-
-    # Primary reverse geocode
-    reverse_res = _reverse_geocode(lat, lon)
-    if reverse_res:
-        structured_location['previous'] = {
-            'state': structured_location['state'],
-            'district': structured_location['district'],
-            'lat': structured_location['lat'],
-            'lon': structured_location['lon']
-        }
-        structured_location.update(reverse_res)
-        # distance check
-        try:
-            distance = _haversine(float(lat), float(lon), float(structured_location['lat']), float(structured_location['lon']))
-            if distance > 50:
-                structured_location['override_reason'] = 'reverse_distance_large'
-        except Exception:
-            distance = 0
-    else:
-        # fallback: use raw_location_str heuristics
-        if raw_location_str and len(raw_location_str.strip()) > 3:
-            best_guess = raw_location_str.split(',')[0].strip()
-            if best_guess.lower() not in ['malaysia', 'unknown'] and len(best_guess) > 2:
-                if structured_location['previous'] is None:
-                    structured_location['previous'] = {'state': structured_location['state'], 'district': structured_location['district'], 'lat': structured_location['lat'], 'lon': structured_location['lon']}
-                structured_location['district'] = best_guess
-                structured_location['state'] = 'GUESS'
-
-    # Keyword fallback
-    if keywords and isinstance(keywords, str) and len(keywords.strip()) > 2:
-        kw_res = _keyword_geocode(keywords)
-        if kw_res and kw_res.get('state'):
-            # compute kw_distance
-            try:
-                kw_distance = _haversine(float(lat), float(lon), float(kw_res['lat']), float(kw_res['lon']))
-            except Exception:
-                kw_distance = 0
-
-            # prefer keyword if state differs or kw_distance is closer
-            reverse_distance = locals().get('distance', 0)
-            if kw_res['state'] != structured_location.get('state') or kw_distance < reverse_distance:
-                if structured_location['previous'] is None:
-                    structured_location['previous'] = {'state': structured_location['state'], 'district': structured_location['district'], 'lat': structured_location['lat'], 'lon': structured_location['lon']}
-                structured_location.update({
-                    'state': kw_res['state'],
-                    'district': kw_res.get('district') or structured_location.get('district'),
-                    'lat': kw_res['lat'],
-                    'lon': kw_res['lon'],
-                    'override_reason': 'keyword_override'
-                })
-
-    return structured_location
-
-
-def run_geo_processing_sweep(db_instance: Any, batch_size: int = 50) -> int:
-    """
-    Reverse geocodes posts in batches until all eligible posts are done.
-    FIXED: Uses while loop for full coverage and $unset for cleanup.
-    """
-    from pymongo import UpdateOne
-    
-    logging.info("--- STARTING GEO-PROCESSING SWEEP ---")
-    
-    # Access collection via the Database instance property
-    posts_collection = db_instance.posts_collection
-    total_processed_count = 0
-    
-    # CRITICAL FIX: Loop until the query returns an empty set (full coverage)
-    while True:
-        # Query: Find UNPROCESSED posts that have coordinates OR keywords OR a raw location name
-        query = {
-            "geo_processed": { "$ne": True },
-            "$or": [
-                {"latitude": { "$exists": True, "$ne": None }, "longitude": { "$exists": True, "$ne": None }},
-                {"keywords": { "$exists": True, "$ne": None }},
-                {"location": { "$exists": True, "$ne": None }}
-            ]
-        }
-
-        posts_cursor = posts_collection.find(query).limit(batch_size)
-        posts_to_process = list(posts_cursor) 
+        # 1. Audit Human Intent (Pillar 1)
+        ai_intent = pillar1_openai_auditor(post_text, keywords)
         
-        if not posts_to_process:
-            break # Exit loop if no more posts are found
-
-        logging.info(f"Processing a batch of {len(posts_to_process)} posts...")
-        
-        updates_queue = []
-        
-        for post in posts_to_process:
-            try:
-                lat = post.get('latitude')
-                lon = post.get('longitude')
-                post_text = post.get('postText', '')
-                raw_location_str = post.get('location', '') 
-                keywords = post.get('keywords')
-                post_id = post.get('_id')
-
-                # 1. Perform Geocoding/Fallback
-                structured_location = reverse_geocode_coordinates(lat, lon, post_text, raw_location_str, keywords)
-                
-                # 2. Prepare bulk update operation - only set audit fields if present
-                set_fields = {
-                    'geo_data.state': structured_location['state'],
-                    'geo_data.district': structured_location['district'],
-                    'geo_data.lat': structured_location.get('lat', lat),
-                    'geo_data.lon': structured_location.get('lon', lon),
-                    'geo_processed': True
-                }
-                if structured_location.get('override_reason'):
-                    set_fields['geo_data.override_reason'] = structured_location['override_reason']
-                if structured_location.get('swap_coords'):
-                    set_fields['geo_data.swap_coords'] = structured_location['swap_coords']
-                if structured_location.get('previous'):
-                    set_fields['geo_data.previous'] = structured_location['previous']
-
-                updates_queue.append(
-                    UpdateOne(
-                        {'_id': post_id},
-                        {
-                            # CRITICAL FIX: RENAME the 5 base fields to raw_geo
-                            '$rename': {
-                                'latitude': 'raw_geo.latitude',
-                                'longitude': 'raw_geo.longitude',
-                                'location': 'raw_geo.location',
-                                'address': 'raw_geo.address',
-                                'city': 'raw_geo.city'
-                            },
-                            # SET the new refined geo_data and the processing flag
-                            '$set': set_fields 
-                        }
-                    )
-                )
-
-            except Exception as e:
-                logging.error(f"Failed to process post {post.get('postId')}: {e}")
-                # Ensure the post is marked processed to avoid future reprocessing
-                updates_queue.append(
-                    UpdateOne(
-                        { '_id': post.get('_id') },
-                        { '$set': { 'geo_data.district': "UNKNOWN_ERROR", 'geo_processed': True } }
-                    )
-                )
-                
-        # Execute the bulk writes
-        if updates_queue:
-            posts_collection.bulk_write(updates_queue, ordered=False)
-            total_processed_count += len(updates_queue)
-            logging.info(f"Batch completed. Total processed so far: {total_processed_count}")
-        else:
-            break
+        # Path A: If GPS Coordinates Exist
+        if lat and lon and is_in_malaysia(lat, lon):
+            res['is_malaysia'] = True
+            gadm_initial = pillar3_gadm_judge(float(lat), float(lon))
             
-    logging.info(f"GEO-PROCESSING SWEEP COMPLETE. Total posts processed: {total_processed_count}")
-    return total_processed_count
+            # Match Verification
+            if gadm_initial and ai_intent and gadm_initial['state'].lower() == ai_intent.state.lower():
+                logging.info(f"✅ [PATH A] GPS matches Text Intent: {ai_intent.state}")
+                res.update(gadm_initial)
+                res.update({'confidence_score': 1.0, 'inference': 'gps_verified_by_ai'})
+                return res
+        
+        # Path B: Conflict Resolution or No GPS (Rescue)
+        if ai_intent and ai_intent.state != "Unknown":
+            logging.info(f"🚀 [PATH B] Rescuing via OpenCage for: {ai_intent.search_string}")
+            search_query = ai_intent.search_string if ai_intent.search_string else _format_keywords_to_string(keywords)
+            # Use OpenCage to find the intended location
+            bridge_coords = pillar2_opencage_bridge(search_query)
+            if bridge_coords:
+                # Final Spatial Judge
+                final_gadm = pillar3_gadm_judge(bridge_coords['lat'], bridge_coords['lon'])
+                if final_gadm:
+                    logging.info(f"✨ [RESCUED] Successfully pinned to {final_gadm['district']}, {final_gadm['state']}")
+                    res.update(final_gadm)
+                    res.update(bridge_coords)
+                    res.update({'is_malaysia': True, 'confidence_score': 0.8, 'inference': 'ai_opencage_rescue'})
+                    return res
+                else:
+                    logging.info(f"⚠️ [CONFLICT] GPS says {gadm_initial['state'] if gadm_initial else 'Unknown'}, but Text says {ai_intent.state if ai_intent else 'Unknown'}. Shifting to Path B.")
+
+        # Fallback: GPS Only (if path A didn't verify but GADM found it)
+        if lat and lon and is_in_malaysia(lat, lon):
+            logging.info("📡 [FALLBACK] Using original GPS metadata only.")
+            gadm_fallback = pillar3_gadm_judge(float(lat), float(lon))
+            if gadm_fallback:
+                res.update(gadm_fallback)
+                res.update({'confidence_score': 0.6, 'inference': 'gps_only'})
+
+    except Exception as e:
+        logging.error(f"Geoprocessing Error: {e}")
+        
+    return res
+
+# --- THE SWEEP ENGINE ---
+def run_geo_processing_sweep(db_instance: Any, batch_size: int = 50) -> int:
+    posts_collection = db_instance.posts_collection
+    total_processed = 0
+    
+    # Query targets records that need cleaning or rescue
+    query = {
+        "$or": [
+            {"geo_processed": {"$ne": True}}, 
+            {"geo_data.state": "Unknown State"},
+            {"geo_data.confidence_score": {"$lt": 0.3}}
+        ]
+    }
+
+    total_to_do = posts_collection.count_documents(query)
+    print(f"🚀 Starting sweep... Target: {total_to_do} records.", flush=True)
+
+    while True:
+
+        posts = list(posts_collection.find(query).sort("_id", 1).limit(batch_size))
+        if not posts: 
+            print("🏁 Finished! All records processed.") 
+            break
+        
+        updates = []
+        for p in posts:
+            raw_lat = p.get('raw_geo', {}).get('latitude') or p.get('latitude')
+            raw_lon = p.get('raw_geo', {}).get('longitude') or p.get('longitude')
+
+            current_id = str(p.get('_id'))
+
+            logging.info(f"🔍 [ANALYSING] GIS for {current_id}...")
+            
+            geo_result = reverse_geocode_coordinates(raw_lat, raw_lon, p.get('postText', ''), p.get('keywords'))
+            
+            update_op = {
+                '$set': {
+                    'geo_data': geo_result, 
+                    'geo_processed': True,
+                    'last_processed_at': time.time()
+                }
+            }
+            
+            # Data Migration for root fields to raw_geo
+            rename_map = {}
+            for field in ['latitude', 'longitude', 'location', 'address', 'city']:
+                if field in p: rename_map[field] = f'raw_geo.{field}'
+            if rename_map: update_op['$rename'] = rename_map
+
+            updates.append(UpdateOne({'_id': p['_id']}, update_op))
+        
+        if updates:
+            posts_collection.bulk_write(updates)
+            total_processed += len(updates)
+            print(f"Sweep Progress: {total_processed} records processed...")
+            
+    return total_processed

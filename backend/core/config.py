@@ -121,7 +121,7 @@ MALAYSIA_STATE_DISTRICT_MAP = {
     "putrajaya": ["putrajaya"], 
 
     # Johor (South)
-    "johor": ["johor bahru", "muar", "kulai", "batu pahat", "kota tinggi", "mersing", "pontian", "segamat", "kluai", "tangkak"],
+    "johor": ["johor bahru", "muar", "kulai", "batu pahat", "kota tinggi", "mersing", "pontian", "segamat", "kluang", "tangkak"],
 
     # Penang / Pulau Pinang (North)
     "penang": ["george town", "butterworth", "balık pulau", "seberang perai", "timur laut", "seberang perai utara", "seberang perai tengah", "seberang perai selatan"],
@@ -153,4 +153,46 @@ MALAYSIA_STATE_DISTRICT_MAP = {
 
     # Sabah (East Malaysia)
     "sabah": ["kota kinabalu", "sandakan", "tawau", "lahad datu", "kudat", "ranau", "tuaran"]
+}
+
+# =================================================================
+# 8. GEOSPATIAL CONFIGURATION (Strict Malaysia Rules)
+# =================================================================
+
+MALAYSIA_BOUNDING_BOX = {
+    "lat": [0.0, 8.0],   
+    "lon": [99.0, 120.0]
+}
+
+MALAYSIA_STATES_WHITELIST = [
+    "johor", "kedah", "kelantan", "melaka", "negeri sembilan", "pahang", 
+    "perak", "perlis", "pulau pinang", "sabah", "sarawak", "selangor", 
+    "terengganu", "kuala lumpur", "labuan", "putrajaya"
+]
+
+STATE_DISPLAY_NAME_MAP = {
+    # Negeri dengan nama khas/ejaan berbeza
+    "pulau pinang": "Pulau Pinang",
+    "penang": "Pulau Pinang",
+    
+    "kuala lumpur": "W.P. Kuala Lumpur",
+    "wp kuala lumpur": "W.P. Kuala Lumpur",
+    "labuan": "W.P. Labuan",
+    "putrajaya": "W.P. Putrajaya",
+    
+    "negeri sembilan": "Negeri Sembilan",
+    "n sembilan": "Negeri Sembilan",
+        "johor": "Johor",
+
+    "kedah": "Kedah",
+    "kelantan": "Kelantan",
+    "melaka": "Melaka",
+    "malacca": "Melaka",
+    "pahang": "Pahang",
+    "perak": "Perak",
+    "perlis": "Perlis",
+    "sabah": "Sabah",
+    "sarawak": "Sarawak",
+    "selangor": "Selangor",
+    "terengganu": "Terengganu"
 }

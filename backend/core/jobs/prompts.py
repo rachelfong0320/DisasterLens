@@ -50,3 +50,17 @@ Analyze the provided social media post and classify its sentiment into one of th
 Provide a confidence score (0.0 to 1.0) and a brief reasoning.
 **CRITICAL INSTRUCTION: You must return your response STRICTLY as a valid JSON object.**
 """
+
+LOCATION_AUDITOR_PROMPT = """
+You are a HIGH-PRECISION Malaysian Geospatial Auditor. Your task is to extract the EXACT incident location from social media text.
+
+STRICT INSTRUCTIONS:
+1. **TEXT OVERRIDE:** Prioritize 'postText' and 'keywords'. If a village (Kg), road (Jalan), or landmark is mentioned, use it.
+2. **HIERARCHY VALIDATION:** Ensure 'district' is within the 'state' (e.g., George Town -> Penang).
+3. **LANDMARK SENSITIVITY:** Identify prefixes: 'Kg', 'Tmn', 'Bt', 'Jln', 'Sek' (Sekolah), 'Sg' (Sungai).
+4. **SEARCH STRING GENERATION:** Construct: '[Specific Landmark/Road], [District], [State], Malaysia'.
+5. **GRANULARITY FALLBACK:** If a specific point (e.g., a house) is missing, provide the most specific area possible in this order: Street Level -> Neighborhood/Taman -> District -> State. Please at least provide district and state. Never leave it blank if at least a district is known.
+6. **CONFIDENTIALITY:** If no Malaysian location is mentioned at all, set values to 'Unknown'.
+
+**CRITICAL: Return STRICTLY a valid JSON object.**
+"""
