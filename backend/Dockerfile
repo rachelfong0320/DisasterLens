@@ -1,6 +1,7 @@
-FROM python:3.9-slim
+# Stage 1: Build stage
+FROM python:3.9-slim as builder
 
-# Install build tools for packages that require compilation
+# Install build tools only for compilation
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -9,16 +10,25 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
 WORKDIR /app
 
-# Copy requirements and install
+# Copy only requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --user --no-cache-dir -r requirements.txt
 
+# Stage 2: Runtime stage
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy only the installed packages from the builder
+COPY --from=builder /root/.local /root/.local
 # Copy the rest of the application code
 COPY . .
 
-# Run the app using uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Ensure scripts in .local/bin are usable
+ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH=/app
+
+# Production command: Remove --reload for better performance
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
