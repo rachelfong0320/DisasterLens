@@ -119,11 +119,27 @@ async def get_filtered_events(
         }}
     ]
 
+    cursor = collection.aggregate(pipeline)
     events = []
-    cursor = collection.aggregate(pipeline) 
     for doc in cursor:
-        events.append(DisasterEvent(**doc))
-        
+        try:
+            # 1. Get coordinates safely from the document
+            geometry = doc.get("geometry", {})
+            coords = geometry.get("coordinates", [])
+            
+            # 2. Check if coordinates exist and are actual numbers
+            if coords and len(coords) == 2 and all(isinstance(c, (int, float)) for c in coords):
+                # Only add to list if data is valid
+                events.append(DisasterEvent(**doc))
+            else:
+                # This logs which real data is missing location info
+                print(f"Skipping event {doc.get('_id')} - coordinates are NULL or invalid.")
+                
+        except Exception as e:
+            # If Pydantic still finds an error, skip this one item and keep the app running
+            print(f"Error validating event {doc.get('_id')}: {e}")
+            continue
+
     return events
 
 # =======================================================
@@ -273,70 +289,67 @@ async def get_filtered_analytics(
     return final_result
 
 @router.get(
-    "/analytics/keywords/filtered",
-    summary="Retrieve top N trending keywords filtered by date range and disaster type (Live Calc)."
+    "/analytics/trending/filtered",
+    summary="Retrieve top trending keywords or hashtags (Live Calc)."
 )
-async def get_top_keywords_filtered(
+async def get_trending_filtered(
     db: Database = Depends(get_db),
     start_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
     end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
-    disaster_type: Optional[str] = Query(None, description="Optional filter by disaster type (e.g., 'flood')"),
+    disaster_type: Optional[str] = Query(None),
+    trend_type: str = Query("keyword", description="Switch between 'keyword' or 'hashtag'"),
     limit: int = 10
 ):
-    # Ensure start and end date are logically ordered
     if start_date > end_date:
-        raise HTTPException(
-            status_code=400, 
-            detail="start_date cannot be after end_date."
-        )
+        raise HTTPException(status_code=400, detail="start_date cannot be after end_date.")
     
-    # Collection: The final source of truth with the historical context and the new 'keywords' field
+    # Referencing the combined data collection
     post_collection = db[DISASTER_POSTS_COLLECTION] 
-    
     start_dt = _get_time_aware_datetime(start_date, is_end=False)
     end_dt = _get_time_aware_datetime(end_date, is_end=True)
     
-    # 1. Base Match Filter
+    # 1. Dynamically select field based on user toggle
+    target_field = "keywords" if trend_type == "keyword" else "hashtags"
+    
     match_query = {
-        # Filter by the correct historical time field
         "start_time": { "$gte": start_dt, "$lte": end_dt },
-        "keywords": { "$ne": None, "$exists": True, "$ne": "" } 
+        target_field: { "$exists": True, "$ne": None, "$nin": ["null", "", "none"] } 
     }
     
-    if disaster_type:
-        # Filter by the correct classification field
+    if disaster_type and disaster_type != "all":
         match_query["disaster_type"] = disaster_type.lower()
     
-    # 2. Aggregation Pipeline
     pipeline = [
         {"$match": match_query},
         
-        # New Step 1: Clean the keyword string (remove commas, periods, etc.)
+        # 2. Split logic: Convert comma-separated string into an array called 'tokens'
         {"$project": {
-            "cleaned_keywords": {
-                # 1. Convert to lowercase immediately
-                "$toLower": "$keywords" 
-            }
+            "tokens": { "$split": [f"${target_field}", ","] }
         }},
-        # Step E: Group and count the individual words
+        
+        # 3. Flatten the array so each word/hashtag becomes a separate document
+        {"$unwind": "$tokens"},
+        
+        # 4. Group and Count: Clean, lowercase, and sum
         {
             "$group": {
-                "_id": "$cleaned_keywords", # Already lowercased, no need for $toLower again
+                "_id": { "$trim": { "input": { "$toLower": "$tokens" } } },
                 "count": {"$sum": 1}
             }
         },
         
-        # Step D: Sort and limit the results
+        # 5. Filter out empty IDs (from trailing commas or empty fields)
+        {"$match": { "_id": { "$ne": "" } }}, 
+        
+        # 6. Final Sort and Limit
         {"$sort": {"count": -1}},
         {"$limit": limit},
         
-        # Step E: Reshape the output to match the expected model
+        # 7. Reshape for Frontend charts
         {"$project": {"_id": 0, "keyword": "$_id", "frequency": "$count"}}
     ]
     
-    # This line is now safe from UnboundLocalError and uses the correct pipeline
     results = list(post_collection.aggregate(pipeline))
-    
     return results
 
 @router.get(

@@ -50,4 +50,25 @@ class SentimentOutput(BaseModel):
     )
     confidence_score: float = Field(description="Confidence level between 0.0 and 1.0.")
 
+# Define the schema for location extraction
+class LocationExtraction(BaseModel):
+    """
+    Schema for OpenAI to extract location intent from unstructured text.
+    """
+    state: str = Field(
+        ..., 
+        description="The official Malaysian state name (e.g., Selangor, Sarawak)."
+    )
+    district: str = Field(
+        ..., 
+        description="The specific district or area mentioned (e.g., Klang, Matang)."
+    )
+    search_string: str = Field(
+        ..., 
+        description="A clean, optimized string for OpenCage geocoding (e.g., 'Matang, Sarawak')."
+    )
+    reasoning: str = Field(
+        ..., 
+        description="A short explanation of why this location was chosen from the text."
+    )
        
