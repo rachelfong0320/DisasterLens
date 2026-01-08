@@ -56,13 +56,16 @@ export default function ChatbotWidget({
 
     try {
       // 1. Call your FastAPI backend
-      const response = await fetch("http://localhost:8000/api/v1/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: userTextInput }),
-      });
+      const response = await fetch(
+        "http://localhost:8000/api/v1/chatbot_debug",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: userTextInput }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to connect to disaster service");
