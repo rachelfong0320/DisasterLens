@@ -8,7 +8,6 @@ from bson.objectid import ObjectId
 # is handled by the calling function (run_master_event_consolidator).
 from core.db.disaster_event_saver import get_mongo_client
 from core.config import DISASTER_EVENTS_COLLECTION, DISASTER_POSTS_COLLECTION, COMBINED_DB_NAME
-from core.jobs.alert_generator import process_event_for_alerts
 
 # --- CONFIGURATION (Ensuring timedelta is correctly defined) ---
 TIME_WINDOW_HOURS = 24
@@ -103,9 +102,6 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
             {"_id": existing_master_event["_id"]},
             [{"$set": {"total_posts_count": {"$size": "$related_post_ids"}}}]
         )
-
-        if is_significant_update:
-            process_event_for_alerts(existing_master_event["_id"])
         
         return event_id
         
@@ -124,7 +120,6 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
             "related_post_ids": [post_id]
         }
         inserted = master_collection.insert_one(new_master_event)
-        process_event_for_alerts(inserted.inserted_id)
         return event_id
 
 def run_master_event_consolidator():

@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import ssl
+print("DEBUG: SCRIPT HAS STARTED", flush=True)
 from datetime import datetime, timezone
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from core.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_SSL_CONFIG, COMBINED_DB_NAME, POSTS_COLLECTION, DISASTER_POSTS_COLLECTION
@@ -49,7 +50,6 @@ async def process_final_stage(data, producer):
             data.get('latitude'),
             data.get('longitude'),
             data.get('postText', ''),
-            data.get('location', ''),
             keyword_text
         )
         logger.info(f"🌍 Geo Processing Result for {post_id}: {geo_res}")
@@ -122,6 +122,7 @@ async def process_final_stage(data, producer):
         logger.error(f"❌ Final stage failed for {post_id}: {e}", exc_info=True)
 
 async def run():
+    print("DEBUG: Setting up SSL...", flush=True)
     # 1. Create the SSL context manually using paths from your config
     # We pull the paths OUT of the dictionary so we don't pass the dictionary itself
     context = ssl.create_default_context(cafile=KAFKA_SSL_CONFIG['ssl_cafile'])
@@ -133,6 +134,7 @@ async def run():
     context.verify_mode = ssl.CERT_REQUIRED
 
     # 2. Setup Consumer
+    print("DEBUG: Initializing AIOKafkaConsumer...", flush=True)
     consumer = AIOKafkaConsumer(
         'processed_data',
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
@@ -155,12 +157,15 @@ async def run():
 
     await consumer.start()
     await producer.start()
+
+    print("DEBUG: Attempting to connect to Kafka (This might hang)...", flush=True)
     
     try:
         logger.info("Incident Worker active. Waiting for AI-enriched data...")
         async for message in consumer:
             logger.info("-" * 30)
             logger.info(f"📥 Received from Kafka: Offset {message.offset}")
+            print("DEBUG: ✅ CONNECTED TO KAFKA!", flush=True)
             await process_final_stage(message.value, producer)
     finally:
         await consumer.stop()
