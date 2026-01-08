@@ -119,11 +119,27 @@ async def get_filtered_events(
         }}
     ]
 
+    cursor = collection.aggregate(pipeline)
     events = []
-    cursor = collection.aggregate(pipeline) 
     for doc in cursor:
-        events.append(DisasterEvent(**doc))
-        
+        try:
+            # 1. Get coordinates safely from the document
+            geometry = doc.get("geometry", {})
+            coords = geometry.get("coordinates", [])
+            
+            # 2. Check if coordinates exist and are actual numbers
+            if coords and len(coords) == 2 and all(isinstance(c, (int, float)) for c in coords):
+                # Only add to list if data is valid
+                events.append(DisasterEvent(**doc))
+            else:
+                # This logs which real data is missing location info
+                print(f"Skipping event {doc.get('_id')} - coordinates are NULL or invalid.")
+                
+        except Exception as e:
+            # If Pydantic still finds an error, skip this one item and keep the app running
+            print(f"Error validating event {doc.get('_id')}: {e}")
+            continue
+
     return events
 
 # =======================================================

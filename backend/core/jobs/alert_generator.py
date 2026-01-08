@@ -136,7 +136,7 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
             server.quit()
 
 
-def process_event_for_alerts(event_id: ObjectId) -> int:
+def process_event_for_alerts(event_id: str) -> int:
     """
     Checks the event's alert cooldown and triggers emails to matching subscribers.
     """
@@ -144,7 +144,7 @@ def process_event_for_alerts(event_id: ObjectId) -> int:
     subscribers_collection = db_connection.subscriber_collection #
 
     # 1. Fetch the latest event data
-    event = events_collection.find_one({"_id": event_id}) #
+    event = events_collection.find_one({"event_id": event_id})
     
     if not event:
         logger.error(f"Event ID {event_id} not found for alerting.")
