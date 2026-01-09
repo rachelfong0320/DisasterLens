@@ -21,6 +21,20 @@ services:
       - IS_DOCKER=true
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: disasterlens_es
+    environment:
+      - ES_HOST=http://disasterlens_es:9200
+      - discovery.type=single-node
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
   # --- NEW KAFKA SERVICES ---
   twitter-scraper:
     build:
@@ -97,6 +111,7 @@ services:
       - PYTHONPATH=/app
       - IS_DOCKER=true
       - PYTHONUNBUFFERED=1
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
     command: python -u core/consumers/incident_worker.py
     restart: always
 
@@ -114,20 +129,6 @@ services:
       - IS_DOCKER=true
     command: python -u core/consumers/alert_worker.py
     restart: always
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
-    container_name: disasterlens_es
-    environment:
-      - ES_HOST=http://disasterlens_es:9200
-      - discovery.type=single-node
-      - xpack.security.http.ssl.enabled=false
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
 
 volumes:
   esdata:

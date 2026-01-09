@@ -20,6 +20,8 @@ logger.setLevel(logging.INFO)
 
 # --- CONFIGURATION for Alerting & SMTP ---
 DEFAULT_COOLDOWN_MINUTES = 60 
+# Only alert on events newer than this threshold
+MAX_EVENT_AGE_DAYS = 90  # alert only for events within last ~3 months
 
 # Load SMTP configuration directly from environment variables
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
@@ -74,8 +76,8 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
               <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('start_time').strftime('%Y-%m-%d %H:%M:%S UTC')}</td>
             </tr>
             <tr>
-              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Location Coordinates:</strong></td>
-              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('geometry', {}).get('coordinates')}</td>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Location State:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('location_state')}</td>
             </tr>
           </table>
 
@@ -149,6 +151,29 @@ def process_event_for_alerts(event_id: str) -> int:
     if not event:
         logger.error(f"Event ID {event_id} not found for alerting.")
         return 0
+    
+    # ---------------------------
+    # 🔒 FRESHNESS CHECK
+    # ---------------------------
+    event_start_time = event.get("start_time")
+    if not event_start_time:
+      logger.warning(f"Event {event_id} has no start_time, skipping alert.")
+      return 0
+
+    # Make sure datetime has timezone
+    if event_start_time.tzinfo is None:
+      event_start_time = event_start_time.replace(tzinfo=timezone.utc)
+
+    now = datetime.now(timezone.utc)
+    event_age = now - event_start_time
+
+    if event_age > timedelta(days=MAX_EVENT_AGE_DAYS):
+      logger.info(
+        f"Skipping old event {event_id}: "
+        f"start_time={event_start_time}, age={event_age}"
+      )
+      return 0
+
 
     event_location = event.get("location_state")
     logger.info(
@@ -160,6 +185,11 @@ def process_event_for_alerts(event_id: str) -> int:
     if not event_location:
         logger.warning(f"Event {event['event_id']} has no location, skipping alert generation.")
         return 0
+
+    if event_start_time.year < now.year - 1:
+      logger.info(f"Skipping very old event {event_id} from year {event_start_time.year}")
+      return 0
+  
 
     # 2. Spam Prevention Check (CoOLDOWN LOGIC)
     raw_last_alert_sent = event.get("last_alert_sent")

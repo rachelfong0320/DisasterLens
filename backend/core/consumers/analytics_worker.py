@@ -53,7 +53,7 @@ async def run():
         ssl_context=ssl_context,
         value_deserializer=lambda m: json.loads(m.decode('utf-8')),
         max_poll_interval_ms=600_000,
-        auto_offset_reset='earliest'
+        auto_offset_reset='latest'
     )
 
     producer = AIOKafkaProducer(

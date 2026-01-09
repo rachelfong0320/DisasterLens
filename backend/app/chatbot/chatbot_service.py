@@ -38,7 +38,7 @@ def get_historical_disasters(location=None, disaster_type=None, month=None):
         },
         # CRITICAL: This ensures the landslide in Pahang comes first
         "sort": [{"start_time": {"order": "desc"}}], 
-        "size": 5
+        "size": 1
     }
 
     try:

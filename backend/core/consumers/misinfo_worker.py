@@ -159,7 +159,7 @@ async def run():
         security_protocol="SSL",
         ssl_context=ssl_context,
         value_deserializer=lambda m: json.loads(m.decode("utf-8")),
-        auto_offset_reset="earliest",
+        auto_offset_reset="latest",
         max_poll_interval_ms=600_000,
     )
 

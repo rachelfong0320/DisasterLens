@@ -1,8 +1,8 @@
 import asyncio
 import json
 import logging
+import sys
 import ssl
-print("DEBUG: SCRIPT HAS STARTED", flush=True)
 from datetime import datetime, timezone
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from core.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_SSL_CONFIG, COMBINED_DB_NAME, POSTS_COLLECTION, DISASTER_POSTS_COLLECTION
@@ -13,7 +13,13 @@ from core.jobs.main_geoProcessor import reverse_geocode_coordinates
 from core.jobs.main_incidentClassifier import classify_incident_async
 from core.processor.event_consolidator import run_event_consolidation
 
-logging.basicConfig(level=logging.INFO)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+    force=True
+)
 logger = logging.getLogger("IncidentWorker")
 
 # Semaphore for AI Rate Limiting
@@ -140,7 +146,7 @@ async def run():
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         # group_id='incident-finalizer-group',
         group_id='incident-worker-debug-v1',  # Change this to a new name
-        auto_offset_reset='earliest',
+        auto_offset_reset='latest',
         # Ensure it decodes bytes to string, then loads to dict
         value_deserializer=lambda m: json.loads(m.decode('utf-8')),
         security_protocol='SSL',
@@ -157,15 +163,12 @@ async def run():
 
     await consumer.start()
     await producer.start()
-
-    print("DEBUG: Attempting to connect to Kafka (This might hang)...", flush=True)
     
     try:
         logger.info("Incident Worker active. Waiting for AI-enriched data...")
         async for message in consumer:
             logger.info("-" * 30)
             logger.info(f"📥 Received from Kafka: Offset {message.offset}")
-            print("DEBUG: ✅ CONNECTED TO KAFKA!", flush=True)
             await process_final_stage(message.value, producer)
     finally:
         await consumer.stop()
