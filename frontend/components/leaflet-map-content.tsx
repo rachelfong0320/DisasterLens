@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup , useMap} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -14,6 +14,23 @@ import { applyFilters } from "@/lib/filterUtils";
 import type { FilterOptions } from "@/components/disaster-filter-widget";
 import { DisasterEvent } from "@/lib/types/disaster";
 import { useTranslations } from "next-intl";
+import { AlertTriangle, X } from "lucide-react";
+
+function MapController({ event }: { event: DisasterEvent | null }) {
+  const map = useMap(); //
+
+  useEffect(() => {
+    if (event) {
+      map.flyTo(
+        [event.geometry.coordinates[1], event.geometry.coordinates[0]],
+        12,
+        { duration: 1.5 }
+      );
+    }
+  }, [event, map]);
+
+  return null;
+}
 
 // 1. Cluster Icon Generator (Moved outside to be globally accessible)
 const createClusterCustomIcon = (cluster: any) => {
@@ -64,6 +81,7 @@ const getCustomIcon = () => {
 
 interface LeafletMapContentProps {
   filters?: FilterOptions;
+  chatbotEvent: string | null;
 }
 
 export default function LeafletMapContent({
@@ -73,10 +91,13 @@ export default function LeafletMapContent({
     startDate: "",
     endDate: "",
   },
+  chatbotEvent
 }: LeafletMapContentProps) {
   const t = useTranslations("map");
   const [events, setEvents] = useState<DisasterEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [highlightedEvent, setHighlightedEvent] = useState<DisasterEvent | null>(null);
 
   const filteredMarkers = applyFilters(events, filters).filter((event) => {
     const type = event.classification_type?.toLowerCase();
@@ -84,8 +105,10 @@ export default function LeafletMapContent({
   });
 
   useEffect(() => {
+    if (chatbotEvent) return;
     const fetchEvents = async () => {
       setLoading(true);
+      console.log("🔍 Fetching events with filters:", filters);
       try {
         const params = new URLSearchParams();
         if (filters.disasterType)
@@ -107,7 +130,63 @@ export default function LeafletMapContent({
     };
 
     fetchEvents();
-  }, [filters]);
+  }, [filters, chatbotEvent]);
+
+  useEffect(() => {
+    if (!chatbotEvent) {
+      setSyncError(null);
+      setHighlightedEvent(null);
+      return;
+    }
+
+    const syncMap = async () => {
+      if (!chatbotEvent) return;
+
+      setLoading(true);
+      setSyncError(null);
+
+      console.log("📡 Sending Sync Request for ID:", chatbotEvent);
+
+      try {
+        const res = await fetch(`http://localhost:8000/api/v1/map-sync`, {
+          method: "POST", // Must be POST
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // This body structure MUST match your MapSyncRequest model
+          body: JSON.stringify({
+            event_ids: [chatbotEvent], // Sending the ID as a single-item array
+          }),
+        });
+
+        if (!res.ok) {
+          // If status is 422, this will log exactly why the data was rejected
+          const errorData = await res.json();
+          console.error("❌ Server Error:", errorData);
+          throw new Error(errorData.detail?.[0]?.msg || "Failed to sync map");
+        }
+
+        const data = await res.json();
+        console.log("✅ Map Sync Data Received:", data);
+
+        // Update markers and trigger the 'flyTo' animation
+        if (Array.isArray(data) && data.length > 0) {
+          setEvents(data); 
+          setHighlightedEvent(data[0]); 
+        } else {
+          setEvents([]);
+          setSyncError("No matching events found in database.");
+        }
+      } catch (err: any) {
+        console.error("🔥 Sync Error:", err.message);
+        setSyncError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    syncMap();
+  }, [chatbotEvent]);
 
   return (
     <div className="relative w-full h-full">
@@ -117,8 +196,28 @@ export default function LeafletMapContent({
         </div>
       )}
 
+      {syncError && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1001 bg-white border border-red-200 p-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <div className="bg-red-100 p-2 rounded-full">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900">Map Sync Issue</p>
+            <p className="text-xs text-gray-500">{syncError}</p>
+          </div>
+          <button 
+            onClick={() => setSyncError(null)}
+            className="ml-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="w-4 h-4 text-gray-400" />
+          </button>
+        </div>
+      )}
+
       <MapContainer center={[4.21, 101.69]} zoom={6} className="w-full h-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        <MapController event={highlightedEvent} />
 
         <MarkerClusterGroup
           chunkedLoading

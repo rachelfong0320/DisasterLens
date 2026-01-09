@@ -16,7 +16,7 @@ const LeafletMapContent = dynamic(() => import("./leaflet-map-content"), {
   ),
 });
 
-export default function LeafletMap() {
+export default function LeafletMap({ chatbotEvent }: { chatbotEvent: string | null }) {
   const t = useTranslations("map");
   const h = useTranslations("home");
   const d = useTranslations("disasterType");
@@ -95,7 +95,7 @@ export default function LeafletMap() {
                 </div>
               }
             >
-              <LeafletMapContent filters={filters} />
+              <LeafletMapContent filters={filters} chatbotEvent={chatbotEvent} />
             </Suspense>
           </div>
 

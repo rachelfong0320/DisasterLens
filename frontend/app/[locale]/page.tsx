@@ -17,6 +17,7 @@ export default function Home() {
     "Johor",
     "Sarawak",
   ]);
+const [chatbotEvent, setChatbotEvent] = useState<string | null>(null);
 
   const handleLocationsChange = useCallback(
     (locations: string[]) => {
@@ -30,8 +31,8 @@ export default function Home() {
       <Header />
 
       <section className="relative">
-        <MapSection />
-        <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} />
+        <MapSection chatbotEvent={chatbotEvent} />
+        <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} onEventFound={setChatbotEvent} />
       </section>
 
       {/* Pass the stable function and initial state to PreferredLocations */}
