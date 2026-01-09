@@ -8,6 +8,8 @@ from core.jobs.alert_generator import process_event_for_alerts
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("AlertWorker")
 
+seen_events = set()
+
 def run():
     # 1. Initialize Kafka Consumer
     # We listen to the 'incidents' topic which now carries Event IDs
@@ -17,29 +19,35 @@ def run():
         **KAFKA_SSL_CONFIG,
         value_deserializer=lambda m: json.loads(m.decode('utf-8')),
         group_id='alert-worker-group',
-        request_timeout_ms=30000
+        # group_id='alert-worker-group-reset-v1',  # Change this to a new name to reset offsets
+        auto_offset_reset='latest',  
+        enable_auto_commit=True
     )
 
     logger.info("Alert Worker is active. Monitoring for disaster events...")
 
     for message in consumer:
-        event_data = message.value
-        event_id = event_data.get('event_id')
-        
-        if not event_id:
-            continue
+       event_data = message.value
+       event_id = event_data.get('event_id')
 
-        try:
-            logger.info(f"📬 Processing alerts for Event: {event_id}")
-            
-            # 2. TRIGGER YOUR ORIGINAL ALERT LOGIC
-            # This function checks for matching subscribers and sends emails via SMTP
-            process_event_for_alerts(event_id)
-            
-            logger.info(f"Alert processing finished for {event_id}")
+       if not event_id:
+         continue
 
-        except Exception as e:
-            logger.error(f"Failed to send alerts for {event_id}: {e}")
+       # 🔒 DEDUPLICATION
+       if event_id in seen_events:
+           logger.info(f"⏭️ Alert already sent for {event_id}, skipping")
+           continue
+
+       try:
+          logger.info(f"📬 Processing alerts for Event: {event_id}")
+
+          process_event_for_alerts(event_id)
+
+          seen_events.add(event_id) 
+          logger.info(f"Alert processing finished for {event_id}")
+
+       except Exception as e:
+          logger.error(f"Failed to send alerts for {event_id}: {e}", exc_info=True)
 
 if __name__ == "__main__":
     run()

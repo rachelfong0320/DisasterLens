@@ -74,8 +74,8 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
               <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('start_time').strftime('%Y-%m-%d %H:%M:%S UTC')}</td>
             </tr>
             <tr>
-              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Location Coordinates:</strong></td>
-              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('geometry', {}).get('coordinates')}</td>
+              <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Location State:</strong></td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('location_state')}</td>
             </tr>
           </table>
 
