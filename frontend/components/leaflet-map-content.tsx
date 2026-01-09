@@ -201,7 +201,7 @@ export default function LeafletMapContent({
       )}
 
       {isInvalidDateRange && (
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001] w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-1001 w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
         <div className="bg-red-50 border border-red-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
           <div className="bg-red-100 p-3 rounded-full text-red-600">
             <CalendarX className="w-6 h-6" />
@@ -217,7 +217,7 @@ export default function LeafletMapContent({
       )}
 
       {isMapEmpty && !syncError && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001] w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-1001 w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="bg-white/95 backdrop-blur-sm border border-amber-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
             <div className="bg-amber-100 p-3 rounded-full">
               <AlertTriangle className="w-6 h-6 text-amber-600" />
