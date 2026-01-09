@@ -99,10 +99,15 @@ def pillar3_gadm_judge(lat: float, lon: float) -> Optional[Dict]:
     for feature in MALAYSIA_GADM.get('features', []):
         polygon = shape(feature['geometry'])
         if polygon.contains(point):
-            logging.info(f"GADM Match: {feature['properties'].get('NAME_1')}, {feature['properties'].get('NAME_2')}")
+            raw_state = feature['properties'].get('NAME_1', 'unknown state')
+            raw_district = feature['properties'].get('NAME_2', 'unknown district')
+
+            clean_state = format_location_name(raw_state)
+            clean_district = format_location_name(raw_district)
+            logging.info(f"GADM Match: {clean_state}, {clean_district}")
             return {
-                'state': feature['properties'].get('NAME_1'),
-                'district': feature['properties'].get('NAME_2'),
+                'state': clean_state,
+                'district': clean_district,
             }
     return None
 
@@ -130,7 +135,15 @@ def _format_keywords_to_string(keywords_data: Any) -> str:
         return ", ".join([str(v) for v in keywords_data.values() if v])
     if isinstance(keywords_data, list): 
         return ", ".join([str(k) for k in keywords_data if k])
-    return str(keywords_data)    
+    return str(keywords_data)   
+
+def format_location_name(text: str) -> str:
+    if not text or "Unknown" in text:
+        return text
+    
+    # Insert space before any capital letter that follows a lowercase letter
+    spaced = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+    return spaced.lower().strip() 
     
 # --- THE ORCHESTRATOR ---
 def reverse_geocode_coordinates(lat: Any, lon: Any, post_text: str, keywords: Any) -> Dict[str, Any]:
