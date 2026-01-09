@@ -146,7 +146,7 @@ async def run():
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         # group_id='incident-finalizer-group',
         group_id='incident-worker-debug-v1',  # Change this to a new name
-        auto_offset_reset='earliest',
+        auto_offset_reset='latest',
         # Ensure it decodes bytes to string, then loads to dict
         value_deserializer=lambda m: json.loads(m.decode('utf-8')),
         security_protocol='SSL',
