@@ -1,6 +1,9 @@
 import logging
 from datetime import timedelta, datetime, timezone
+import os
 from typing import Dict, Any, Optional
+from dotenv import load_dotenv
+from elasticsearch import Elasticsearch
 from pymongo.database import Database
 from pymongo.collection import Collection
 from bson.objectid import ObjectId
@@ -9,12 +12,19 @@ from bson.objectid import ObjectId
 from core.db.disaster_event_saver import get_mongo_client
 from core.config import DISASTER_EVENTS_COLLECTION, DISASTER_POSTS_COLLECTION, COMBINED_DB_NAME
 
+load_dotenv()
+
 # --- CONFIGURATION (Ensuring timedelta is correctly defined) ---
 TIME_WINDOW_HOURS = 24
 TIME_WINDOW = timedelta(hours=TIME_WINDOW_HOURS)
 DEFAULT_ALERT_COOLDOWN_MINUTES = 60
 # ---------------------------------------------------------------
 
+# Initialize ES Client (Ensure ELASTICSEARCH_URL is in your .env)
+ES_URL = os.getenv("ELASTICSEARCH_URL", "http://elasticsearch:9200")
+es_client = Elasticsearch(ES_URL)
+
+    
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -103,6 +113,26 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
             [{"$set": {"total_posts_count": {"$size": "$related_post_ids"}}}]
         )
         
+        # SYNC UPDATE TO ELASTICSEARCH
+        try:
+            es_client.index(
+                index="disaster_events",
+                id=event_id, # Use the unique event_id (e.g., FLOOD-KUALALUMPUR-20250109)
+                document={
+                    "event_id": event_id,
+                    "classification_type": event_type,
+                    "location_district": post_district,
+                    "location_state": post_state,
+                    "start_time": new_start_time.isoformat(),
+                    "most_recent_report": new_recent_time.isoformat(),
+                    "total_posts_count": len(existing_master_event.get("related_post_ids", [])) + 1,
+                    "geometry": existing_master_event.get("geometry")
+                }
+            )
+            logger.info(f"Updated ES Event: {event_id}")
+        except Exception as e:
+            logger.error(f"Failed to update ES Event {event_id}: {e}")
+
         return event_id
         
     else:
@@ -120,6 +150,26 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
             "related_post_ids": [post_id]
         }
         inserted = master_collection.insert_one(new_master_event)
+        # SYNC NEW EVENT TO ELASTICSEARCH
+        try:
+            es_client.index(
+                index="disaster_events",
+                id=event_id,
+                document={
+                    "event_id": event_id,
+                    "classification_type": event_type,
+                    "location_district": post_district,
+                    "location_state": post_state,
+                    "start_time": post_time.isoformat(),
+                    "most_recent_report": post_time.isoformat(),
+                    "total_posts_count": 1,
+                    "geometry": new_master_event["geometry"]
+                }
+            )
+            logger.info(f"Created NEW ES Event: {event_id}")
+        except Exception as e:
+            logger.error(f"Failed to create ES Event {event_id}: {e}")
+
         return event_id
 
 def run_master_event_consolidator():
