@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState , useMemo} from "react";
 import { MapContainer, TileLayer, Marker, Popup , useMap} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -14,7 +14,7 @@ import { applyFilters } from "@/lib/filterUtils";
 import type { FilterOptions } from "@/components/disaster-filter-widget";
 import { DisasterEvent } from "@/lib/types/disaster";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, CalendarX } from "lucide-react";
 
 function MapController({ event }: { event: DisasterEvent | null }) {
   const map = useMap(); //
@@ -99,10 +99,17 @@ export default function LeafletMapContent({
   const [syncError, setSyncError] = useState<string | null>(null);
   const [highlightedEvent, setHighlightedEvent] = useState<DisasterEvent | null>(null);
 
+  const isInvalidDateRange = useMemo(() => {
+    if (!filters.startDate || !filters.endDate) return false;
+    return new Date(filters.startDate) > new Date(filters.endDate);
+  }, [filters.startDate, filters.endDate]);
+
   const filteredMarkers = applyFilters(events, filters).filter((event) => {
     const type = event.classification_type?.toLowerCase();
     return type !== "none" && type !== "" && type !== null;
   });
+
+  const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange;
 
   useEffect(() => {
     if (chatbotEvent) return;
@@ -133,17 +140,14 @@ export default function LeafletMapContent({
   }, [filters, chatbotEvent]);
 
   useEffect(() => {
-    if (!chatbotEvent) {
-      setSyncError(null);
-      setHighlightedEvent(null);
-      return;
-    }
+    if (!chatbotEvent) return;
 
     const syncMap = async () => {
       if (!chatbotEvent) return;
-
       setLoading(true);
       setSyncError(null);
+      setEvents([]);
+      setHighlightedEvent(null);
 
       console.log("📡 Sending Sync Request for ID:", chatbotEvent);
 
@@ -196,21 +200,47 @@ export default function LeafletMapContent({
         </div>
       )}
 
-      {syncError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1001 bg-white border border-red-200 p-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
-          <div className="bg-red-100 p-2 rounded-full">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
+      {isInvalidDateRange && (
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001] w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-red-50 border border-red-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
+          <div className="bg-red-100 p-3 rounded-full text-red-600">
+            <CalendarX className="w-6 h-6" />
           </div>
-          <div>
-            <p className="text-sm font-bold text-gray-900">Map Sync Issue</p>
-            <p className="text-xs text-gray-500">{syncError}</p>
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-red-900">Invalid Date Range</h3>
+            <p className="text-xs text-red-700 leading-relaxed">
+              The <b>Start Date</b> cannot be later than the <b>End Date</b>. Please check your filter settings.
+            </p>
           </div>
-          <button 
-            onClick={() => setSyncError(null)}
-            className="ml-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="w-4 h-4 text-gray-400" />
-          </button>
+        </div>
+      </div>
+      )}
+
+      {isMapEmpty && !syncError && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001] w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white/95 backdrop-blur-sm border border-amber-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
+            <div className="bg-amber-100 p-3 rounded-full">
+              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            </div>
+            
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-gray-900">
+                No {filters.disasterType || "Events"} Found
+              </h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                There are no reports for this category in 
+                <span className="font-semibold text-gray-700"> {filters.state || "all states"}</span>.
+              </p>
+            </div>
+            
+            {/* Optional: Add a button to reset to "All" */}
+            <button 
+              onClick={() => window.location.reload()} 
+              className="text-xs font-bold text-amber-700 hover:underline"
+            >
+              Clear
+            </button>
+          </div>
         </div>
       )}
 
