@@ -2,19 +2,23 @@ version: "3.8"
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.api
     env_file:
       - ./backend/.env
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./backend/certs:/app/certs
     depends_on:
       - elasticsearch
 
     working_dir: /app
     environment:
       - PYTHONPATH=/app
+      - IS_DOCKER=true
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   elasticsearch:
@@ -30,6 +34,101 @@ services:
       - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+
+  # --- NEW KAFKA SERVICES ---
+  twitter-scraper:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python -u core/scrapers/TweetDataScraper/main_scraperTweet.py
+    restart: always
+
+  instagram-scraper:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python -u core/scrapers/InstagramDataScraper/main_scraperIg.py
+    restart: always
+
+  misinfo-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    # This runs the routing logic we created
+    command: python -u core/consumers/misinfo_worker.py
+    restart: always
+
+  analytics-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python -u core/consumers/analytics_worker.py
+    restart: always
+
+  incident-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+      - PYTHONUNBUFFERED=1
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    command: python -u core/consumers/incident_worker.py
+    restart: always
+
+  alert-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/certs:/app/certs
+    environment:
+      - PYTHONPATH=/app
+      - IS_DOCKER=true
+    command: python -u core/consumers/alert_worker.py
+    restart: always
 
 volumes:
   esdata:
