@@ -38,6 +38,7 @@ def sync_events():
         actions.append({
             "_index": "disaster_events",
             "_id": str(doc["_id"]),
+            "event_id": doc.get("event_id"),
             "classification_type": doc.get("classification_type"),
             "location_district": doc.get("location_district"),
             "location_state": doc.get("location_state"),

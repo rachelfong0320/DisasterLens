@@ -1,11 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import List
+from pymongo.database import Database
+from app.db.connection import get_db
 from ..chatbot.chatbot_service import chatbot_response, chatbot_response_with_data
+from ..chatbot.map_chatbot_sync import get_full_events_by_ids
 
 router = APIRouter(tags=["Chatbot"])
 
 class ChatInput(BaseModel):
     message: str
+
+class MapSyncRequest(BaseModel):
+    event_ids: List[str]    
 
 @router.post(
     "/chat",
@@ -49,3 +56,13 @@ async def ask_bot_debug(data: ChatInput):
             status_code=500,
             detail="Failed to generate chatbot response"
         )
+    
+@router.post("/map-sync")
+async def sync_chatbot_to_map(data: MapSyncRequest, db: Database = Depends(get_db)):
+    # The route only handles the HTTP request and response
+    events = get_full_events_by_ids(db, data.event_ids)
+    
+    if not events:
+        return []
+        
+    return events
