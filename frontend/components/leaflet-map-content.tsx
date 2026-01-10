@@ -327,74 +327,82 @@ export default function LeafletMapContent({
           ))}
         </MarkerClusterGroup>
 
-        <div className="absolute bottom-1 left-6 z-1000 flex flex-col items-start gap-2">
-          {/* Modern Toggle Button */}
-          <button 
-            onClick={() => setShowLegend(!showLegend)}
-            className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-zinc-200 shadow-lg hover:bg-zinc-50 transition-all flex items-center gap-2 group active:scale-95"
-          >
-            <div className={`w-2 h-2 rounded-full bg-red-600 ${showLegend ? 'animate-pulse' : ''}`} />
-            <span className="text-[12px] font-bold text-zinc-700">
-              {showLegend ? "Hide Legend" : "Show Legend"} 
-            </span>
-          </button>
+        {/* Main Positioning Container - bottom-2 makes it sit very close to the map edge */}
+<div className="absolute bottom-2 left-6 z-1000 flex flex-col items-start gap-1">
+  
+  {/* Toggle Button with Hover Effects */}
+  <button 
+    onClick={() => setShowLegend(!showLegend)}
+    className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-zinc-200 shadow-lg 
+               flex items-center gap-2 group transition-all duration-200
+               hover:bg-zinc-100 hover:border-zinc-300 hover:shadow-xl active:scale-95 cursor-pointer"
+  >
+    {/* Status Indicator Dot */}
+    <div className={`w-2 h-2 rounded-full bg-red-600 ${showLegend ? 'animate-pulse' : ''} 
+                    group-hover:scale-110 transition-transform`} />
+    
+    <span className="text-[12px] font-bold text-zinc-700 group-hover:text-zinc-900 transition-colors">
+      {showLegend ? "Hide Legend" : "Show Legend"}
+    </span>
+  </button>
 
-          {/* Smooth Transition Legend Bar */}
-          <div className={`
-            bg-white/95 backdrop-blur-md rounded-2xl border border-zinc-200 shadow-2xl 
-            transition-all duration-500 ease-in-out origin-left overflow-hidden
-            ${showLegend ? "max-w-[95vw] opacity-100 scale-100 p-1.5" : "max-w-0 opacity-0 scale-95 p-0 border-none"}
-          `}>
-            <div className="flex flex-row items-center gap-6 px-2 py-1 whitespace-nowrap">
-              
-              {/* SECTION 1: Incident Summary (Total Incidents Box) */}
-              <div className="flex items-center gap-3 pr-6 border-r border-zinc-200 shrink-0">
-                <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-[14px] text-white font-black border border-white/20 shadow-sm shrink-0">
-                  #
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight leading-none">
-                    Indicator
-                  </span>
-                  <span className="text-[13px] text-red-600 font-black leading-tight">
-                    Incidents
-                  </span>
-                </div>
-              </div>
-
-              {/* SECTION 2: Disaster Type Keys (Clean Spacing) */}
-              <div className="flex flex-row items-center gap-6">
-                {Object.entries(DISASTER_COLORS).map(([type, color]) => (
-                  <div key={type} className="flex items-center gap-2.5">
-                    <div 
-                      className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm ring-1 ring-zinc-100 shrink-0" 
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="text-[12px] capitalize font-bold text-zinc-600">
-                      {type}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* SECTION 3: Cluster Explanation (Visual Groups) */}
-              <div className="flex items-center gap-3 border-l border-zinc-200 pl-6 pr-2 shrink-0">
-                <div className="flex -space-x-2">
-                  <div className="w-5 h-5 bg-red-600 rounded-full border-2 border-white z-10 shadow-sm" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-zinc-800 leading-none">
-                    Cluster Group
-                  </span>
-                  <span className="text-[9px] text-zinc-400 font-medium italic">
-                    Zoom to expand
-                  </span>
-                </div>
-              </div>
-
-            </div>
-          </div>
+  {/* Smooth Transition Bar */}
+  <div className={`
+    bg-white/95 backdrop-blur-md rounded-xl border border-zinc-200 shadow-2xl 
+    transition-all duration-500 ease-in-out origin-top-left overflow-hidden
+    ${showLegend 
+      ? "max-w-[95vw] max-h-[150px] opacity-100 scale-100 py-1.5 px-2 mt-0.5" 
+      : "max-w-0 max-h-0 opacity-0 scale-95 p-0 mt-0 border-none"}
+  `}>
+    <div className="flex flex-row items-center gap-4 px-1 whitespace-nowrap">
+      
+      {/* SECTION 1: Incident Summary */}
+      <div className="flex items-center gap-2.5 pr-4 border-r border-zinc-200 shrink-0">
+        <div className="w-7 h-7 bg-red-600 rounded-lg flex items-center justify-center text-[12px] text-white font-black border border-white/20 shadow-sm shrink-0">
+          #
         </div>
+        <div className="flex flex-col">
+          <span className="text-[9px] text-zinc-500 font-bold uppercase leading-none">
+            {t("number")}
+          </span>
+          <span className="text-[11px] text-red-600 font-black leading-tight">
+            {t("incidents")}
+          </span>
+        </div>
+      </div>
+
+      {/* SECTION 2: Disaster Type Keys */}
+      <div className="flex flex-row items-center gap-4">
+        {Object.entries(DISASTER_COLORS).map(([type, color]) => (
+          <div key={type} className="flex items-center gap-2">
+            <div 
+              className="w-3 h-3 rounded-full border-2 border-white shadow-sm ring-1 ring-zinc-100 shrink-0" 
+              style={{ backgroundColor: color }}
+            />
+            <span className="text-[12px] font-bold text-zinc-600">
+              {type}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* SECTION 3: Cluster Explanation */}
+      <div className="flex items-center gap-2.5 border-l border-zinc-200 pl-4 pr-1 shrink-0">
+        <div className="flex -space-x-1.5">
+           <div className="w-4 h-4 bg-red-600 rounded-full border-2 border-white z-10 shadow-sm" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-zinc-800 leading-none">
+            Cluster
+          </span>
+          <span className="text-[8px] text-zinc-400 font-medium italic">
+            Zoom to expand
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
       </MapContainer>
     </div>
   );
