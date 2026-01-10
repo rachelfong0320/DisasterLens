@@ -32,7 +32,14 @@ const [chatbotEvent, setChatbotEvent] = useState<string | null>(null);
 
       <section className="relative">
         <MapSection chatbotEvent={chatbotEvent} />
-        <ChatbotWidget isOpen={chatOpen} onToggle={setChatOpen} onEventFound={setChatbotEvent} />
+        <ChatbotWidget isOpen={chatOpen} 
+        onToggle={(open) => {
+          setChatOpen(open);
+          if (!open) {
+            setChatbotEvent(null); // This clears the map when the chat is closed
+          }
+        }}  
+        onEventFound={setChatbotEvent} />
       </section>
 
       {/* Pass the stable function and initial state to PreferredLocations */}

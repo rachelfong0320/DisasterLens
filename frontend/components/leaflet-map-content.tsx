@@ -146,15 +146,16 @@ export default function LeafletMapContent({
     return new Date(filters.startDate) > new Date(filters.endDate);
   }, [filters.startDate, filters.endDate]);
 
-  const filteredMarkers = applyFilters(events, filters).filter((event) => {
-    const type = event.classification_type?.toLowerCase();
-    return type !== "none" && type !== "" && type !== null;
-  });
+  const filteredMarkers = chatbotEvent 
+  ? events // If chatbot is active, show the sync results directly
+  : applyFilters(events, filters).filter((event) => {
+      const type = event.classification_type?.toLowerCase();
+      return type !== "none" && type !== "" && type !== null;
+    });
 
   const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange;
 
   useEffect(() => {
-    if (chatbotEvent) return;
     const fetchEvents = async () => {
       setLoading(true);
       console.log("🔍 Fetching events with filters:", filters);
