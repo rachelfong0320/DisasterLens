@@ -280,6 +280,24 @@ export default function Dashboard() {
                       <MetricListChart title={trendType === "keyword" ? t("keyword") : "Trending Hashtags"} data={keywordChartData} color="#3b82f6" unit="Hit" />
                     )}
                   </div>
+
+                  <div className="hidden print:block pt-8 border-t border-gray-200">
+                    <h2 className="text-xl font-bold mb-4">Monthly Event Summary ({currentViewYear})</h2>
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="border p-2 text-left">Month</th>
+                          {trendData.map(d => <th key={d.name} className="border p-2 text-center text-xs">{d.name}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border p-2 font-semibold">Total Events</td>
+                          {trendData.map(d => <td key={d.name} className="border p-2 text-center">{d.value}</td>)}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
