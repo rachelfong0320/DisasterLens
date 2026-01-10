@@ -27,7 +27,7 @@ const DISASTER_COLORS: Record<string, string> = {
 };
 
 function MapController({ event }: { event: DisasterEvent | null }) {
-  const map = useMap(); //
+  const map = useMap(); 
 
   useEffect(() => {
     if (event) {
@@ -93,33 +93,6 @@ const getCustomIcon = (disasterType: string) => {
   });
 };
 
-// const getCustomIcon = () => {
-//   return L.divIcon({
-//     html: `
-//       <div style="
-//         width: 30px; 
-//         height: 30px; 
-//         background-color: #dc2626; /* Match your red cluster color */
-//         color: white; 
-//         border: 2px solid white; 
-//         border-radius: 50%; 
-//         display: flex; 
-//         align-items: center; 
-//         justify-content: center; 
-//         font-weight: bold;
-//         font-size: 12px;
-//         box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-//       ">
-//         1
-//       </div>
-//     `,
-//     className: "custom-icon",
-//     iconSize: [30, 30],
-//     iconAnchor: [15, 15],
-//     popupAnchor: [0, -15],
-//   });
-// };
-
 interface LeafletMapContentProps {
   filters?: FilterOptions;
   chatbotEvent: string | null;
@@ -146,12 +119,24 @@ export default function LeafletMapContent({
     return new Date(filters.startDate) > new Date(filters.endDate);
   }, [filters.startDate, filters.endDate]);
 
-  const filteredMarkers = chatbotEvent 
-  ? events // If chatbot is active, show the sync results directly
-  : applyFilters(events, filters).filter((event) => {
-      const type = event.classification_type?.toLowerCase();
-      return type !== "none" && type !== "" && type !== null;
-    });
+ const filteredMarkers = (chatbotEvent 
+  ? events 
+  : applyFilters(events, filters)
+).filter((event) => {
+  const type = event.classification_type?.toLowerCase();
+  const district = event.location_district?.toLowerCase();
+  const state = event.location_state?.toLowerCase();
+
+  // 1. Keep standard check for valid disaster types
+  const hasValidType = type !== "none" && type !== "" && type !== null;
+
+  // 2. Add checks for "unknown" or "null" location strings
+  const hasValidLocation = 
+    district !== "unknown district" && district !== "null" && district !== "" &&
+    state !== "unknown state" && state !== "null" && state !== "";
+
+  return hasValidType && hasValidLocation;
+});
 
   const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange;
 
