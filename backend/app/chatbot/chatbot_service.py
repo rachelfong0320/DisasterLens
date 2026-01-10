@@ -56,7 +56,7 @@ def get_historical_disasters(location=None, disaster_type=None, month=None):
         return []
 
 async def chatbot_response(user_text):
-    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = openai.OpenAI(api_key=os.getenv("IG_OPENAI_API_KEY"))
     
     messages = [
     {
@@ -114,7 +114,7 @@ async def chatbot_response(user_text):
     return response.choices[0].message.content
 
 async def chatbot_response_with_data(user_input):
-    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = openai.OpenAI(api_key=os.getenv("IG_OPENAI_API_KEY"))
     
     messages = [
     {

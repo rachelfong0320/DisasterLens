@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect, useState , useMemo} from "react";
+import { MapContainer, TileLayer, Marker, Popup , useMap} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -14,6 +14,23 @@ import { applyFilters } from "@/lib/filterUtils";
 import type { FilterOptions } from "@/components/disaster-filter-widget";
 import { DisasterEvent } from "@/lib/types/disaster";
 import { useTranslations } from "next-intl";
+import { AlertTriangle, X, CalendarX } from "lucide-react";
+
+function MapController({ event }: { event: DisasterEvent | null }) {
+  const map = useMap(); //
+
+  useEffect(() => {
+    if (event) {
+      map.flyTo(
+        [event.geometry.coordinates[1], event.geometry.coordinates[0]],
+        12,
+        { duration: 1.5 }
+      );
+    }
+  }, [event, map]);
+
+  return null;
+}
 
 // 1. Cluster Icon Generator (Moved outside to be globally accessible)
 const createClusterCustomIcon = (cluster: any) => {
@@ -64,6 +81,7 @@ const getCustomIcon = () => {
 
 interface LeafletMapContentProps {
   filters?: FilterOptions;
+  chatbotEvent: string | null;
 }
 
 export default function LeafletMapContent({
@@ -73,19 +91,31 @@ export default function LeafletMapContent({
     startDate: "",
     endDate: "",
   },
+  chatbotEvent
 }: LeafletMapContentProps) {
   const t = useTranslations("map");
   const [events, setEvents] = useState<DisasterEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [highlightedEvent, setHighlightedEvent] = useState<DisasterEvent | null>(null);
+
+  const isInvalidDateRange = useMemo(() => {
+    if (!filters.startDate || !filters.endDate) return false;
+    return new Date(filters.startDate) > new Date(filters.endDate);
+  }, [filters.startDate, filters.endDate]);
 
   const filteredMarkers = applyFilters(events, filters).filter((event) => {
     const type = event.classification_type?.toLowerCase();
     return type !== "none" && type !== "" && type !== null;
   });
 
+  const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange;
+
   useEffect(() => {
+    if (chatbotEvent) return;
     const fetchEvents = async () => {
       setLoading(true);
+      console.log("🔍 Fetching events with filters:", filters);
       try {
         const params = new URLSearchParams();
         if (filters.disasterType)
@@ -107,7 +137,60 @@ export default function LeafletMapContent({
     };
 
     fetchEvents();
-  }, [filters]);
+  }, [filters, chatbotEvent]);
+
+  useEffect(() => {
+    if (!chatbotEvent) return;
+
+    const syncMap = async () => {
+      if (!chatbotEvent) return;
+      setLoading(true);
+      setSyncError(null);
+      setEvents([]);
+      setHighlightedEvent(null);
+
+      console.log("📡 Sending Sync Request for ID:", chatbotEvent);
+
+      try {
+        const res = await fetch(`http://localhost:8000/api/v1/map-sync`, {
+          method: "POST", // Must be POST
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // This body structure MUST match your MapSyncRequest model
+          body: JSON.stringify({
+            event_ids: [chatbotEvent], // Sending the ID as a single-item array
+          }),
+        });
+
+        if (!res.ok) {
+          // If status is 422, this will log exactly why the data was rejected
+          const errorData = await res.json();
+          console.error("❌ Server Error:", errorData);
+          throw new Error(errorData.detail?.[0]?.msg || "Failed to sync map");
+        }
+
+        const data = await res.json();
+        console.log("✅ Map Sync Data Received:", data);
+
+        // Update markers and trigger the 'flyTo' animation
+        if (Array.isArray(data) && data.length > 0) {
+          setEvents(data); 
+          setHighlightedEvent(data[0]); 
+        } else {
+          setEvents([]);
+          setSyncError("No matching events found in database.");
+        }
+      } catch (err: any) {
+        console.error("🔥 Sync Error:", err.message);
+        setSyncError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    syncMap();
+  }, [chatbotEvent]);
 
   return (
     <div className="relative w-full h-full">
@@ -117,8 +200,54 @@ export default function LeafletMapContent({
         </div>
       )}
 
+      {isInvalidDateRange && (
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-1001 w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-red-50 border border-red-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
+          <div className="bg-red-100 p-3 rounded-full text-red-600">
+            <CalendarX className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-red-900">Invalid Date Range</h3>
+            <p className="text-xs text-red-700 leading-relaxed">
+              The <b>Start Date</b> cannot be later than the <b>End Date</b>. Please check your filter settings.
+            </p>
+          </div>
+        </div>
+      </div>
+      )}
+
+      {isMapEmpty && !syncError && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-1001 w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white/95 backdrop-blur-sm border border-amber-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
+            <div className="bg-amber-100 p-3 rounded-full">
+              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            </div>
+            
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-gray-900">
+                No {filters.disasterType || "Events"} Found
+              </h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                There are no reports for this category in 
+                <span className="font-semibold text-gray-700"> {filters.state || "all states"}</span>.
+              </p>
+            </div>
+            
+            {/* Optional: Add a button to reset to "All" */}
+            <button 
+              onClick={() => window.location.reload()} 
+              className="text-xs font-bold text-amber-700 hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       <MapContainer center={[4.21, 101.69]} zoom={6} className="w-full h-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        <MapController event={highlightedEvent} />
 
         <MarkerClusterGroup
           chunkedLoading

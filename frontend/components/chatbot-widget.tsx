@@ -16,11 +16,13 @@ interface ChatMessage {
 interface ChatbotWidgetProps {
   isOpen: boolean;
   onToggle: (open: boolean) => void;
+  onEventFound?: (eventId: string | null) => void;
 }
 
 export default function ChatbotWidget({
   isOpen,
   onToggle,
+  onEventFound
 }: ChatbotWidgetProps) {
   const t = useTranslations("ChatbotWidget");
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -56,19 +58,28 @@ export default function ChatbotWidget({
 
     try {
       // 1. Call your FastAPI backend
-      const response = await fetch("http://localhost:8000/api/v1/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: userTextInput }),
-      });
+      const response = await fetch(
+        "http://localhost:8000/api/v1/chatbot_debug",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: userTextInput }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to connect to disaster service");
       }
 
       const data = await response.json();
+      // 1. Check for debug_data and extract event_id
+      if (data.debug_data && data.debug_data.length > 0) {
+        onEventFound?.(data.debug_data[0].event_id); // Pass first found event ID
+      } else {
+        onEventFound?.(null); // Clear map if no event found or empty results
+      }
 
       // 2. Map the backend "reply" to a bot message
       const botMessage: ChatMessage = {

@@ -102,6 +102,10 @@ async def get_filtered_events(
         query_filter["location_state"] = {"$nin": unknown_terms, "$exists": True}
         query_filter["location_district"] = {"$nin": unknown_terms, "$exists": True}
 
+    query_filter["geometry.coordinates"] = {"$ne": None, "$exists": True}
+    query_filter["geometry.coordinates.0"] = {"$type": "number"}
+    query_filter["geometry.coordinates.1"] = {"$type": "number"}
+ 
     # 4. Aggregation Pipeline
     pipeline = [
         { "$match": query_filter },
