@@ -34,8 +34,9 @@ import {
   DisasterToast,
   DisasterToastContainer,
 } from "@/components/disaster-toast";
+import { set } from "date-fns";
 
-type ExportStage = "idle" | "preparing" | "exporting" | "complete";
+type ExportStage = "idle" | "preparing" | "exporting" | "complete" | "error";
 
 export default function AccessDataPage() {
   const t = useTranslations("access_data");
@@ -113,6 +114,7 @@ export default function AccessDataPage() {
       );
 
       if (!response.ok) {
+        setExportStage("error");
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || "Export failed");
       }
