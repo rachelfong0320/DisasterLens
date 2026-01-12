@@ -31,7 +31,7 @@
     "title": "Muat Turun Data Bencana Mentah",
     "type": "Jenis Bencana",
     "zipDesc": "Pemindahan data mentah lengkap dengan semua medan dan metadata",
-    "zipFormat": "Data Mentah (.zip)"
+    "zipFormat": "Data Mentah (.raw)"
   },
   "ChatbotWidget": {
     "chat": "Halo! Bagaimana saya boleh membantu anda mencari maklumat bencana hari ini?",

@@ -31,7 +31,7 @@
     "title": "Download Raw Disaster Data",
     "type": "Disaster Type",
     "zipDesc": "Complete raw data dump with all fields and metadata",
-    "zipFormat": "Raw Data (.zip)"
+    "zipFormat": "Raw Data (.raw)"
   },
   "ChatbotWidget": {
     "chat": "Hello! How can I help you find disaster information today?",

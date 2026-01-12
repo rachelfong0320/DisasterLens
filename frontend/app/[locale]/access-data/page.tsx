@@ -127,8 +127,7 @@ export default function AccessDataPage() {
       const a = document.createElement("a");
       a.href = url;
 
-      const extension =
-        format === "excel" ? "xlsx" : format === "raw" ? "json" : format;
+      const extension = format;
       const dateStr = new Date().toISOString().split("T")[0];
       a.download = `disaster_export_${dateStr}.${extension}`;
 

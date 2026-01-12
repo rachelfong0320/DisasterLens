@@ -3,6 +3,7 @@ import csv
 import io
 import json
 import keyword
+import zipfile
 import pandas as pd
 from fastapi.responses import StreamingResponse
 from datetime import datetime, date, timezone
@@ -506,16 +507,30 @@ async def export_disaster_events(
             headers={"Content-Disposition": f"attachment; filename=disaster_data_{filename_timestamp}.csv"}
         )
 
-    elif format == "excel":
+    elif format == "zip":
+    # Create Excel in memory
         df = pd.DataFrame(data_list)
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Disaster Data')
-        output.seek(0)
-        return StreamingResponse(
-            output,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename=disaster_data_{filename_timestamp}.xlsx"}
-        )
+        excel_buffer = io.BytesIO()
 
+        with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Disaster Data")
+
+        excel_buffer.seek(0)
+
+        # Create ZIP in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            zip_file.writestr(
+                f"disaster_data_{filename_timestamp}.xlsx",
+                excel_buffer.getvalue()
+            )
+        zip_buffer.seek(0)
+
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename=disaster_data_{filename_timestamp}.zip"
+            }
+        )
     raise HTTPException(status_code=400, detail="Invalid format specified")
