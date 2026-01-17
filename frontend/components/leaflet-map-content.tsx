@@ -36,6 +36,11 @@ function MapController({ event }: { event: DisasterEvent | null }) {
         12,
         { duration: 1.5 }
       );
+    }else {
+      map.flyTo([4.21, 101.69], 6, {
+        duration: 1.5,
+        easeLinearity: 0.25
+      });
     }
   }, [event, map]);
 
@@ -119,53 +124,52 @@ export default function LeafletMapContent({
     return new Date(filters.startDate) > new Date(filters.endDate);
   }, [filters.startDate, filters.endDate]);
 
- const filteredMarkers = (chatbotEvent 
-  ? events 
-  : applyFilters(events, filters)
-).filter((event) => {
-  const type = event.classification_type?.toLowerCase();
-  const district = event.location_district?.toLowerCase();
-  const state = event.location_state?.toLowerCase();
+const filteredMarkers = useMemo(() => {
+  // If a chatbot event is active, show ONLY that marker
+  if (chatbotEvent) {
+    return events.filter(e => e.event_id === chatbotEvent);
+  }
 
-  // 1. Keep standard check for valid disaster types
-  const hasValidType = type !== "none" && type !== "" && type !== null;
+  // Otherwise, return to default filtered view
+  return applyFilters(events, filters).filter((event) => {
+    const type = event.classification_type?.toLowerCase();
+    const district = event.location_district?.toLowerCase();
+    const state = event.location_state?.toLowerCase();
 
-  // 2. Add checks for "unknown" or "null" location strings
-  const hasValidLocation = 
-    district !== "unknown district" && district !== "null" && district !== "" &&
-    state !== "unknown state" && state !== "null" && state !== "";
-
-  return hasValidType && hasValidLocation;
-});
+    return (
+      type !== "none" && type !== "" && type !== null &&
+      district !== "unknown district" && district !== "" &&
+      state !== "unknown state" && state !== ""
+    );
+  });
+}, [events, filters, chatbotEvent]);
 
   const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange;
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      console.log("🔍 Fetching events with filters:", filters);
-      try {
-        const params = new URLSearchParams();
-        if (filters.disasterType)
-          params.append("disaster_type", filters.disasterType);
-        if (filters.state) params.append("state", filters.state);
-        if (filters.startDate) params.append("start_date", filters.startDate);
-        if (filters.endDate) params.append("end_date", filters.endDate);
+  // If we are currently syncing with the chatbot, DON'T fetch global background events
+  if (chatbotEvent) return; 
 
-        const response = await fetch(
-          `http://localhost:8000/api/v1/events/filtered?${params.toString()}`
-        );
-        const data = await response.json();
-        setEvents(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.disasterType) params.append("disaster_type", filters.disasterType);
+      if (filters.state) params.append("state", filters.state);
+      if (filters.startDate) params.append("start_date", filters.startDate);
+      if (filters.endDate) params.append("end_date", filters.endDate);
+      const response = await fetch(`http://localhost:8000/api/v1/events/filtered?${params.toString()}`);
+      const data = await response.json();
+      setEvents(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchEvents();
-  }, [filters, chatbotEvent]);
+  fetchEvents();
+}, [filters, chatbotEvent]);
 
   useEffect(() => {
     if (!chatbotEvent) return;
@@ -337,35 +341,37 @@ export default function LeafletMapContent({
     bg-white/95 backdrop-blur-md rounded-xl border border-zinc-200 shadow-2xl 
     transition-all duration-500 ease-in-out origin-top-left overflow-hidden
     ${showLegend 
-      ? "max-w-[95vw] max-h-[150px] opacity-100 scale-100 py-1.5 px-2 mt-0.5" 
-      : "max-w-0 max-h-0 opacity-0 scale-95 p-0 mt-0 border-none"}
+      ? "w-[calc(100vw-3rem)] md:w-auto max-h-[200px] opacity-100 scale-100 py-1.5 px-2 mt-0.5" 
+      : "w-0 max-h-0 opacity-0 scale-95 p-0 mt-0 border-none"}
   `}>
-    <div className="flex flex-row items-center gap-4 px-1 whitespace-nowrap">
+    {/* Add 'overflow-x-auto' and 'no-scrollbar' to allow horizontal sliding on mobile */}
+    <div className="flex flex-row items-center gap-4 px-1 whitespace-nowrap overflow-x-auto no-scrollbar">
       
       {/* SECTION 1: Incident Summary */}
       <div className="flex items-center gap-2.5 pr-4 border-r border-zinc-200 shrink-0">
-        <div className="w-7 h-7 bg-red-600 rounded-lg flex items-center justify-center text-[12px] text-white font-black border border-white/20 shadow-sm shrink-0">
+        <div className="w-7 h-7 bg-red-600 rounded-lg flex items-center justify-center text-[12px] text-white font-black border border-white/20 shadow-sm">
           #
         </div>
         <div className="flex flex-col">
-          <span className="text-[9px] text-zinc-500 font-bold uppercase leading-none">
+          <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-tight leading-none">
             {t("number")}
           </span>
-          <span className="text-[11px] text-red-600 font-black leading-tight">
+          <span className="text-[12px] text-red-600 font-black leading-tight">
             {t("incidents")}
           </span>
         </div>
       </div>
 
-      {/* SECTION 2: Disaster Type Keys */}
-      <div className="flex flex-row items-center gap-4">
+      {/* SECTION 2: Disaster Type Keys - Shrinkable labels for tablet */}
+      <div className="flex flex-row items-center gap-3 md:gap-4">
         {Object.entries(DISASTER_COLORS).map(([type, color]) => (
           <div key={type} className="flex items-center gap-2">
             <div 
               className="w-3 h-3 rounded-full border-2 border-white shadow-sm ring-1 ring-zinc-100 shrink-0" 
               style={{ backgroundColor: color }}
             />
-            <span className="text-[12px] font-bold text-zinc-600">
+            {/* Hide text labels on very small screens if preferred, or keep them for scrolling */}
+            <span className="text-[11px] font-bold text-zinc-600">
               {type}
             </span>
           </div>
@@ -375,7 +381,7 @@ export default function LeafletMapContent({
       {/* SECTION 3: Cluster Explanation */}
       <div className="flex items-center gap-2.5 border-l border-zinc-200 pl-4 pr-1 shrink-0">
         <div className="flex -space-x-1.5">
-           <div className="w-4 h-4 bg-red-600 rounded-full border-2 border-white z-10 shadow-sm" />
+          <div className="w-4 h-4 bg-red-600 rounded-full border-2 border-white z-10 shadow-sm" />
         </div>
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-zinc-800 leading-none">
