@@ -17,13 +17,14 @@ import { useTranslations } from "next-intl";
 import { AlertTriangle, X, CalendarX } from "lucide-react";
 
 const DISASTER_COLORS: Record<string, string> = {
-  flood: "#2563eb",
-  "forest fire": "#f97316",
-  storm: "#f59e0b",
-  haze: "#71717a",
-  sinkhole: "#7c3aed",
-  earthquake: "#92400e",
-  tsunami: "#0891b2",
+  flood: "#2563eb",       // Blue
+  "forest fire": "#f97316", // Orange
+  storm: "#f59e0b",       // Amber
+  haze: "#71717a",        // Gray
+  landslide: "#78350f",    // Brown
+  earthquake: "#880e4f",   // Deep Burgundy (New choice to avoid Cluster Red)
+  tsunami: "#0891b2",      // Cyan
+  sinkhole: "#7c3aed",     // Violet
 };
 
 function MapController({ event }: { event: DisasterEvent | null }) {
