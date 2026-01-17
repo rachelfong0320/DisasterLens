@@ -173,6 +173,20 @@ export default function Dashboard() {
 
       <section className="w-full px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-7xl mx-auto">
+
+          {/* PDF Report Header */}
+          <div className="hidden print:flex flex-col mb-8 border-b pb-4">
+            <h1 className="text-3xl font-bold">DisasterLens Analysis Report</h1>
+            <p className="text-gray-500">
+              Generated on: {new Date().toLocaleString(locale, { 
+                dateStyle: 'full', 
+                timeStyle: 'short' 
+              })}
+            </p>
+            <p className="text-sm text-gray-400 mt-2">
+              Data Range: {dateRange.start} to {dateRange.end} | Disaster Type: {disasterType}
+            </p>
+          </div>
           
           {/* Dashboard Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -241,7 +255,6 @@ export default function Dashboard() {
                   {Object.entries(disasterConfig).map(([key, config]) => {
                     const dataItem = stats?.type_counts?.find(item => item.type === key);
                     
-                    // FIXED: This logic ensures cards are ACTIVE (colorized) when "All Types" is selected
                     const isAllView = !disasterType || disasterType.toLowerCase().includes("all");
                     const isActive = isAllView || disasterType === key;
 
@@ -279,6 +292,18 @@ export default function Dashboard() {
                     ) : (
                       <MetricListChart title={trendType === "keyword" ? t("keyword") : "Trending Hashtags"} data={keywordChartData} color="#3b82f6" unit="Hit" />
                     )}
+                  </div>
+
+                  <div className="hidden print:grid grid-cols-2 gap-6 mb-8">
+                      <MetricListChart 
+                          title="Trending Hashtags" 
+                          data={keywords.slice(0, 5).map(item => ({
+                              name: `#${item.keyword.replace(/\s+/g, "").toLowerCase()}`,
+                              value: item.frequency
+                          }))} 
+                          color="#3b82f6" 
+                          unit="Hit" 
+                      />
                   </div>
 
                   <div className="hidden print:block pt-8 border-t border-gray-200">
