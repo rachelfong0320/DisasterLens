@@ -35,6 +35,20 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile # Use the dev Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app # Syncs your local code with the container
+      - /app/node_modules # Prevents local node_modules from overwriting container ones
+      - /app/.next # Keeps the build cache inside the container
+    environment:
+      - WATCHPACK_POLLING=true # Helps hot reload work reliably in Docker
+      - I18NEXUS_API_KEY=${I18NEXUS_API_KEY}
+
   # --- NEW KAFKA SERVICES ---
   twitter-scraper:
     build:

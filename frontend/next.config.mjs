@@ -1,10 +1,11 @@
-import createNextIntlPlugin from 'next-intl/plugin';
+import createNextIntlPlugin from "next-intl/plugin";
 
 // 1. Initialize the next-intl plugin wrapper
 const withNextIntl = createNextIntlPlugin();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   // 2. Preserve your existing configurations
   typescript: {
     ignoreBuildErrors: true,
