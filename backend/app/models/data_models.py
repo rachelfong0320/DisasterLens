@@ -1,6 +1,6 @@
 # app/models/data_models.py
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -24,8 +24,9 @@ class DisasterEvent(BaseModel):
     related_post_ids: List[str]
 
     # Allows MongoDB document fields to be accessed like Pydantic fields
-    class Config:
-        from_attributes = True
+    # class Config:
+    #    from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- B. ANALYTICS MODELS (Used by /analytics/global and /analytics/filtered) ---
@@ -59,5 +60,6 @@ class KeywordTrend(BaseModel):
     keyword: str
     frequency: int
     
-    class Config:
-        from_attributes = True
+    # class Config:
+    #    from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
