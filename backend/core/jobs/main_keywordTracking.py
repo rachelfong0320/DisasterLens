@@ -46,7 +46,11 @@ async def generate_main_topic_async(post: dict) -> Union[str, None]:
         
         # Returns the topic for the batch runner to save in bulk
         return topic
-        
+        #return {
+        #    "post_id": post_id,
+        #    "topic": topic
+        #}
+
     except Exception as e:
         logging.error(f"Error generating AI topic for {post_id}: {e}")
         return {"post_id": post_id, "topic": None} # Return for bulk update

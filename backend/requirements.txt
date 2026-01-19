@@ -59,3 +59,6 @@ wrapt==2.0.1
 elasticsearch==8.11.0
 email-validator
 aiokafka
+pytest 
+pytest-asyncio 
+httpx
