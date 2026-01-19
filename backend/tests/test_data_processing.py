@@ -3,6 +3,7 @@ import sys
 import os
 from unittest.mock import MagicMock, patch
 
+
 # --- SETUP: MOCK DATABASE BEFORE IMPORT ---
 # 1. Define a real class for DuplicateKeyError so Python accepts it in 'try/except' blocks
 class MockDuplicateKeyError(Exception):
