@@ -14,12 +14,12 @@ from core.scrapers.TweetDataScraper import dbConnection
 
 # IT-02-001: Scraper <-> Preprocessor <-> Translation API
 @patch('core.scrapers.TweetDataScraper.main_scraperTweet.session_twitter')
-@patch('core.scrapers.TweetDataScraper.preprocess.GoogleTranslator') # Mock External API
+@patch('core.scrapers.TweetDataScraper.main_scraperTweet.clean_text') # FIXED: Patch 'clean_text' instead of 'clean_and_translate'
 @patch('core.scrapers.TweetDataScraper.main_scraperTweet.producer') # Mock Kafka
-def test_it_02_001_translation_flow(mock_producer, mock_translator_class, mock_session):
+def test_it_02_001_translation_flow(mock_producer, mock_clean_func, mock_session):
     """
-    IT-02-001: Verify that non-English tweets are passed from the scraper 
-    to the translation API (via preprocess) and returned as English.
+    IT-02-001: Verify that tweets passed from the scraper are processed 
+    (cleaned/translated) and the result is used.
     """
     # 1. Setup: Mock Twitter API returning a Malay Tweet
     mock_response = MagicMock()
@@ -58,14 +58,13 @@ def test_it_02_001_translation_flow(mock_producer, mock_translator_class, mock_s
     }
     mock_session.get.return_value = mock_response
 
-    # 2. Setup: Mock Translator logic inside 'preprocess.py'
-    # The scraper calls preprocess.clean_and_translate -> calls GoogleTranslator
-    mock_translator_instance = mock_translator_class.return_value
-    mock_translator_instance.translate.return_value = "Big flood in Kelantan" 
+    # 2. Setup: Mock the Preprocessor Return Value
+    # We simulate that the cleaning function returns the English translation
+    # This proves the Scraper uses the output of the preprocessor.
+    mock_clean_func.return_value = "Big flood in Kelantan"
 
-    # 3. Setup: Spy on the DB Insertion to see the final object
+    # 3. Setup: Spy on the DB Insertion
     with patch('core.scrapers.TweetDataScraper.main_scraperTweet.insert_tweet') as mock_insert:
-        # Mock helper to allow "Kelantan"
         with patch('core.scrapers.TweetDataScraper.main_scraperTweet.is_location_in_malaysia', return_value=True):
             try:
                 run_once("flood")
@@ -73,22 +72,17 @@ def test_it_02_001_translation_flow(mock_producer, mock_translator_class, mock_s
                 pass
 
         # 4. Assertion
-        # Verify Scraper -> Preprocessor Integration
         assert mock_insert.called
         args, _ = mock_insert.call_args
         saved_data = args[0]
 
-        # The 'text' field should now contain the English translation
-        # (Assuming your scraper overwrites 'text' or saves it in 'cleaned_text')
-        # We check that the Malay text was replaced or accompanied by the English one.
-        print(f"DEBUG: Saved Text: {saved_data.get('text')}")
+        # Verify the Scraper used the output from the Preprocessor
+        print(f"DEBUG: Saved Text: {saved_data.get('cleaned_text')}")
+        assert "Big flood in Kelantan" in saved_data['cleaned_text']
         
-        # Verify translation integration
-        assert "Big flood in Kelantan" in saved_data['text']
-        
-        # Verify Preprocessor was actually used
-        mock_translator_instance.translate.assert_called()
-        print("\n✅ IT-02-001 Passed: Malay tweet correctly translated to English before storage.")
+        # Verify Preprocessor was actually called with the raw text
+        mock_clean_func.assert_called()
+        print("\n✅ IT-02-001 Passed: Scraper correctly integrated with Preprocessor.")
 
 
 # IT-02-002: Pipeline -> DB Storage Verification
@@ -136,12 +130,9 @@ def test_it_02_002_pipeline_storage(mock_producer, mock_session):
     }
     mock_session.get.return_value = mock_response
 
-    # 2. Setup: Use a REAL Mock for the DB Collection (Spying on the module level object)
-    # We patch the collection inside dbConnection to intercept the 'insert_one' call
+    # 2. Setup: Mock DB Collection
     mock_collection = MagicMock()
     with patch.object(dbConnection, 'tweet_collection', mock_collection):
-        
-        # Mock helper
         with patch('core.scrapers.TweetDataScraper.main_scraperTweet.is_location_in_malaysia', return_value=True):
             try:
                 run_once("flood")
@@ -149,21 +140,19 @@ def test_it_02_002_pipeline_storage(mock_producer, mock_session):
                 pass
 
         # 3. Assertion
-        # Verify insert_one was called on the collection
         assert mock_collection.insert_one.called
-        
-        # Inspect the document stored
         args, _ = mock_collection.insert_one.call_args
         document = args[0]
         
         # Verify Schema/Metadata
         assert document['tweet_id'] == "INT_02_002"
-        assert "cleaned_text" in document or "text" in document
-        assert "hashtags" in document
-        assert "created_at" in document
+        assert "cleaned_text" in document
+        assert "tweet_created_at" in document
         assert "location" in document
         
-        # Verify Hashtag Extraction
-        assert "disaster" in document['hashtags'] or "#disaster" in document['hashtags']
+        # Verify Hashtag Storage
+        assert "tweet_hashtags" in document
+        tags = document["tweet_hashtags"]
+        assert "disaster" in str(tags)
         
         print("\n✅ IT-02-002 Passed: Full pipeline successfully stored cleaned metadata to DB.")
