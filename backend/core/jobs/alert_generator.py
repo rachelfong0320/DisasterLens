@@ -40,20 +40,26 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
         logger.error("SMTP configuration is incomplete. Cannot send email.")
         return
 
+    # 1. EXTRACT DATA (Define all variables BEFORE using them in the template)
     event_type = event_data.get('classification_type', 'Disaster')
     location = event_data.get('location_district', 'Unknown Location')
+    
+    # Capitalize the state name for the email (e.g., "johor" -> "Johor")
+    raw_state = str(event_data.get('location_state', ''))
+    state = raw_state.title()  
+
+    # Define event_id here so it is available for the HTML f-string below
     event_id = event_data.get('event_id', 'N/A')
 
     post_link = f"http://localhost:3000"  # Link to the system dashboard or event details
     unsubscribe_url = f"http://localhost:8000/api/v1/unsubscribe?email={subscriber_email}"
 
-    # 1. Build the email content
+    # 2. BUILD EMAIL CONTENT
     subject = f"ALERT: {event_type.upper()} Detected in {location}"
     html_content = f"""\
     <html>
   <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0;">
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-      <!-- Header -->
       <tr>
         <td style="background: linear-gradient(135deg, #1c50a7 70%, #ffffff 100%); color: #ffffff; padding: 20px; text-align: center;">
           <h1 style="margin: 0; font-size: 24px;">DisasterLens</h1>
@@ -61,7 +67,6 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
         </td>
       </tr>
 
-      <!-- Body -->
       <tr>
         <td style="padding: 20px; color: #333333; line-height: 1.5;">
           <p>A significant <strong>{event_type}</strong> event has been detected in <strong>{location}</strong>.</p>
@@ -77,7 +82,7 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
             </tr>
             <tr>
               <td style="padding: 8px; border: 1px solid #dddddd;"><strong>Location State:</strong></td>
-              <td style="padding: 8px; border: 1px solid #dddddd;">{event_data.get('location_state')}</td>
+              <td style="padding: 8px; border: 1px solid #dddddd;">{state}</td>
             </tr>
           </table>
 
@@ -97,7 +102,6 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
         </td>
       </tr>
 
-      <!-- Footer -->
       <tr>
         <td style="background-color: #f0f0f0; text-align: center; padding: 15px; font-size: 12px; color: #999999;">
           &copy; 2025 DisasterLens. All rights reserved.
@@ -115,7 +119,7 @@ def _send_notification_email(subscriber_email: str, event_data: Dict[str, Any]):
     
     message.attach(MIMEText(html_content, "html"))
 
-    # 2. Send email via SMTP
+    # 3. Send email via SMTP
     context = ssl.create_default_context()
     try:
         server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)

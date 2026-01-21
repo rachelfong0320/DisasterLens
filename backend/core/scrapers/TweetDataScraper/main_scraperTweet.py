@@ -179,15 +179,15 @@ def run_once(combined_query):
                                 insert_tweet(tweet_info.copy())
                             except Exception as db_err:
                                 logging.error(f"DB insert failed for {tweet_id}: {db_err}")
-
-                            try:
-                                producer.send(
-                                    'raw_social_data',
-                                    key=tweet_id.encode('utf-8'),
-                                    value=tweet_info
+                            if producer:
+                                try:
+                                    producer.send(
+                                        'raw_social_data',
+                                        key=tweet_id.encode('utf-8'),
+                                        value=tweet_info
                                 )
-                            except Exception as kafka_err:
-                                logging.error(f"Kafka send failed for {tweet_id}: {kafka_err}")
+                                except Exception as kafka_err:
+                                    logging.error(f"Kafka send failed for {tweet_id}: {kafka_err}")
 
                         except Exception as tweet_err:
                             logging.error(f"Tweet processing error: {tweet_err}")

@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch
 es = Elasticsearch("http://elasticsearch:9200")
 
 def get_historical_disasters(location=None, disaster_type=None, month=None):
-    query = {"bool": {"must": []}}
+    # FIXED: We use a single list 'must_clauses' to collect ALL filters
     must_clauses = []
     
     # 1. Handle Location (Ignore 'Malaysia' to prevent empty results)
@@ -19,17 +19,23 @@ def get_historical_disasters(location=None, disaster_type=None, month=None):
                 "fuzziness": "AUTO"
             }
         })
+    
+    # 2. Handle Disaster Type
     if disaster_type:
-        query["bool"]["must"].append({"term": {"classification_type": disaster_type.lower()}})
+        # FIXED: Append to must_clauses, not a separate 'query' dict
+        must_clauses.append({"term": {"classification_type": disaster_type.lower()}})
+        
+    # 3. Handle Month
     if month:
         # Matches ISO date format synced from Mongo
         month_map = {"july": "07", "august": "08", "january": "01", "february": "02",
                      "march": "03", "april": "04", "may": "05", "june": "06",
                      "september": "09", "october": "10", "november": "11", "december": "12"}
         m_code = month_map.get(month.lower(), "01")
-        query["bool"]["must"].append({"wildcard": {"start_time": f"*-{m_code}-*"}})
+        # FIXED: Append to must_clauses
+        must_clauses.append({"wildcard": {"start_time": f"*-{m_code}-*"}})
 
-    # 3. Build Query with STRICT SORTING
+    # 4. Build Query with STRICT SORTING
     search_body = {
         "query": {
             "bool": {
@@ -45,7 +51,7 @@ def get_historical_disasters(location=None, disaster_type=None, month=None):
         res = es.search(index="disaster_events", body=search_body)
         results = [hit["_source"] for hit in res["hits"]["hits"]]
         
-        # LOGGING FOR TRACKING: Check your 'docker logs -f backend'
+        # LOGGING FOR TRACKING
         print(f"--- DEBUG ES RESULTS for {location} ---")
         for r in results:
             print(f"Date: {r.get('start_time')} | Type: {r.get('classification_type')} | State: {r.get('location_state')}")
