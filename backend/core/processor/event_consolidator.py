@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from datetime import timedelta, datetime, timezone
 import os
@@ -28,12 +29,13 @@ es_client = Elasticsearch(ES_URL)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
-def _get_unique_event_id(post_type: str, post_district: str, post_time: datetime) -> str:
-    """Generates a base unique ID for the event based on type, district, and date."""
+def _get_unique_event_id(post_type: str, post_district: str, post_time: datetime, post_id: str = "") -> str:
     prefix = f"{post_type.upper()}-{post_district.replace(' ', '').upper()}-{post_time.strftime('%Y%m%d')}"
-    return f"{prefix}-{post_time.strftime('%H%M%S')}"
-
+    
+    # Create a short 4-character hash from the post_id to prevent collisions
+    suffix = hashlib.md5(post_id.encode()).hexdigest()[:4] if post_id else "0000"
+    
+    return f"{prefix}-{post_time.strftime('%H%M%S')}-{suffix}"
 
 def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Optional[str]:
     master_collection: Collection = db[DISASTER_EVENTS_COLLECTION]
@@ -137,7 +139,7 @@ def run_event_consolidation(db: Database, new_post_event: Dict[str, Any]) -> Opt
         
     else:
         # CREATE NEW EVENT
-        event_id = _get_unique_event_id(event_type, post_district, post_time)
+        event_id = _get_unique_event_id(event_type, post_district, post_time, post_id)
         new_master_event = {
             "event_id": event_id, 
             "classification_type": event_type, 

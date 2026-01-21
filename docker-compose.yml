@@ -63,7 +63,7 @@ services:
     environment:
       - PYTHONPATH=/app
       - IS_DOCKER=true
-    command: python -u core/scrapers/InstagramDataScraper/main_scraperIg.py
+    command: python -u core/scrapers/InstagramDataScraper/mock_scraper_ig.py
     restart: always
 
   misinfo-worker:

@@ -8,8 +8,15 @@ import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 
 // Load Geist fonts
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans", // This connects it to your CSS
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono", // This connects it to your CSS
+});
 
 export const metadata: Metadata = {
   title: "DisasterLens - Disaster Event Tracking & Analysis",
@@ -73,7 +80,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <NextIntlClientProvider locale={locale} messages={translation}>
           {children}
         </NextIntlClientProvider>
