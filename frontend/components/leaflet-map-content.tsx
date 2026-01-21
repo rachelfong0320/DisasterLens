@@ -31,23 +31,43 @@ const DISASTER_COLORS: Record<string, string> = {
   sinkhole: "#7c3aed",     // Violet
 };
 
-function MapController({ event }: { event: DisasterEvent | null }) {
-  const map = useMap(); 
+function MapController({ events }: { events: DisasterEvent[] }) {
+  const map = useMap();
 
   useEffect(() => {
-    if (event) {
+    // Filter out any events with invalid coordinates for calculation
+    const validEvents = events.filter(e => 
+      e.geometry?.coordinates && 
+      e.geometry.coordinates.length === 2 &&
+      e.geometry.coordinates[0] !== null
+    );
+
+    if (validEvents.length === 0) {
+      map.flyTo([4.21, 101.69], 6, { duration: 1.5 });
+      return;
+    }
+
+    if (validEvents.length === 1) {
+      const event = validEvents[0];
       map.flyTo(
         [event.geometry.coordinates[1], event.geometry.coordinates[0]],
         12,
         { duration: 1.5 }
       );
-    }else {
-      map.flyTo([4.21, 101.69], 6, {
+    } else {
+      const bounds = L.latLngBounds(
+        validEvents.map((e) => [
+          e.geometry.coordinates[1],
+          e.geometry.coordinates[0],
+        ] as L.LatLngExpression)
+      );
+
+      map.flyToBounds(bounds, {
+        padding: [50, 50],
         duration: 1.5,
-        easeLinearity: 0.25
       });
     }
-  }, [event, map]);
+  }, [events, map]);
 
   return null;
 }
@@ -131,8 +151,8 @@ export default function LeafletMapContent({
 
 const filteredMarkers = useMemo(() => {
   // If a chatbot event is active, show ONLY that marker
-  if (chatbotEvent) {
-    return events.filter(e => e.event_id === chatbotEvent);
+  if (chatbotEvent && events.length > 0) {
+  return events;
   }
 
   // Otherwise, return to default filtered view
@@ -149,7 +169,7 @@ const filteredMarkers = useMemo(() => {
   });
 }, [events, filters, chatbotEvent]);
 
-  const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange;
+  const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange && !chatbotEvent;
 
   useEffect(() => {
   // If we are currently syncing with the chatbot, DON'T fetch global background events
@@ -176,59 +196,70 @@ const filteredMarkers = useMemo(() => {
   fetchEvents();
 }, [filters, chatbotEvent]);
 
-  useEffect(() => {
-    if (!chatbotEvent) return;
+useEffect(() => {
+  if (!chatbotEvent) return;
 
-    const syncMap = async () => {
-      if (!chatbotEvent) return;
-      setLoading(true);
-      setSyncError(null);
-      setEvents([]);
-      setHighlightedEvent(null);
+  const syncMap = async () => {
+    setLoading(true);
+    setSyncError(null);
+    setEvents([]);
+    setHighlightedEvent(null);
 
-      console.log("📡 Sending Sync Request for ID:", chatbotEvent);
+    // FIX: Extract all IDs if chatbotEvent is an array, otherwise wrap the single ID in an array
+    const eventIds = Array.isArray(chatbotEvent) 
+      ? chatbotEvent 
+      : [chatbotEvent];
 
-      try {
-        const res = await fetch(`http://localhost:8000/api/v1/map-sync`, {
-          method: "POST", // Must be POST
-          headers: {
-            "Content-Type": "application/json",
-          },
-          // This body structure MUST match your MapSyncRequest model
-          body: JSON.stringify({
-            event_ids: [chatbotEvent], // Sending the ID as a single-item array
-          }),
+    console.log("📡 Sending Sync Request for IDs:", eventIds);
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/v1/map-sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // The backend MapSyncRequest model expects "event_ids" as a list
+        body: JSON.stringify({
+          event_ids: eventIds, 
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail?.[0]?.msg || "Failed to sync map");
+      }
+
+      const data = await res.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const validMapEvents = data.filter((event: any) => {
+            const district = event.location_district?.toLowerCase();
+            const state = event.location_state?.toLowerCase();
+            const unknownTerms = ["unknown district", "unknown state", "unknown", ""];
+
+            return !unknownTerms.includes(district) && !unknownTerms.includes(state);
         });
 
-        if (!res.ok) {
-          // If status is 422, this will log exactly why the data was rejected
-          const errorData = await res.json();
-          console.error("❌ Server Error:", errorData);
-          throw new Error(errorData.detail?.[0]?.msg || "Failed to sync map");
-        }
-
-        const data = await res.json();
-        console.log("✅ Map Sync Data Received:", data);
-
-        // Update markers and trigger the 'flyTo' animation
-        if (Array.isArray(data) && data.length > 0) {
-          setEvents(data); 
-          setHighlightedEvent(data[0]); 
+        if (validMapEvents.length > 0) {
+            setEvents(validMapEvents); 
+            setHighlightedEvent(validMapEvents[0]); 
         } else {
+            setEvents([]);
+            setSyncError("Found events, but they lack specific location data to display on the map.");
+        }
+      }else {
           setEvents([]);
           setSyncError("No matching events found in database.");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to sync map";
-        console.error("🔥 Sync Error:", errorMessage);
-        setSyncError(errorMessage);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Failed to sync map");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    syncMap();
-  }, [chatbotEvent]);
+  syncMap();
+}, [chatbotEvent]);
 
   return (
     <div className="relative w-full h-full">
@@ -285,22 +316,32 @@ const filteredMarkers = useMemo(() => {
       <MapContainer center={[4.21, 101.69]} zoom={6} className="w-full h-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        <MapController event={highlightedEvent} />
+        <MapController events={filteredMarkers} />
 
         <MarkerClusterGroup
           chunkedLoading
           spiderfyOnMaxZoom={true}
           iconCreateFunction={createClusterCustomIcon}
         >
-          {filteredMarkers.map((event) => (
-            <Marker
-              key={event.event_id}
-              position={[
-                event.geometry.coordinates[1],
-                event.geometry.coordinates[0],
-              ]}
-              icon={getCustomIcon(event.classification_type)}
-            >
+          {filteredMarkers.map((event) => {
+            // ADD THIS SAFETY CHECK:
+            const coords = event.geometry?.coordinates;
+            const isValid = coords && 
+                            coords.length === 2 && 
+                            coords[0] !== null && 
+                            coords[1] !== null;
+
+            if (!isValid) return null;
+
+            return (
+              <Marker
+                key={event.event_id}
+                position={[
+                  event.geometry.coordinates[1], // Latitude
+                  event.geometry.coordinates[0], // Longitude
+                ]}
+                icon={getCustomIcon(event.classification_type)}
+              >
               <Popup>
                 <div className="text-sm">
                   {/* The 'S' or 'F' type is shown here now */}
@@ -320,7 +361,8 @@ const filteredMarkers = useMemo(() => {
                 </div>
               </Popup>
             </Marker>
-          ))}
+          );
+          })}
         </MarkerClusterGroup>
 
         {/* Main Positioning Container - bottom-2 makes it sit very close to the map edge */}

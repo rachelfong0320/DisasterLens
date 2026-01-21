@@ -75,10 +75,12 @@ export default function ChatbotWidget({
 
       const data = await response.json();
       // 1. Check for debug_data and extract event_id
-      if (data.debug_data && data.debug_data.length > 0) {
-        onEventFound?.(data.debug_data[0].event_id); // Pass first found event ID
+      if (data.debug_data && Array.isArray(data.debug_data) && data.debug_data.length > 0) {
+        const allEventIds = data.debug_data.map((item: any) => item.event_id);
+        console.log("Extracted event IDs from debug data:", allEventIds);
+        onEventFound?.(allEventIds); 
       } else {
-        onEventFound?.(null); // Clear map if no event found or empty results
+        onEventFound?.(null); 
       }
 
       // 2. Map the backend "reply" to a bot message
