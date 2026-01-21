@@ -77,10 +77,34 @@ def sync_posts():
         helpers.bulk(es_client, actions)
         print(f"✅ Synced {len(actions)} posts.")
 
+def clear_indices():
+    indices = ["disaster_events", "disaster_posts"]
+    print("Cleaning up old indices...")
+    for index in indices:
+        try:
+            if es_client.indices.exists(index=index):
+                es_client.indices.delete(index=index)
+                print(f"🗑️  Deleted index: {index}")
+            else:
+                print(f"⚠️  Index '{index}' does not exist (skipping).")
+        except Exception as e:
+            print(f"❌ Error deleting index '{index}': {e}")
+
+def count_data():
+    # Count events
+    event_count = db['disaster_events'].count_documents({})
+    print(f"📊 Total Disaster Events: {event_count}")
+
+    # Count posts
+    post_count = db['combined_disaster_data'].count_documents({})
+    print(f"📝 Total Social Media Posts: {post_count}")
+
 if __name__ == "__main__":
     try:
+        clear_indices()
         sync_events()
         sync_posts()
         print("🚀 All data copied to local Elasticsearch!")
+        count_data()
     except Exception as e:
         print(f"❌ Error during sync: {e}")
