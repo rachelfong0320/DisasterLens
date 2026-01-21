@@ -40,7 +40,6 @@ async def fetch_data(session, keyword, semaphore, pagination_token=None):
                         return await response.json()
                     else:
                         print(f"[{keyword}] Error {response.status}")
-                        return None
         except Exception as e:
             print(f"[{keyword}] Connection Error: {e}")
 
