@@ -15,6 +15,13 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface LabelProps {
+  x?: number | string;
+  y?: number | string;
+  width?: number | string;
+  value?: number | string;
+}
+
 interface EventTrendChartProps {
   title?: string;
   type?: "area" | "bar" | "line";
@@ -30,7 +37,7 @@ interface EventTrendChartProps {
 export default function EventTrendChart({
   data,
   title = "Event Trends",
-  type = "area", // Default to area
+  type = "area",
   color = "#3b82f6",
 }: EventTrendChartProps) {
   const chartData =
@@ -60,8 +67,6 @@ export default function EventTrendChart({
       </CardHeader>
       <CardContent>
         <div className="h-[350px] w-full">
-          {" "}
-          {/* Increased height slightly for rotated labels */}
           <ResponsiveContainer width="100%" height="100%">
             {type === "bar" ? (
               <BarChart
@@ -78,9 +83,9 @@ export default function EventTrendChart({
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#9ca3af" }}
-                  interval={0} // Forces every label (Kuala Lumpur, etc.) to show
-                  angle={-45} // Rotates names to prevent overlapping
-                  textAnchor="end" // Aligns rotated text to the end of the tick
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
                 />
                 <YAxis
                   axisLine={false}
@@ -104,8 +109,13 @@ export default function EventTrendChart({
                   <LabelList
                     dataKey="value"
                     position="top"
-                    content={(props: any) => {
-                      const { x, y, width, value } = props;
+                    content={(props: LabelProps) => {
+                      // Safely convert to numbers for the math calculation
+                      const x = Number(props.x || 0);
+                      const y = Number(props.y || 0);
+                      const width = Number(props.width || 0);
+                      const val = Number(props.value || 0);
+
                       return (
                         <text
                           x={x + width / 2}
@@ -114,9 +124,9 @@ export default function EventTrendChart({
                           textAnchor="middle"
                           fontSize="12"
                           fontWeight="bold"
-                          className="hidden print:block" // Hidden on UI, visible in PDF
+                          className="hidden print:block"
                         >
-                          {value > 0 ? value : ""}
+                          {val > 0 ? val : ""}
                         </text>
                       );
                     }}
@@ -144,7 +154,6 @@ export default function EventTrendChart({
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: "#9ca3af" }}
-                  // Ensure we only show the month name
                   tickFormatter={(value) => value.split(" ")[0]}
                   minTickGap={20}
                 />
@@ -171,8 +180,10 @@ export default function EventTrendChart({
                   <LabelList
                     dataKey="value"
                     position="top"
-                    content={(props: any) => {
-                      const { x, y, value } = props;
+                    content={(props: LabelProps) => {
+                      const x = Number(props.x || 0);
+                      const y = Number(props.y || 0);
+                      const val = Number(props.value || 0);
                       return (
                         <text
                           x={x}
@@ -181,9 +192,9 @@ export default function EventTrendChart({
                           textAnchor="middle"
                           fontSize="11"
                           fontWeight="bold"
-                          className="hidden print:block" // Hidden on UI, visible in PDF
+                          className="hidden print:block"
                         >
-                          {value > 0 ? value : ""}
+                          {val > 0 ? val : ""}
                         </text>
                       );
                     }}

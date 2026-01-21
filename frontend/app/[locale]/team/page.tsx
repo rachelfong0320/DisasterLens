@@ -1,5 +1,4 @@
 import PageContainer from "@/components/page-contaner";
-import Image from "next/image";
 
 const team = [
   {

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, use, useState } from "react";
+import { Suspense, useState } from "react";
 import DisasterFilterWidget, { FilterOptions } from "./disaster-filter-widget";
 import { ChevronDown } from "lucide-react"; // If you have lucide-react, otherwise use text "▼"
 import { Filter } from "lucide-react"; // Filter icon

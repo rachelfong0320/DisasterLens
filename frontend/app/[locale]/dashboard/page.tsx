@@ -89,7 +89,7 @@ export default function Dashboard() {
 
         setIsEmpty(hasNoData);
         setStats(statsData);
-      } catch (e) {
+      } catch {
         setError("Unable to load statistics. Please try again later.");
       } finally {
         setGlobalLoading(false);

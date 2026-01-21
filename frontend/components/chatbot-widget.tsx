@@ -180,17 +180,17 @@ export default function ChatbotWidget({
                         remarkPlugins={[remarkGfm]}
                         components={{
                           // This ensures your list items look correct
-                          ul: ({ node, ...props }) => (
+                          ul: ({...props }) => (
                             <ul className="list-disc pl-4 mb-2" {...props} />
                           ),
-                          ol: ({ node, ...props }) => (
+                          ol: ({...props }) => (
                             <ol className="list-decimal pl-4 mb-2" {...props} />
                           ),
-                          li: ({ node, ...props }) => (
+                          li: ({...props }) => (
                             <li className="mb-1" {...props} />
                           ),
                           // This ensures paragraphs have spacing
-                          p: ({ node, ...props }) => (
+                          p: ({...props }) => (
                             <p className="mb-2 last:mb-0" {...props} />
                           ),
                         }}

@@ -304,6 +304,15 @@
   }
 }
 
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
 .animate-slide-text {
   animation: slide-in-out 1.6s ease-in-out forwards;
 }

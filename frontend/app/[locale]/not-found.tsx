@@ -49,7 +49,7 @@ export default function NotFound() {
             <AlertTriangle className="w-5 h-5" />
           </div>
           <p className="text-muted-foreground text-base sm:text-lg max-w-md mx-auto leading-relaxed">
-            The page you're looking for has been caught in a meteor shower and
+            The page you&apos;re looking for has been caught in a meteor shower and
             is currently unavailable.
           </p>
         </div>

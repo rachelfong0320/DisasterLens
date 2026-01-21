@@ -14,7 +14,11 @@ import { applyFilters } from "@/lib/filterUtils";
 import type { FilterOptions } from "@/components/disaster-filter-widget";
 import { DisasterEvent } from "@/lib/types/disaster";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, X, CalendarX } from "lucide-react";
+import { AlertTriangle, CalendarX } from "lucide-react";
+
+interface MarkerCluster {
+  getChildCount(): number;
+}
 
 const DISASTER_COLORS: Record<string, string> = {
   flood: "#2563eb",       // Blue
@@ -49,7 +53,7 @@ function MapController({ event }: { event: DisasterEvent | null }) {
 }
 
 // 1. Cluster Icon Generator (Moved outside to be globally accessible)
-const createClusterCustomIcon = (cluster: any) => {
+const createClusterCustomIcon = (cluster: MarkerCluster) => {
   const count = cluster.getChildCount();
 
   let size = "w-8 h-8";
@@ -214,9 +218,10 @@ const filteredMarkers = useMemo(() => {
           setEvents([]);
           setSyncError("No matching events found in database.");
         }
-      } catch (err: any) {
-        console.error("🔥 Sync Error:", err.message);
-        setSyncError(err.message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to sync map";
+        console.error("🔥 Sync Error:", errorMessage);
+        setSyncError(errorMessage);
       } finally {
         setLoading(false);
       }
