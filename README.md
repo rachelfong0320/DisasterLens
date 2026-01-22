@@ -61,20 +61,20 @@ graph TD
 
     %% 2. Stream Processing Pipeline (The AI Workers)
     T1 -->|Consume| P1[Data Processor]
-    P1 -->|Produce| T2(Topic: processed_dataClassic)
+    P1 -->|Produce| T2(Topic: processed_data)
 
     T2 -->|Consume| P2[Authenticity Worker]
     P2 -.->|Detect Misinfo| AI2[OpenAI GPT-4]
     AI2 -.->|Verified Post| P2
-    P2 -->|Produce| T3(Topic: authentic_postsClassic)
+    P2 -->|Produce| T3(Topic: authentic_posts)
 
     T3 -->|Consume| P3[Incident Classifier]
     P3 -.->|Classify Type & Sentiment| AI3[OpenAI GPT-4]
     AI3 -.->|Enriched Event| P3
-    P3 -->|Produce| T4(Topic: incidentsClassic)
+    P3 -->|Produce| T4(Topic: incidents)
 
     T4 -->|Consume| P4[Alert Generator]
-    P4 -->|Produce| T5(Topic: alertsClassic)
+    P4 -->|Produce| T5(Topic: alerts)
 
     %% 3. Persistence Layer (Workers Write Here)
     T1 & T4  -->|Persist| DB[(MongoDB)]
