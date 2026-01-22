@@ -170,7 +170,16 @@ export default function AccessDataPage() {
     "Negeri Sembilan",
     "Perlis",
   ];
-  const category_of_disaster = ["Flood", "Landslide", "Storm", "Earthquake"];
+  const category_of_disaster = [
+    "Flood",
+    "Landslide",
+    "Storm",
+    "Earthquake",
+    "Haze",
+    "Forest Fire",
+    "Sinkhole",
+    "Tsunami",
+  ];
   const severity_levels = ["Warning", "Infomational", "Urgent"];
 
   return (
