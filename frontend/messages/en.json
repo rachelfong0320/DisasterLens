@@ -97,7 +97,8 @@
     "haze": "Haze",
     "tsunami": "Tsunami",
     "sinkhole": "Sinkhole",
-    "allTypes": "All Types"
+    "allTypes": "All Types",
+    "none": "Unknown Event"
   },
   "map": {
     "update": "Updating map...",

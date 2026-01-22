@@ -367,17 +367,23 @@ useEffect(() => {
               >
               <Popup>
                 <div className="text-sm">
-                  {/* The 'S' or 'F' type is shown here now */}
                   <p className="font-bold uppercase text-red-600 mb-1">
-                    {d(event.classification_type.toLowerCase().replace(/\s+(.)/g, (_, char) => char.toUpperCase()))}
+                    {event.classification_type && event.classification_type.toLowerCase() !== "none" 
+                      ? d(event.classification_type.toLowerCase().replace(/\s+(.)/g, (_, char) => char.toUpperCase()))
+                      : "EVENT" // Replace t("unknownEvent") with a simple string
+                    }
                   </p>
+                  
                   <p className="capitalize text-gray-700">
                     {event.location_district}, {event.location_state}
                   </p>
+                  
                   <p className="font-semibold text-blue-700 mt-1">
                     📅 {new Date(event.start_time).toLocaleDateString()}
                   </p>
+                  
                   <hr className="my-1" />
+                  
                   <p className="text-gray-500 text-xs">
                     {t("report")} {event.total_posts_count}
                   </p>
