@@ -98,7 +98,8 @@
     "haze": "Jerebu",
     "tsunami": "Tsunami",
     "sinkhole": "Lubang Benam",
-    "allTypes": "Semua Jenis"
+    "allTypes": "Semua Jenis",
+    "none": "Acara Tidak Diketahui"
   },
   "map": {
     "update": "Mengemas kini peta...",
