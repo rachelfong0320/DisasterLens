@@ -48,7 +48,19 @@
     "eventTrend": "Event Trend",
     "affected": "Top Affected Districts",
     "sentiment": "Sentiment Analysis",
-    "keyword": "Trending Keywords"
+    "keywordTitle": "Trending Keywords",
+    "hashtagTitle": "Trending Hashtags",
+    "keywordToggle": "Keywords",
+    "hashtagToggle": "Hashtags",
+    "unitPost": "{count, plural, =1 {Post} other {Posts}}",
+    "unitHit": "{count, plural, =1 {Hit} other {Hits}}",
+    "monthlySummaryTitle": "Monthly Event Summary",
+    "monthLabel": "Month",
+    "totalEventsLabel": "Total Events",
+    "generatedOn": "Generated on",
+    "dataRange": "Data Range",
+    "disasterType": "Disaster Type",
+    "to":"to"
   },
   "header": {
     "access_data": "Access Data",

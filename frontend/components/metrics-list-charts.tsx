@@ -7,14 +7,14 @@ interface MetricListChartProps {
   title: string;
   data: { name: string; value: number }[];
   color?: string;
-  unit?: string; // e.g., "Hit" or "Post"
+  unit: string | ((count: number) => string);
 }
 
 export default function MetricListChart({ 
   title, 
   data, 
   color = "#3b82f6",
-  unit = ""
+  unit 
 }: MetricListChartProps) {
   const maxValue = data.length > 0 ? Math.max(...data.map(d => d.value)) : 0;
 
@@ -41,7 +41,7 @@ export default function MetricListChart({
                   {item.name}
                 </span>
                 <span className="text-xs font-bold px-2 py-1 rounded bg-blue-50 text-blue-600">
-                  {item.value} {formatUnit(item.value, unit)}
+                  {item.value} {typeof unit === 'function' ? unit(item.value) : unit}
                 </span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">

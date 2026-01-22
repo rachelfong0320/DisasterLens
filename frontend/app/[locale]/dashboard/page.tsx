@@ -179,13 +179,15 @@ export default function Dashboard() {
           <div className="hidden print:flex flex-col mb-8 border-b pb-4">
             <h1 className="text-3xl font-bold">DisasterLens Analysis Report</h1>
             <p className="text-gray-500">
-              Generated on: {new Date().toLocaleString(locale, { 
+              {t("generatedOn")}: {new Date().toLocaleString(locale, { 
                 dateStyle: 'full', 
                 timeStyle: 'short' 
               })}
             </p>
             <p className="text-sm text-gray-400 mt-2">
-              Data Range: {dateRange.start} to {dateRange.end} | Disaster Type: {disasterType}
+              {t("dataRange")}: {dateRange.start} {t("to")} {dateRange.end} | {t("disasterType")}: {disasterType && disasterType !== "all" 
+              ? d(disasterType) 
+              : d("allTypes")}
             </p>
           </div>
           
@@ -299,14 +301,14 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                   <EventsChart title={`${t("eventTrend")} (${currentViewYear})`} type="area" data={trendData} color="#3b82f6" />
                   <EventsChart title={t("affected")} type="bar" data={districtData} color="#3b82f6" />
-                  <MetricListChart title={t("sentiment")} data={sentimentData} color="#3b82f6" unit="Post" />
+                  <MetricListChart title={t("sentiment")} data={sentimentData} color="#3b82f6" unit={(count: number) => t("unitPost", { count })} />
                   
                   {/* Independent Keyword Chart Container */}
                   <div className={`relative transition-all duration-300 ${wordsLoading ? "opacity-50" : "opacity-100"}`}>
                     <div className="absolute top-4 right-4 z-10 flex bg-gray-100 p-1 rounded-lg border border-gray-200 shadow-inner w-[180px]">
                       <div className={`absolute top-1 bottom-1 left-1 w-[86px] bg-white rounded-md shadow-sm transition-transform duration-300 ease-in-out ${trendType === "hashtag" ? "translate-x-[88px]" : "translate-x-0"}`} />
-                      <button onClick={() => setTrendType("keyword")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "keyword" ? "text-blue-600" : "text-gray-500"}`}>Keywords</button>
-                      <button onClick={() => setTrendType("hashtag")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "hashtag" ? "text-blue-600" : "text-gray-500"}`}>Hashtags</button>
+                      <button onClick={() => setTrendType("keyword")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "keyword" ? "text-blue-600" : "text-gray-500"}`}>{t("keywordToggle")}</button>
+                      <button onClick={() => setTrendType("hashtag")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "hashtag" ? "text-blue-600" : "text-gray-500"}`}>{t("hashtagToggle")}</button>
                     </div>
                     
                     {keywordChartData.length === 0 && !wordsLoading ? (
@@ -315,34 +317,34 @@ export default function Dashboard() {
                         <p className="text-sm italic">No trending items found for this selection.</p>
                       </div>
                     ) : (
-                      <MetricListChart title={trendType === "keyword" ? t("keyword") : "Trending Hashtags"} data={keywordChartData} color="#3b82f6" unit="Hit" />
+                      <MetricListChart title={trendType === "keyword" ? t("keywordTitle") : t("hashtagTitle")} data={keywordChartData} color="#3b82f6" unit={(count: number) => t("unitHit", { count })} />
                     )}
                   </div>
 
                   <div className="hidden print:grid grid-cols-2 gap-6 mb-8">
                       <MetricListChart 
-                          title="Trending Hashtags" 
+                          title={t("hashtagTitle")} 
                           data={keywords.slice(0, 5).map(item => ({
                               name: `#${item.keyword.replace(/\s+/g, "").toLowerCase()}`,
                               value: item.frequency
                           }))} 
                           color="#3b82f6" 
-                          unit="Hit" 
+                          unit={(count: number) => t("unitHit", { count })} 
                       />
                   </div>
 
                   <div className="hidden print:block pt-8 border-t border-gray-200">
-                    <h2 className="text-xl font-bold mb-4">Monthly Event Summary ({currentViewYear})</h2>
+                    <h2 className="text-xl font-bold mb-4">{t("monthlySummaryTitle")} ({currentViewYear})</h2>
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-gray-50">
-                          <th className="border p-2 text-left">Month</th>
+                          <th className="border p-2 text-left">{t("monthLabel")}</th>
                           {trendData.map(d => <th key={d.name} className="border p-2 text-center text-xs">{d.name}</th>)}
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
-                          <td className="border p-2 font-semibold">Total Events</td>
+                          <td className="border p-2 font-semibold">{t("totalEventsLabel")}</td>
                           {trendData.map(d => <td key={d.name} className="border p-2 text-center">{d.value}</td>)}
                         </tr>
                       </tbody>
