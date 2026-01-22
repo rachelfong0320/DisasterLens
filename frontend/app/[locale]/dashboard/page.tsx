@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [wordsLoading, setWordsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEmpty, setIsEmpty] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
 
   const currentViewYear = new Date(dateRange.start).getFullYear();
   const baseUrl = `http://localhost:8000/api/v1/analytics`;
@@ -178,13 +179,15 @@ export default function Dashboard() {
           <div className="hidden print:flex flex-col mb-8 border-b pb-4">
             <h1 className="text-3xl font-bold">DisasterLens Analysis Report</h1>
             <p className="text-gray-500">
-              Generated on: {new Date().toLocaleString(locale, { 
+              {t("generatedOn")}: {new Date().toLocaleString(locale, { 
                 dateStyle: 'full', 
                 timeStyle: 'short' 
               })}
             </p>
             <p className="text-sm text-gray-400 mt-2">
-              Data Range: {dateRange.start} to {dateRange.end} | Disaster Type: {disasterType}
+              {t("dataRange")}: {dateRange.start} {t("to")} {dateRange.end} | {t("disasterType")}: {disasterType && disasterType !== "all" 
+              ? d(disasterType) 
+              : d("allTypes")}
             </p>
           </div>
           
@@ -197,10 +200,22 @@ export default function Dashboard() {
 
             <div className="flex items-center gap-3 print:hidden text-sm font-medium">
               <DisasterFilter value={disasterType} onChange={setDisasterType} options={disasterConfig} />
-              <TimeFilter onRangeChange={(start, end) => setDateRange({ start, end })} />
+              <TimeFilter 
+                onRangeChange={(start, end) => {
+                  const startDate = new Date(start);
+                  const endDate = new Date(end);
+
+                  if (startDate > endDate) {
+                    setDateError("The Start Date cannot be later than the End Date.");
+                  } else {
+                    setDateError(null);
+                    setDateRange({ start, end });
+                  }
+                }} 
+              />
               <button
                 onClick={generateReport}
-                disabled={isGenerating || globalLoading || isEmpty || !!error}
+                disabled={isGenerating || globalLoading || isEmpty || !!error || !!dateError}
                 className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 transition-all shadow-sm disabled:opacity-50"
               >
                 {isGenerating ? t("preparing") : t("reportBtn")}
@@ -210,8 +225,20 @@ export default function Dashboard() {
 
           <div className="relative min-h-[500px]">
             
-            {/* 1. LOADING: Skeleton Pulse Grid */}
-            {globalLoading && (
+            {/* 1. DATE VALIDATION ERROR (Add this as the top priority) */}
+            {!globalLoading && dateError && (
+              <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-12 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-center mb-8">
+                <AlertTriangle className="w-10 h-10 mb-3 opacity-70" />
+                <h3 className="text-lg font-bold">Invalid Date Range</h3>
+                <p className="text-sm">{dateError}</p>
+                <p className="text-xs mt-2 opacity-60">
+                  Please adjust your filters to ensure the Start Date comes before the End Date.
+                </p>
+              </div>
+            )}
+
+            {/* 2. LOADING: Skeleton Pulse Grid (Only show if no date error) */}
+            {globalLoading && !dateError && (
               <div className="animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                   {[...Array(8)].map((_, i) => (
@@ -222,7 +249,7 @@ export default function Dashboard() {
             )}
 
             {/* 2. ERROR: Technical Failure Interface */}
-            {!globalLoading && error && (
+            {!globalLoading && !dateError && error && (
               <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-16 bg-red-50 border border-red-200 rounded-xl text-red-700 text-center">
                 <AlertTriangle className="w-12 h-12 mb-4 opacity-50" />
                 <h3 className="text-xl font-bold">{t.has("errorTitle") ? t("errorTitle") : "System Connection Issue"}</h3>
@@ -234,7 +261,7 @@ export default function Dashboard() {
             )}
 
             {/* 3. EMPTY: Success but zero results found */}
-            {!globalLoading && !error && isEmpty && (
+            {!globalLoading && !dateError && !error && isEmpty && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col items-center justify-center p-20 bg-gray-50 border border-dashed border-gray-300 rounded-xl text-gray-500 text-center">
                 <div className="bg-white p-4 rounded-full shadow-sm mb-4">
                   <CircleSlash className="w-10 h-10 text-gray-300" />
@@ -247,7 +274,7 @@ export default function Dashboard() {
             )}
 
             {/* 4. DATA SUCCESS: Render only when verified and loaded */}
-            {!globalLoading && !error && !isEmpty && stats && (
+            {!globalLoading && !dateError && !error && !isEmpty && stats && (
               <div className="animate-in fade-in duration-1000">
                 
                 {/* Metrics Grid - Fixed Activity Logic */}
@@ -274,14 +301,14 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                   <EventsChart title={`${t("eventTrend")} (${currentViewYear})`} type="area" data={trendData} color="#3b82f6" />
                   <EventsChart title={t("affected")} type="bar" data={districtData} color="#3b82f6" />
-                  <MetricListChart title={t("sentiment")} data={sentimentData} color="#3b82f6" unit="Post" />
+                  <MetricListChart title={t("sentiment")} data={sentimentData} color="#3b82f6" unit={(count: number) => t("unitPost", { count })} />
                   
                   {/* Independent Keyword Chart Container */}
                   <div className={`relative transition-all duration-300 ${wordsLoading ? "opacity-50" : "opacity-100"}`}>
                     <div className="absolute top-4 right-4 z-10 flex bg-gray-100 p-1 rounded-lg border border-gray-200 shadow-inner w-[180px]">
                       <div className={`absolute top-1 bottom-1 left-1 w-[86px] bg-white rounded-md shadow-sm transition-transform duration-300 ease-in-out ${trendType === "hashtag" ? "translate-x-[88px]" : "translate-x-0"}`} />
-                      <button onClick={() => setTrendType("keyword")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "keyword" ? "text-blue-600" : "text-gray-500"}`}>Keywords</button>
-                      <button onClick={() => setTrendType("hashtag")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "hashtag" ? "text-blue-600" : "text-gray-500"}`}>Hashtags</button>
+                      <button onClick={() => setTrendType("keyword")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "keyword" ? "text-blue-600" : "text-gray-500"}`}>{t("keywordToggle")}</button>
+                      <button onClick={() => setTrendType("hashtag")} className={`relative z-20 flex-1 px-2 py-1.5 text-[10px] font-bold uppercase transition-colors duration-200 ${trendType === "hashtag" ? "text-blue-600" : "text-gray-500"}`}>{t("hashtagToggle")}</button>
                     </div>
                     
                     {keywordChartData.length === 0 && !wordsLoading ? (
@@ -290,34 +317,34 @@ export default function Dashboard() {
                         <p className="text-sm italic">No trending items found for this selection.</p>
                       </div>
                     ) : (
-                      <MetricListChart title={trendType === "keyword" ? t("keyword") : "Trending Hashtags"} data={keywordChartData} color="#3b82f6" unit="Hit" />
+                      <MetricListChart title={trendType === "keyword" ? t("keywordTitle") : t("hashtagTitle")} data={keywordChartData} color="#3b82f6" unit={(count: number) => t("unitHit", { count })} />
                     )}
                   </div>
 
                   <div className="hidden print:grid grid-cols-2 gap-6 mb-8">
                       <MetricListChart 
-                          title="Trending Hashtags" 
+                          title={t("hashtagTitle")} 
                           data={keywords.slice(0, 5).map(item => ({
                               name: `#${item.keyword.replace(/\s+/g, "").toLowerCase()}`,
                               value: item.frequency
                           }))} 
                           color="#3b82f6" 
-                          unit="Hit" 
+                          unit={(count: number) => t("unitHit", { count })} 
                       />
                   </div>
 
                   <div className="hidden print:block pt-8 border-t border-gray-200">
-                    <h2 className="text-xl font-bold mb-4">Monthly Event Summary ({currentViewYear})</h2>
+                    <h2 className="text-xl font-bold mb-4">{t("monthlySummaryTitle")} ({currentViewYear})</h2>
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-gray-50">
-                          <th className="border p-2 text-left">Month</th>
+                          <th className="border p-2 text-left">{t("monthLabel")}</th>
                           {trendData.map(d => <th key={d.name} className="border p-2 text-center text-xs">{d.name}</th>)}
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
-                          <td className="border p-2 font-semibold">Total Events</td>
+                          <td className="border p-2 font-semibold">{t("totalEventsLabel")}</td>
                           {trendData.map(d => <td key={d.name} className="border p-2 text-center">{d.value}</td>)}
                         </tr>
                       </tbody>

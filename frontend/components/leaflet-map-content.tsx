@@ -31,23 +31,43 @@ const DISASTER_COLORS: Record<string, string> = {
   sinkhole: "#7c3aed",     // Violet
 };
 
-function MapController({ event }: { event: DisasterEvent | null }) {
-  const map = useMap(); 
+function MapController({ events }: { events: DisasterEvent[] }) {
+  const map = useMap();
 
   useEffect(() => {
-    if (event) {
+    // Filter out any events with invalid coordinates for calculation
+    const validEvents = events.filter(e => 
+      e.geometry?.coordinates && 
+      e.geometry.coordinates.length === 2 &&
+      e.geometry.coordinates[0] !== null
+    );
+
+    if (validEvents.length === 0) {
+      map.flyTo([4.21, 101.69], 6, { duration: 1.5 });
+      return;
+    }
+
+    if (validEvents.length === 1) {
+      const event = validEvents[0];
       map.flyTo(
         [event.geometry.coordinates[1], event.geometry.coordinates[0]],
         12,
         { duration: 1.5 }
       );
-    }else {
-      map.flyTo([4.21, 101.69], 6, {
+    } else {
+      const bounds = L.latLngBounds(
+        validEvents.map((e) => [
+          e.geometry.coordinates[1],
+          e.geometry.coordinates[0],
+        ] as L.LatLngExpression)
+      );
+
+      map.flyToBounds(bounds, {
+        padding: [50, 50],
         duration: 1.5,
-        easeLinearity: 0.25
       });
     }
-  }, [event, map]);
+  }, [events, map]);
 
   return null;
 }
@@ -118,6 +138,7 @@ export default function LeafletMapContent({
   chatbotEvent
 }: LeafletMapContentProps) {
   const t = useTranslations("map");
+  const d = useTranslations("disasterType");
   const [events, setEvents] = useState<DisasterEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -131,8 +152,8 @@ export default function LeafletMapContent({
 
 const filteredMarkers = useMemo(() => {
   // If a chatbot event is active, show ONLY that marker
-  if (chatbotEvent) {
-    return events.filter(e => e.event_id === chatbotEvent);
+  if (chatbotEvent && events.length > 0) {
+  return events;
   }
 
   // Otherwise, return to default filtered view
@@ -149,7 +170,7 @@ const filteredMarkers = useMemo(() => {
   });
 }, [events, filters, chatbotEvent]);
 
-  const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange;
+  const isMapEmpty = !loading && filteredMarkers.length === 0 && !isInvalidDateRange && !chatbotEvent;
 
   useEffect(() => {
   // If we are currently syncing with the chatbot, DON'T fetch global background events
@@ -176,59 +197,70 @@ const filteredMarkers = useMemo(() => {
   fetchEvents();
 }, [filters, chatbotEvent]);
 
-  useEffect(() => {
-    if (!chatbotEvent) return;
+useEffect(() => {
+  if (!chatbotEvent) return;
 
-    const syncMap = async () => {
-      if (!chatbotEvent) return;
-      setLoading(true);
-      setSyncError(null);
-      setEvents([]);
-      setHighlightedEvent(null);
+  const syncMap = async () => {
+    setLoading(true);
+    setSyncError(null);
+    setEvents([]);
+    setHighlightedEvent(null);
 
-      console.log("📡 Sending Sync Request for ID:", chatbotEvent);
+    // FIX: Extract all IDs if chatbotEvent is an array, otherwise wrap the single ID in an array
+    const eventIds = Array.isArray(chatbotEvent) 
+      ? chatbotEvent 
+      : [chatbotEvent];
 
-      try {
-        const res = await fetch(`http://localhost:8000/api/v1/map-sync`, {
-          method: "POST", // Must be POST
-          headers: {
-            "Content-Type": "application/json",
-          },
-          // This body structure MUST match your MapSyncRequest model
-          body: JSON.stringify({
-            event_ids: [chatbotEvent], // Sending the ID as a single-item array
-          }),
+    console.log("📡 Sending Sync Request for IDs:", eventIds);
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/v1/map-sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // The backend MapSyncRequest model expects "event_ids" as a list
+        body: JSON.stringify({
+          event_ids: eventIds, 
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail?.[0]?.msg || "Failed to sync map");
+      }
+
+      const data = await res.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const validMapEvents = data.filter((event: any) => {
+            const district = event.location_district?.toLowerCase();
+            const state = event.location_state?.toLowerCase();
+            const unknownTerms = ["unknown district", "unknown state", "unknown", ""];
+
+            return !unknownTerms.includes(district) && !unknownTerms.includes(state);
         });
 
-        if (!res.ok) {
-          // If status is 422, this will log exactly why the data was rejected
-          const errorData = await res.json();
-          console.error("❌ Server Error:", errorData);
-          throw new Error(errorData.detail?.[0]?.msg || "Failed to sync map");
-        }
-
-        const data = await res.json();
-        console.log("✅ Map Sync Data Received:", data);
-
-        // Update markers and trigger the 'flyTo' animation
-        if (Array.isArray(data) && data.length > 0) {
-          setEvents(data); 
-          setHighlightedEvent(data[0]); 
+        if (validMapEvents.length > 0) {
+            setEvents(validMapEvents); 
+            setHighlightedEvent(validMapEvents[0]); 
         } else {
+            setEvents([]);
+            setSyncError("Found events, but they lack specific location data to display on the map.");
+        }
+      }else {
           setEvents([]);
           setSyncError("No matching events found in database.");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to sync map";
-        console.error("🔥 Sync Error:", errorMessage);
-        setSyncError(errorMessage);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Failed to sync map");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    syncMap();
-  }, [chatbotEvent]);
+  syncMap();
+}, [chatbotEvent]);
 
   return (
     <div className="relative w-full h-full">
@@ -254,58 +286,90 @@ const filteredMarkers = useMemo(() => {
       </div>
       )}
 
-      {isMapEmpty && !syncError && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-1001 w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="bg-white/95 backdrop-blur-sm border border-amber-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
-            <div className="bg-amber-100 p-3 rounded-full">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
-            </div>
-            
-            <div className="flex-1">
-              <h3 className="text-sm font-bold text-gray-900">
-                No {filters.disasterType || "Events"} Found
-              </h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                There are no reports for this category in 
-                <span className="font-semibold text-gray-700"> {filters.state || "all states"}</span>.
-              </p>
-            </div>
-            
-            {/* Optional: Add a button to reset to "All" */}
-            <button 
-              onClick={() => window.location.reload()} 
-              className="text-xs font-bold text-amber-700 hover:underline"
-            >
-              Clear
-            </button>
-          </div>
+      {/* 3. EMPTY: Success but zero results found */}
+{isMapEmpty && !syncError && (
+  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001] w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="bg-white/95 backdrop-blur-sm border border-amber-200 shadow-2xl rounded-2xl p-4 flex items-start gap-4 text-left">
+      
+      {/* Icon */}
+      <div className="bg-amber-100 p-3 rounded-full shrink-0">
+        <AlertTriangle className="w-6 h-6 text-amber-600" />
+      </div>
+      
+      {/* Content Column */}
+      <div className="flex-1 flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-gray-900">
+            {/* FORMATTING FIX: forestFire -> Forest Fire */}
+            No {filters.disasterType 
+              ? filters.disasterType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) 
+              : "Events"} Found
+          </h3>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="text-[10px] uppercase tracking-wider font-black text-amber-700 hover:text-amber-800 underline shrink-0"
+          >
+            Clear
+          </button>
         </div>
-      )}
 
+        <p className="text-xs text-gray-500 leading-relaxed">
+          There are no reports for this category in 
+          <span className="font-semibold text-gray-700"> 
+            {/* FORMATTING FIX: pahang -> Pahang */}
+            {filters.state 
+              ? filters.state.charAt(0).toUpperCase() + filters.state.slice(1) 
+              : "all states"}
+          </span>.
+        </p>
+
+        {/* CONDITIONAL QUICK TIP: Only shows if start and end dates match */}
+        {filters.startDate !== "" && filters.startDate === filters.endDate && (
+          <div className="mt-2">
+            <p className="text-[10px] uppercase font-black text-amber-800 mb-0.5">Quick Tip:</p>
+            <p className="text-[11px] text-amber-700 font-bold leading-tight italic">
+              "You're searching a single day. Try expanding your date range to see more results."
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
       <MapContainer center={[4.21, 101.69]} zoom={6} className="w-full h-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        <MapController event={highlightedEvent} />
+        <MapController events={filteredMarkers} />
 
         <MarkerClusterGroup
           chunkedLoading
           spiderfyOnMaxZoom={true}
           iconCreateFunction={createClusterCustomIcon}
         >
-          {filteredMarkers.map((event) => (
-            <Marker
-              key={event.event_id}
-              position={[
-                event.geometry.coordinates[1],
-                event.geometry.coordinates[0],
-              ]}
-              icon={getCustomIcon(event.classification_type)}
-            >
+          {filteredMarkers.map((event) => {
+            // ADD THIS SAFETY CHECK:
+            const coords = event.geometry?.coordinates;
+            const isValid = coords && 
+                            coords.length === 2 && 
+                            coords[0] !== null && 
+                            coords[1] !== null;
+
+            if (!isValid) return null;
+
+            return (
+              <Marker
+                key={event.event_id}
+                position={[
+                  event.geometry.coordinates[1], // Latitude
+                  event.geometry.coordinates[0], // Longitude
+                ]}
+                icon={getCustomIcon(event.classification_type)}
+              >
               <Popup>
                 <div className="text-sm">
                   {/* The 'S' or 'F' type is shown here now */}
                   <p className="font-bold uppercase text-red-600 mb-1">
-                    {event.classification_type}
+                    {d(event.classification_type.toLowerCase().replace(/\s+(.)/g, (_, char) => char.toUpperCase()))}
                   </p>
                   <p className="capitalize text-gray-700">
                     {event.location_district}, {event.location_state}
@@ -320,7 +384,8 @@ const filteredMarkers = useMemo(() => {
                 </div>
               </Popup>
             </Marker>
-          ))}
+          );
+          })}
         </MarkerClusterGroup>
 
         {/* Main Positioning Container - bottom-2 makes it sit very close to the map edge */}
@@ -338,7 +403,7 @@ const filteredMarkers = useMemo(() => {
                     group-hover:scale-110 transition-transform`} />
     
     <span className="text-[12px] font-bold text-zinc-700 group-hover:text-zinc-900 transition-colors">
-      {showLegend ? "Hide Legend" : "Show Legend"}
+      {showLegend ? t("hideLegend") : t("showLegend")}
     </span>
   </button>
 
@@ -370,18 +435,23 @@ const filteredMarkers = useMemo(() => {
 
       {/* SECTION 2: Disaster Type Keys - Shrinkable labels for tablet */}
       <div className="flex flex-row items-center gap-3 md:gap-4">
-        {Object.entries(DISASTER_COLORS).map(([type, color]) => (
-          <div key={type} className="flex items-center gap-2">
-            <div 
-              className="w-3 h-3 rounded-full border-2 border-white shadow-sm ring-1 ring-zinc-100 shrink-0" 
-              style={{ backgroundColor: color }}
-            />
-            {/* Hide text labels on very small screens if preferred, or keep them for scrolling */}
-            <span className="text-[11px] font-bold text-zinc-600">
-              {type}
-            </span>
-          </div>
-        ))}
+        {Object.entries(DISASTER_COLORS).map(([type, color]) => {
+          // Convert "forest fire" to "forestFire" to match your JSON keys
+          const translationKey = type.replace(/\s+(.)/g, (_, char) => char.toUpperCase());
+
+          return (
+            <div key={type} className="flex items-center gap-2">
+              <div 
+                className="w-3 h-3 rounded-full border-2 border-white shadow-sm ring-1 ring-zinc-100 shrink-0" 
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-[11px] font-bold text-zinc-600">
+                {/* Use d hook for types */}
+                {d(translationKey)} 
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* SECTION 3: Cluster Explanation */}
@@ -391,10 +461,10 @@ const filteredMarkers = useMemo(() => {
         </div>
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-zinc-800 leading-none">
-            Cluster
+            {t("cluster")}
           </span>
           <span className="text-[8px] text-zinc-400 font-medium italic">
-            Zoom to expand
+            {t("zoomToExpand")}
           </span>
         </div>
       </div>

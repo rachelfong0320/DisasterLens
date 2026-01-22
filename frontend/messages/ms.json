@@ -49,7 +49,19 @@
     "eventTrend": "Trend Acara",
     "affected": "Daerah Paling Terjejas",
     "sentiment": "Analisis Sentimen",
-    "keyword": "Kata Kunci Trending"
+    "keywordTitle": "Kata Kunci Trending",
+    "hashtagTitle": "Hashtag Trending",
+    "keywordToggle": "Kata Kunci",
+    "hashtagToggle": "Hashtag",
+    "unitPost" : "Hantaran",
+    "unitHit": "Kali",
+    "monthlySummaryTitle": "Ringkasan Acara Bulanan",
+    "monthLabel": "Bulan",
+    "totalEventsLabel": "Jumlah Acara",
+    "generatedOn": "Dijana pada",
+    "dataRange": "Julat Data",
+    "disasterType": "Jenis Bencana",
+    "to":"hingga"
   },
   "header": {
     "access_data": "Akses Data",
@@ -95,7 +107,11 @@
     "incidents": "Jumlah Insiden",
     "reported": "dilaporkan",
     "view": "Paparan Semasa: ",
-    "in": "di"
+    "in": "di",
+    "showLegend": "Tunjuk Penunjuk",
+    "hideLegend": "Sorok Penunjuk",
+    "cluster": "Kelompok",
+    "zoomToExpand": "Zum untuk kembangkan"
   },
   "timeFilter": {
     "year": "Tahun Ini",

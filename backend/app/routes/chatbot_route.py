@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List
@@ -61,7 +62,8 @@ async def ask_bot_debug(data: ChatInput):
 async def sync_chatbot_to_map(data: MapSyncRequest, db: Database = Depends(get_db)):
     # The route only handles the HTTP request and response
     events = get_full_events_by_ids(db, data.event_ids)
-    
+    logging.info(f"Map sync retrieved {len(events)} events for IDs: {data.event_ids}")
+    logging.info(f"Events data: {events}")
     if not events:
         return []
         
