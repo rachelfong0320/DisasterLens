@@ -56,38 +56,84 @@ DisasterLens is a comprehensive situational awareness tool designed to scrape, a
 
 ```mermaid
 graph TD
-    %% 1. Ingestion Layer
-    Sources[Social Media Sources] -->|Scrapers| T1(Topic: raw_social_data)
 
-    %% 2. Stream Processing Pipeline (The AI Workers)
-    T1 -->|Consume| P1[Data Processor]
-    P1 -->|Produce| T2(Topic: processed_data)
+%% =========================
+%% 1. INGESTION
+%% =========================
+subgraph Ingestion Layer
+    Sources[Social Media Sources]
+    Scrapers[Scrapers]
+    T1[(Topic: raw_social_data)]
 
-    T2 -->|Consume| P2[Authenticity Worker]
-    P2 -.->|Detect Misinfo| AI2[OpenAI GPT-4]
-    AI2 -.->|Verified Post| P2
-    P2 -->|Produce| T3(Topic: authentic_posts)
+    Sources --> Scrapers -->|Produce| T1
+end
 
-    T3 -->|Consume| P3[Incident Classifier]
-    P3 -.->|Classify Type & Sentiment| AI3[OpenAI GPT-4]
-    AI3 -.->|Enriched Event| P3
-    P3 -->|Produce| T4(Topic: incidents)
+%% =========================
+%% 2. STREAM PROCESSING
+%% =========================
+subgraph Stream Processing
 
-    T4 -->|Consume| P4[Alert Generator]
-    P4 -->|Produce| T5(Topic: alerts)
+    %% Step 1: Misinfo Filter
+    T1 -->|Consume| W1[misinfo_worker]
+    W1 -.->|Verify| AI1[OpenAI GPT-4]
+    AI1 -.->|Result| W1
+    W1 -->|Produce| T2[(Topic: authentic_posts)]
 
-    %% 3. Persistence Layer (Workers Write Here)
-    T1 & T4  -->|Persist| DB[(MongoDB)]
-    T4  -->|Index| ES[(Elasticsearch)]
+    %% Step 2: Analytics Enrichment (Linear Chain)
+    T2 -->|Consume| W4[analytics_worker]
+    W4 -.->|Enrich| AI3[Sentiment/Keywords Analysis]
+    AI3 -.->|Result| W4
+    W4 -->|Produce| T_INT[(Topic: processed_data)]
 
-    %% 4. Access Layer (FastAPI) - THIS IS THE NEW PART
-    DB -.->|Read Data| API[FastAPI Backend]
-    ES -.->|Search Context| API
-    
-    %% 5. Frontend & Chatbot
-    API <==>|REST API / WebSocket| FE[Frontend / Next.js]
-    FE <-->|User Query| Chat[AI Chatbot Logic]
-    Chat <-->|RAG Retrieval| API
+    %% Step 3: Incident Classification & Geo
+    T_INT -->|Consume| W2[incident_worker]
+    W2 -.->|Classify| AI2[Incident Classifier]
+    W2 -->|Produce| T3[(Topic: incidents)]
+
+    %% Step 4: Alerting
+    T3 -->|Consume| W3[alerts_worker]
+end
+
+%% =========================
+%% 3. PERSISTENCE
+%% =========================
+subgraph Persistence Layer
+    DB[(MongoDB)]
+    ES[(Elasticsearch)]
+end
+
+%% Incident worker saves the final enriched state to DB
+W2 -->|Update Posts & Events| DB
+W2 -->|Index Events| ES
+
+%% =========================
+%% 4. ACCESS + RAG RETRIEVAL
+%% =========================
+subgraph Access Layer
+    API[FastAPI Backend]
+end
+
+DB -.-> API
+ES -.->|Semantic / Keyword Search| API
+
+%% =========================
+%% 5. FRONTEND & CHAT
+%% =========================
+subgraph User Layer
+    FE[Next.js Frontend]
+    Chat[AI Chatbot]
+    User[End User]
+end
+
+API <--> |REST API| FE
+
+FE -->|User Question| Chat
+Chat -.->|RAG Retrieval Request| API
+API -.->|Relevant Context| Chat
+Chat -->|Final Answer| FE
+
+%% Alert worker notifies user/system directly (not via Kafka topic)
+W3 -.->|Email/SMS Notification| User
 ```
 ---
 ## ⚡ Getting Started
