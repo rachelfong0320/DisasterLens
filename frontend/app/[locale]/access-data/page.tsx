@@ -109,7 +109,7 @@ export default function AccessDataPage() {
 
       const response = await fetch(
         `${baseUrl}/api/v1/events/export?${params.toString()}`,
-        { method: "GET" }
+        { method: "GET" },
       );
 
       if (!response.ok) {
@@ -144,7 +144,7 @@ export default function AccessDataPage() {
       toast.success(
         to("exportSuccess"),
         to("exportedFormat", { format: format.toUpperCase() }),
-        4000
+        4000,
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : to("exportFailed"));
@@ -313,25 +313,6 @@ export default function AccessDataPage() {
                     />
                   </div>
 
-                  {/* Keyword */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="keyword"
-                      className="text-sm font-medium flex items-center gap-2"
-                    >
-                      <Search className="w-4 h-4 text-muted-foreground" />
-                      {t("keyword")}
-                    </Label>
-                    <Input
-                      id="keyword"
-                      type="text"
-                      value={keyword}
-                      onChange={(e) => setKeyword(e.target.value)}
-                      placeholder="Search by keyword..."
-                      className="h-11"
-                    />
-                  </div>
-
                   {/* Disaster Type */}
                   <div className="space-y-2">
                     <Label
@@ -349,26 +330,6 @@ export default function AccessDataPage() {
                         {category_of_disaster.map((cat) => (
                           <SelectItem key={cat} value={cat.toLowerCase()}>
                             {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Severity */}
-                  <div className="space-y-2">
-                    <Label htmlFor="severity" className="text-sm font-medium">
-                      <ShieldAlert className="w-4 h-4 text-muted-foreground" />
-                      {t("severity")}
-                    </Label>
-                    <Select value={severity} onValueChange={setSeverity}>
-                      <SelectTrigger id="severity" className="h-11">
-                        <SelectValue placeholder="Select Severity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {severity_levels.map((level) => (
-                          <SelectItem key={level} value={level}>
-                            {level}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -413,7 +374,7 @@ export default function AccessDataPage() {
                           setLocationsSelected((prev) =>
                             prev.includes(loc)
                               ? prev.filter((l) => l !== loc)
-                              : [...prev, loc]
+                              : [...prev, loc],
                           )
                         }
                         className="w-4 h-4 accent-primary rounded"
