@@ -101,17 +101,24 @@ def get_historical_disasters(location=None, disaster_type=None, month=None, year
 
 async def chatbot_response(user_text):
     client = openai.OpenAI(api_key=os.getenv("IG_OPENAI_API_KEY"))
+    current_date = datetime.now().strftime("%Y-%m-%d")
     
     messages = [
     {
         "role": "system", 
         "content": (
+            f"Current Date: {current_date}\n"
             "You are DisasterLens AI, an expert on Malaysian disasters. "
             "IMPORTANT TERMINOLOGY:\n"
-            "1. 'Kilat' on its own usually refers to Lightning or Thunderstorms.\n"
-            "2. 'Banjir Kilat' refers specifically to Flash Floods.\n"
+            "1. 'Kilat' or 'ribut' on its own usually refers to Lightning or storms.\n"
+            "2. 'Flash flood' refers specifically to Floods.\n"
             "3. If the user asks for 'Kilat', look for reports categorized as 'Storm' or 'Lightning'. "
             "Do NOT assume they mean 'Banjir Kilat' (Flash Flood) unless they say the word 'Banjir'.\n\n"
+
+            "IMPORTANT TERMINOLOGY (STRICT MAPPING):\n"
+                "1. **Flash Flood (Banjir Kilat)** = **Flood**. If a user asks about 'flash floods', 'banjir kilat', or 'rising water', ALWAYS search for 'flood'. Do not treat them as separate categories.\n"
+                "2. **Kilat (Lightning)** = **Storm**. If a user asks about 'kilat', 'thunder', or 'lightning', ALWAYS search for 'storm'.\n"
+                "3. **Ribut** = **Storm**. Treat these as identical.\n\n"
             
             "DATA HANDLING:\n"
                 "The search results are SORTED BY DATE (newest first). "
@@ -183,6 +190,11 @@ async def chatbot_response_with_data(user_input):
             "If a user asks about 'Malaysia' generally, search without a location filter. "
             "ALWAYS look for the newest records by date. "
             "Don't offer user to ask impact of the event and current situation of the disaster."
+
+            "IMPORTANT TERMINOLOGY (STRICT MAPPING):\n"
+                "1. **Flash Flood (Banjir Kilat)** = **Flood**. If a user asks about 'flash floods', 'banjir kilat', or 'rising water', ALWAYS search for 'flood'. Do not treat them as separate categories.\n"
+                "2. **Kilat (Lightning)** = **Storm**. If a user asks about 'kilat', 'thunder', or 'lightning', ALWAYS search for 'storm'.\n"
+                "3. **Ribut** = **Storm**. Treat these as identical.\n\n"
         )
     },
     {"role": "user", "content": user_input}

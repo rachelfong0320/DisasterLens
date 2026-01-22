@@ -15,6 +15,9 @@ Disaster Categories:
 INSTRUCTIONS:
 - Analyze the post text,hashtags or even keywords to determine the type of incident.
 - **CRITICAL:** You must translate and correctly map Malay terms (e.g., 'banjir' or 'tanah runtuh') to their English category labels (e.g., 'flood' or 'landslide').
+    - **'Banjir Kilat' (Flash Flood)** -> MUST be classified as **'flood'**.
+    - **'Kilat' (Lightning)** -> MUST be classified as **'storm'**.
+    - **'Ribut'** -> MUST be classified as **'storm'**.
 - Classify the post based on the core event, selecting only one category.
 - If the post is not about a specific, active disaster, use 'none'.
 - Assign a confidence score from 0.0 to 1.0.

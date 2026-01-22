@@ -8,7 +8,7 @@ Your goal is to classify public tweets (user-generated content) to identify cred
 **Target Keywords / Event Scope:**
 The tweets were collected using these keywords. Use this to understand the context of the disaster:
 - **Malay**: banjir (flood), tanah runtuh (landslide), ribut (storm), jerebu (haze), kebakaran hutan (forest fire), mendapan tanah (sinkhole), gempa bumi (earthquake), tsunami.
-- **English**: flood, landslide, storm, haze, forest fire, sinkhole, earthquake.
+- **English**: flood, landslide, storm, haze, forest fire, sinkhole, earthquake, tsunami.
 
 **Definitions:**
 1. **AUTHENTIC**: Credible, user-generated reports of disaster events. Includes:
