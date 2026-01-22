@@ -138,6 +138,7 @@ export default function LeafletMapContent({
   chatbotEvent
 }: LeafletMapContentProps) {
   const t = useTranslations("map");
+  const d = useTranslations("disasterType");
   const [events, setEvents] = useState<DisasterEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -368,7 +369,7 @@ useEffect(() => {
                 <div className="text-sm">
                   {/* The 'S' or 'F' type is shown here now */}
                   <p className="font-bold uppercase text-red-600 mb-1">
-                    {event.classification_type}
+                    {d(event.classification_type.toLowerCase().replace(/\s+(.)/g, (_, char) => char.toUpperCase()))}
                   </p>
                   <p className="capitalize text-gray-700">
                     {event.location_district}, {event.location_state}
@@ -402,7 +403,7 @@ useEffect(() => {
                     group-hover:scale-110 transition-transform`} />
     
     <span className="text-[12px] font-bold text-zinc-700 group-hover:text-zinc-900 transition-colors">
-      {showLegend ? "Hide Legend" : "Show Legend"}
+      {showLegend ? t("hideLegend") : t("showLegend")}
     </span>
   </button>
 
@@ -434,18 +435,23 @@ useEffect(() => {
 
       {/* SECTION 2: Disaster Type Keys - Shrinkable labels for tablet */}
       <div className="flex flex-row items-center gap-3 md:gap-4">
-        {Object.entries(DISASTER_COLORS).map(([type, color]) => (
-          <div key={type} className="flex items-center gap-2">
-            <div 
-              className="w-3 h-3 rounded-full border-2 border-white shadow-sm ring-1 ring-zinc-100 shrink-0" 
-              style={{ backgroundColor: color }}
-            />
-            {/* Hide text labels on very small screens if preferred, or keep them for scrolling */}
-            <span className="text-[11px] font-bold text-zinc-600">
-              {type}
-            </span>
-          </div>
-        ))}
+        {Object.entries(DISASTER_COLORS).map(([type, color]) => {
+          // Convert "forest fire" to "forestFire" to match your JSON keys
+          const translationKey = type.replace(/\s+(.)/g, (_, char) => char.toUpperCase());
+
+          return (
+            <div key={type} className="flex items-center gap-2">
+              <div 
+                className="w-3 h-3 rounded-full border-2 border-white shadow-sm ring-1 ring-zinc-100 shrink-0" 
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-[11px] font-bold text-zinc-600">
+                {/* Use d hook for types */}
+                {d(translationKey)} 
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* SECTION 3: Cluster Explanation */}
@@ -455,10 +461,10 @@ useEffect(() => {
         </div>
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-zinc-800 leading-none">
-            Cluster
+            {t("cluster")}
           </span>
           <span className="text-[8px] text-zinc-400 font-medium italic">
-            Zoom to expand
+            {t("zoomToExpand")}
           </span>
         </div>
       </div>

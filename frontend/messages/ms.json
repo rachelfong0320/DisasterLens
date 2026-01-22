@@ -107,7 +107,11 @@
     "incidents": "Jumlah Insiden",
     "reported": "dilaporkan",
     "view": "Paparan Semasa: ",
-    "in": "di"
+    "in": "di",
+    "showLegend": "Tunjuk Penunjuk",
+    "hideLegend": "Sorok Penunjuk",
+    "cluster": "Kelompok",
+    "zoomToExpand": "Zum untuk kembangkan"
   },
   "timeFilter": {
     "year": "Tahun Ini",
