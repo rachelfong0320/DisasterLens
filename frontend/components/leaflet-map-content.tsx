@@ -285,34 +285,56 @@ useEffect(() => {
       </div>
       )}
 
-      {isMapEmpty && !syncError && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-1001 w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="bg-white/95 backdrop-blur-sm border border-amber-200 shadow-2xl rounded-2xl p-4 flex items-center gap-4">
-            <div className="bg-amber-100 p-3 rounded-full">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
-            </div>
-            
-            <div className="flex-1">
-              <h3 className="text-sm font-bold text-gray-900">
-                No {filters.disasterType || "Events"} Found
-              </h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                There are no reports for this category in 
-                <span className="font-semibold text-gray-700"> {filters.state || "all states"}</span>.
-              </p>
-            </div>
-            
-            {/* Optional: Add a button to reset to "All" */}
-            <button 
-              onClick={() => window.location.reload()} 
-              className="text-xs font-bold text-amber-700 hover:underline"
-            >
-              Clear
-            </button>
-          </div>
+      {/* 3. EMPTY: Success but zero results found */}
+{isMapEmpty && !syncError && (
+  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001] w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="bg-white/95 backdrop-blur-sm border border-amber-200 shadow-2xl rounded-2xl p-4 flex items-start gap-4 text-left">
+      
+      {/* Icon */}
+      <div className="bg-amber-100 p-3 rounded-full shrink-0">
+        <AlertTriangle className="w-6 h-6 text-amber-600" />
+      </div>
+      
+      {/* Content Column */}
+      <div className="flex-1 flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-gray-900">
+            {/* FORMATTING FIX: forestFire -> Forest Fire */}
+            No {filters.disasterType 
+              ? filters.disasterType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) 
+              : "Events"} Found
+          </h3>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="text-[10px] uppercase tracking-wider font-black text-amber-700 hover:text-amber-800 underline shrink-0"
+          >
+            Clear
+          </button>
         </div>
-      )}
 
+        <p className="text-xs text-gray-500 leading-relaxed">
+          There are no reports for this category in 
+          <span className="font-semibold text-gray-700"> 
+            {/* FORMATTING FIX: pahang -> Pahang */}
+            {filters.state 
+              ? filters.state.charAt(0).toUpperCase() + filters.state.slice(1) 
+              : "all states"}
+          </span>.
+        </p>
+
+        {/* CONDITIONAL QUICK TIP: Only shows if start and end dates match */}
+        {filters.startDate !== "" && filters.startDate === filters.endDate && (
+          <div className="mt-2">
+            <p className="text-[10px] uppercase font-black text-amber-800 mb-0.5">Quick Tip:</p>
+            <p className="text-[11px] text-amber-700 font-bold leading-tight italic">
+              "You're searching a single day. Try expanding your date range to see more results."
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
       <MapContainer center={[4.21, 101.69]} zoom={6} className="w-full h-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
