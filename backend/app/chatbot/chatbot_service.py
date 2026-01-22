@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import json
 import openai
@@ -6,7 +7,7 @@ from elasticsearch import Elasticsearch
 # Inside Docker, use 'elasticsearch' as the host
 es = Elasticsearch("http://elasticsearch:9200")
 
-def get_historical_disasters(location=None, disaster_type=None, month=None, year=None,latest=False):
+def get_historical_disasters(location=None, disaster_type=None, month=None, year=None,latest=False,specific_date=None):
     # FIXED: We use a single list 'must_clauses' to collect ALL filters
     must_clauses = []
     
@@ -61,6 +62,19 @@ def get_historical_disasters(location=None, disaster_type=None, month=None, year
             })
         except ValueError:
             pass # Ignore invalid years
+    
+    # 5. Handle Specific Date (NEW)
+    if specific_date:
+        # specific_date should be passed as "YYYY-MM-DD" by the AI
+        must_clauses.append({
+            "range": {
+                "start_time": {
+                    # Check for the entire 24-hour window of that date
+                    "gte": f"{specific_date}T00:00:00",
+                    "lte": f"{specific_date}T23:59:59"
+                }
+            }
+        })
 
     # DYNAMIC SIZE LOGIC
     # If the AI explicitly asks for 'latest', we only need 1. Otherwise, fetch 50 for context/stats.
@@ -126,6 +140,10 @@ async def chatbot_response(user_text):
                     "latest": {
                         "type": "boolean", 
                         "description": "Set to true ONLY if the user explicitly asks for the 'latest', 'newest', or 'most recent' event."
+                    },
+                    "specific_date": {
+                        "type": "string",
+                        "description": "The exact date to search for in 'YYYY-MM-DD' format. Use this if the user asks for 'today', 'yesterday', or a specific date."
                     }
                 }
             }
@@ -153,11 +171,13 @@ async def chatbot_response(user_text):
 
 async def chatbot_response_with_data(user_input):
     client = openai.OpenAI(api_key=os.getenv("IG_OPENAI_API_KEY"))
+    current_date = datetime.now().strftime("%Y-%m-%d")
     
     messages = [
     {
         "role": "system", 
         "content": (
+            f"Current Date: {current_date}\n"
             "You are DisasterLens AI, an expert on Malaysian disaster data. "
             "The database contains specific Malaysian states and districts (e.g., Pahang, Kuching, Penang). "
             "If a user asks about 'Malaysia' generally, search without a location filter. "
@@ -183,6 +203,10 @@ async def chatbot_response_with_data(user_input):
                     "latest": {
                         "type": "boolean", 
                         "description": "Set to true ONLY if the user explicitly asks for the 'latest', 'newest', or 'most recent' event."
+                    },
+                    "specific_date": {
+                        "type": "string",
+                        "description": "The exact date to search for in 'YYYY-MM-DD' format. Use this if the user asks for 'today', 'yesterday', or a specific date."
                     }
                 }
             }
