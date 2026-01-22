@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [wordsLoading, setWordsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEmpty, setIsEmpty] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
 
   const currentViewYear = new Date(dateRange.start).getFullYear();
   const baseUrl = `http://localhost:8000/api/v1/analytics`;
@@ -197,10 +198,22 @@ export default function Dashboard() {
 
             <div className="flex items-center gap-3 print:hidden text-sm font-medium">
               <DisasterFilter value={disasterType} onChange={setDisasterType} options={disasterConfig} />
-              <TimeFilter onRangeChange={(start, end) => setDateRange({ start, end })} />
+              <TimeFilter 
+                onRangeChange={(start, end) => {
+                  const startDate = new Date(start);
+                  const endDate = new Date(end);
+
+                  if (startDate > endDate) {
+                    setDateError("The Start Date cannot be later than the End Date.");
+                  } else {
+                    setDateError(null);
+                    setDateRange({ start, end });
+                  }
+                }} 
+              />
               <button
                 onClick={generateReport}
-                disabled={isGenerating || globalLoading || isEmpty || !!error}
+                disabled={isGenerating || globalLoading || isEmpty || !!error || !!dateError}
                 className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 transition-all shadow-sm disabled:opacity-50"
               >
                 {isGenerating ? t("preparing") : t("reportBtn")}
@@ -210,8 +223,20 @@ export default function Dashboard() {
 
           <div className="relative min-h-[500px]">
             
-            {/* 1. LOADING: Skeleton Pulse Grid */}
-            {globalLoading && (
+            {/* 1. DATE VALIDATION ERROR (Add this as the top priority) */}
+            {!globalLoading && dateError && (
+              <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-12 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-center mb-8">
+                <AlertTriangle className="w-10 h-10 mb-3 opacity-70" />
+                <h3 className="text-lg font-bold">Invalid Date Range</h3>
+                <p className="text-sm">{dateError}</p>
+                <p className="text-xs mt-2 opacity-60">
+                  Please adjust your filters to ensure the Start Date comes before the End Date.
+                </p>
+              </div>
+            )}
+
+            {/* 2. LOADING: Skeleton Pulse Grid (Only show if no date error) */}
+            {globalLoading && !dateError && (
               <div className="animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                   {[...Array(8)].map((_, i) => (
@@ -222,7 +247,7 @@ export default function Dashboard() {
             )}
 
             {/* 2. ERROR: Technical Failure Interface */}
-            {!globalLoading && error && (
+            {!globalLoading && !dateError && error && (
               <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-16 bg-red-50 border border-red-200 rounded-xl text-red-700 text-center">
                 <AlertTriangle className="w-12 h-12 mb-4 opacity-50" />
                 <h3 className="text-xl font-bold">{t.has("errorTitle") ? t("errorTitle") : "System Connection Issue"}</h3>
@@ -234,7 +259,7 @@ export default function Dashboard() {
             )}
 
             {/* 3. EMPTY: Success but zero results found */}
-            {!globalLoading && !error && isEmpty && (
+            {!globalLoading && !dateError && !error && isEmpty && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col items-center justify-center p-20 bg-gray-50 border border-dashed border-gray-300 rounded-xl text-gray-500 text-center">
                 <div className="bg-white p-4 rounded-full shadow-sm mb-4">
                   <CircleSlash className="w-10 h-10 text-gray-300" />
@@ -247,7 +272,7 @@ export default function Dashboard() {
             )}
 
             {/* 4. DATA SUCCESS: Render only when verified and loaded */}
-            {!globalLoading && !error && !isEmpty && stats && (
+            {!globalLoading && !dateError && !error && !isEmpty && stats && (
               <div className="animate-in fade-in duration-1000">
                 
                 {/* Metrics Grid - Fixed Activity Logic */}
