@@ -114,7 +114,7 @@ subgraph Access Layer
 end
 
 DB -.-> API
-ES -.->|Semantic / Keyword Search| API
+ES -.->|Keyword Search| API
 
 %% =========================
 %% 5. FRONTEND & CHAT
