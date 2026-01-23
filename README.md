@@ -133,7 +133,7 @@ API -.->|Relevant Context| Chat
 Chat -->|Final Answer| FE
 
 %% Alert worker notifies user/system directly (not via Kafka topic)
-W3 -.->|Email/SMS Notification| User
+W3 -.->|Email Notification| User
 ```
 ---
 ## ⚡ Getting Started
