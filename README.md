@@ -150,13 +150,30 @@ git clone https://github.com/rachelfong0320/disasterlens.git
 cd disasterlens`
 ```
 #### Environment Setup
-Create a `.env` file in the `backend/` directory:
+1. Create a `.env` file in the `backend/` directory:
 ```bash
-OPENAI_API_KEY=your_openai_key
-MONGO_URI=mongodb://mongo:27017/disasterlens
-ELASTICSEARCH_URL=http://elasticsearch:9200
-INSTAGRAM_USERNAME=your_mongodb_username
-INSTAGRAM_PASSWORD=your_mongodb_password
+# AI & Geocoding Services
+IG_OPENAI_API_KEY=your_openai_api_key
+OPEN_CAGE_KEY=your_opencage_api_key
+
+# Database (MongoDB Atlas)
+MONGO_USERNAME=your_mongodb_username
+MONGO_PASSWORD=your_mongodb_password
+
+# Kafka Configuration
+KAFKA_BOOTSTRAP_SERVER=your_kafka_broker_url
+
+# Twitter/X Scraper (RapidAPI)
+RAPIDAPI_KEY=your_rapidapi_key
+RAPIDAPI_HOST=twitter241.p.rapidapi.com
+
+# Instagram Scraper (RapidAPI)
+RAPIDAPI_IG_KEY=your_rapidapi_key
+RAPID_API_IG_HOST=instagram-social-api.p.rapidapi.com
+```
+2. Create a `.env` file in the `frontend/` directory:
+```bash
+I18NEXUS_API_KEY=your_i18nexus_api_key
 ```
 
 #### ▶️ Run with Docker Compose (Recommended)
@@ -188,19 +205,38 @@ npm run dev
 ## 📂 Project Structure
 ```bash
 disasterlens/
+├── .github/
+│   └── workflows/           # CI/CD pipelines (Instagram & Tweet scrapers)
 ├── backend/
-│   ├── app/                 # API Routes, Models, and Services
-│   │   ├── chatbot/         # Chatbot logic and Elasticsearch integration
-│   │   └── routes/          # FastAPI endpoints
-│   ├── core/                # Core business logic
-│   │   ├── jobs/            # AI jobs (Sentiment, Classification)
-│   │   └── scrapers/        # Instagram & Tweet scrapers
-│   └── Dockerfile
+│   ├── app/                 # FastAPI Application
+│   │   ├── chatbot/         # RAG Chatbot logic & Elasticsearch manual sync 
+│   │   ├── db/              # Database connection handling
+│   │   ├── models/          # Pydantic data models
+│   │   ├── routes/          # API Endpoints (Alerts, Chatbot, Pipelines)
+│   │   └── main.py          # App entry point
+│   ├── core/                # Business Logic & Background Workers
+│   │   ├── consumers/       # Kafka Consumers (Alerts, Analytics, Incident, Misinfo)
+│   │   ├── jobs/            # AI Processing Jobs (Geo, Incident, Sentiment)
+│   │   ├── processor/       # Event consolidation & Statistics aggregation
+│   │   └── scrapers/        # Data collectors (Instagram & Twitter)
+│   ├── tests/               # Test Suite (Integration, System, Unit)
+│   ├── Dockerfile.api       # Dockerfile for the Main API
+│   ├── Dockerfile.worker    # Dockerfile for Kafka Workers
+│   └── requirements.txt     # Python dependencies
 ├── frontend/
-│   ├── app/                 # Next.js App Router pages
-│   ├── components/          # Reusable UI components & Map widgets
-│   └── hooks/               # Custom React hooks
-├── docker-compose.yml       # Orchestration for the full stack
+│   ├── app/                 # Next.js App Router
+│   │   └── [locale]/        # Internationalized pages (Dashboard, Data Sources)
+│   ├── components/          # React Components
+│   │   ├── ui/              # Reusable UI elements (Buttons, Inputs, etc.)
+│   │   └── ...              # Map, Charts, and Filter widgets
+│   ├── hooks/               # Custom React Hooks (Mobile, Toasts, Reports)
+│   ├── i18n/                # Internationalization configuration
+│   ├── lib/                 # Utility functions and TypeScript types
+│   ├── messages/            # Translation files (en.json, ms.json)
+│   ├── public/              # Static assets and icons
+│   ├── Dockerfile           # Frontend Dockerfile
+│   └── package.json         # Node.js dependencies
+├── docker-compose.yml       # Orchestration for Full Stack (App, Workers, DBs)
 └── README.md
 ```
 ---
