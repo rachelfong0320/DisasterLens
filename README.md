@@ -33,22 +33,28 @@ DisasterLens is a comprehensive situational awareness tool designed to scrape, a
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework:** Next.js 14 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS (shadcn/ui compatible)
-- **Maps:** Leaflet (`react-leaflet`)
-- **State Management:** React Hooks
+- **Styling:** Tailwind CSS, shadcn/ui (Radix UI Primitives)
+- **Maps:** Leaflet (`react-leaflet`, `react-leaflet-cluster`)
+- **Internationalization:** next-intl, i18nexus
 
 ### Backend
 - **Framework:** FastAPI (Python)
 - **Database:** MongoDB (primary store)
 - **Search Engine:** Elasticsearch
-- **AI/ML:** OpenAI API (GPT-4 / GPT-3.5)
-- **Data Processing:** Pandas, Asyncio
+- **Message Broker:** Apache Kafka (`aiokafka`, `kafka-python`)
+- **AI/ML:** OpenAI API (GPT-4o-mini)
+- **NLP:** SpaCy, NLTK, Scikit-learn (`joblib`)
+- **Data Processing:** Pandas, Asyncio, NumPy, BeautifulSoup4
 
 ### DevOps
 - **Containerization:** Docker & Docker Compose
-- **CI/CD:** GitHub Actions (scraper workflows included)
+- **CI/CD:** GitHub Actions (Scraper Automation)
+
+### Quality Assurances
+- **Testing:** Pytest (pytest-asyncio, httpx)
+
 
 ---
 
